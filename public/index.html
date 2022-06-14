@@ -1,0 +1,242 @@
+<!doctype HTML>
+<html lang="en-us">
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="3D Implicit Function Viewer">
+
+  <title>ImpVis - 3D Implicit Function Viewer</title>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script>
+    MathJax = {
+      chtml: { displayAlign: 'left' }
+    };
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <style>
+    html {
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      color: white;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-shadow: 1px 1px 1px black;
+    }
+
+    .status {
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      min-height: 10%;
+    }
+
+    #eqnname {
+      background-color: #00000000;
+      color: white;
+      border: none;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 1em;
+      text-align: left;
+      font-family: 'Roboto', monospace;
+      margin-top: -0.5em;
+      pointer-events: none;
+    }
+
+    #equation {
+      background-color: #00000000;
+      color: white;
+      border: none;
+      width: 90%;
+      position: absolute;
+      margin-left: 17px;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #output {
+      background-color: #00000000;
+      color: white;
+      border: none;
+      padding: 0 1em;
+      position: absolute;
+      left: 0;
+      width: 100%;
+      bottom: 0;
+      font-family: monospace;
+      font-stretch: condensed;
+      font-size: small;
+      resize: none;
+      overflow: visible;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body onresize='onResize()'>
+  <div class="status" id="status"></div>
+
+  <div id="container" oncontextmenu="event.preventDefault()">
+    <canvas id="canvas"></canvas>
+
+    <div id="eqnname" hidden=1>
+      <h1></h1>
+    </div>
+
+    <div id="equation" hidden=1>
+      <h3>\[\]</h3>
+    </div>
+  </div>
+
+  <script type='text/javascript'>
+    function isMobile() {
+      return (/Mobi/i.test(navigator.userAgent) || /Android/i.test(navigator.userAgent));
+    }
+
+    var container = document.getElementById('container');
+    container.requestFullscreen = container.webkitRequestFullscreen || container.mozRequestFullScreen || canvas.msRequestFullscreen;
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        container.focus();
+        container.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    function onResize() {
+      resizeEquation();
+    }
+
+    function resizeEquation() {
+      var node = document.getElementById("equation");
+      var clientWidth = document.body.clientWidth;
+      var originalTop = 25;
+      var originalFontSize = 17;
+      var newTop = originalTop;
+      var newSize = originalFontSize;
+      if (clientWidth < 960) {
+        newSize = originalFontSize * Math.pow(clientWidth / 960, 1.85);
+        newTop = originalTop * 960 / clientWidth;
+      }
+      node.style.fontSize = newSize + "px";
+      node.style.marginTop = 17 + newTop + "px";
+    }
+
+    function updateEquationName(name) {
+      var oldNode = document.getElementById("eqnname").firstElementChild;
+      var newNode = document.createElement(oldNode.tagName);
+      newNode.innerHTML = name;
+
+      oldNode.parentNode.replaceChild(newNode, oldNode)
+    }
+
+    function updateEquation(equation, comment) {
+      var oldNode = document.getElementById("equation").firstElementChild;
+      var newNode = document.createElement(oldNode.tagName);
+      newNode.innerHTML = "\\[ \\begin{align*}&" + equation + comment +
+        "\\end{align*} \\]";
+      oldNode.parentNode.replaceChild(newNode, oldNode)
+
+      MathJax.typeset()
+      resizeEquation();
+    }
+
+    var Module = {
+      onRuntimeInitialized: function () { },
+      print: (function (text) {
+        var element = document.getElementById('output');
+        if (element) element.value = ''; // clear browser cache
+        return function (text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.log(text);
+          if (element) {
+            element.value += text + "\n";
+            element.scrollTop = element.scrollHeight; // focus on bottom
+          }
+        };
+      })(),
+      canvas: document.getElementById('canvas'),
+      printErr: function (text) { console.error(text); },
+      setStatus: function (text) {
+        if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+        if (text === Module.setStatus.last.text) return;
+        var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+        var now = Date.now();
+        if (m && now - Module.setStatus.last.time < 30) return;
+        Module.setStatus.last.time = now;
+        Module.setStatus.last.text = text;
+
+        var equationElement = document.getElementById('equation');
+        var equationNameElement = document.getElementById('eqnname');
+        if (m) {
+          text = m[1];
+          equationElement.hidden = true;
+          equationNameElement.hidden = true;
+        } else {
+          equationElement.hidden = false;
+          equationNameElement.hidden = false;
+        }
+        var statusElement = document.getElementById('status');
+        statusElement.textContent = text;
+      },
+      totalDependencies: 0,
+      monitorRunDependencies: function (left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        Module.setStatus(left ?
+          'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' :
+          'All downloads complete.');
+      }
+    };
+    Module.setStatus('Downloading...');
+    window.onerror = function () {
+      addErrorMessage('Exception thrown. See JavaScript console.');
+      Module.setStatus('Exception thrown, see JavaScript console');
+      Module.setStatus = function (text) {
+        if (text) Module.printErr('[post-exception status] ' + text);
+      };
+    };    
+  </script>
+  <script async type="text/javascript" src="impvis.js"></script>
+</body>
+
+</html>

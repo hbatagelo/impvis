@@ -1,0 +1,21 @@
+---
+Checks: '*,
+         -abseil*,         
+         -altera*,
+         -android*,         
+         -fuchsia*,         
+         -google*,
+         -llvm*,         
+         -zircon*,
+         -*braces-around-statements,         
+         -*magic-numbers,         
+         -*use-trailing-return-type,
+         -*reinterpret-cast,
+         -*signed-bitwise,
+         -*type-union-access,
+         -*vararg,
+         -*uppercase-literal-suffix'
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
+AnalyzeTemporaryDtors: false
+FormatStyle: llvm

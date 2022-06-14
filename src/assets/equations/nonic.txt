@@ -1,0 +1,31 @@
+name Chmutov Nonic
+thumb textures/thumbs/nonic/chmutov.png
+bound_shape 1
+bound_radius 1.1
+raymarch_method 0
+raymarch_steps 300
+cam_dist 8
+colormap_scale 0.75
+code_global float T_9(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  float x6=x4*x2;
+  float x8=x4*x4;
+  return x*(256.*x8-576.*x6+432.*x4-120.*x2+9.);
+}
+comment ,\\&\mathrm{where}\;T_9(x)=256x^9-576x^7+432x^5-120x^3+9x
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;9.}
+expr T_9(x)+T_9(y)+T_9(z)+1
+
+name Enneper Minimal
+thumb textures/thumbs/nonic/enneper_minimal.png
+bound_shape 0
+bound_radius 2
+raymarch_method 0
+raymarch_steps 350
+cam_dist 10
+colormap_scale 0.25
+expr 64*z^9-128*z^7+64*z^5-702*x^2*y^2*z^3-18*x^2*y^2*z+144*(y^2*z^6-x^2*z^6)+\n
+162*(y^4*z^2-x^4*z^2)+27*(y^6-x^6)+9*(x^4*z+y^4*z)+48*(x^2*z^3+y^2*z^3)-\n
+432*(x^2*z^5+y^2*z^5)+81*(x^4*y^2-x^2*y^4)+240*(y^2*z^4-x^2*z^4)-\n
+135*(x^4*z^3+y^4*z^3)

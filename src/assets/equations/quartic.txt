@@ -1,0 +1,179 @@
+name Bifolia
+thumb textures/thumbs/quartic/bifolia.png
+bound_shape 0
+bound_radius 2
+raymarch_method 0
+raymarch_steps 80
+cam_dist 7
+colormap_scale 7
+expr (x^2+y^2+z^2)^2-3*y*(x^2+z^2)
+
+name Cassini
+thumb textures/thumbs/quartic/cassini.png
+bound_shape 0
+bound_radius 3
+raymarch_method 0
+raymarch_steps 75
+cam_dist 13
+colormap_scale 0.75
+param r 1
+expr [(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2
+
+name Chair
+thumb textures/thumbs/quartic/chair.png
+bound_shape 0
+bound_radius 2
+raymarch_method 0
+raymarch_steps 100
+cam_dist 7
+colormap_scale 8
+param a 0.95
+param b 0.8
+param k 1
+expr (x^2+y^2+z^2-a*k^2)^2-b*[(z-k)^2-2*x^2]*[(z+k)^2-2*y^2]
+
+name Chmutov Quartic
+thumb textures/thumbs/quartic/chmutov.png
+bound_shape 1
+bound_radius 1.2
+raymarch_method 0
+raymarch_steps 70
+cam_dist 8
+colormap_scale 0.75
+code_global float T_4(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return 8.*x4-8.*x2+1.;
+}
+comment ,\\&\mathrm{where}\; T_4(x)=8x^4-8x^2+1
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;4.}
+expr T_4(x)+T_4(y)+T_4(z)
+
+name Cross-Cap
+thumb textures/thumbs/quartic/cross-cap.png
+bound_shape 0
+bound_radius 2.5
+raymarch_method 0
+raymarch_steps 250
+cam_dist 8
+colormap_scale 5
+param a 1
+expr 4*x^2*(x^2+y^2+z^2+a*z)+y^2*(y^2+z^2-a^2)
+
+name Cushion
+thumb textures/thumbs/quartic/cushion.png
+bound_shape 0
+bound_radius 2
+raymarch_method 0
+raymarch_steps 150
+cam_dist 9
+colormap_scale 8
+expr z^2*x^2-z^4+2*z^3+x^2-2*z^2-x^4-y^4-\n
+2*x^2*y^2-y^2*z^2+2*y^2*z+y^2
+
+name Devil
+thumb textures/thumbs/quartic/devil.png
+bound_shape 0
+bound_radius 3
+raymarch_method 0
+raymarch_steps 100
+cam_dist 14
+colormap_scale 1
+param a -0.26
+param b 0.25
+exprx^4+2*x^2*z^2+a*x^2-y^4+b*y^2+z^4
+
+name Double Cone
+thumb textures/thumbs/quartic/double-cone.png
+bound_shape 0
+bound_radius 3
+raymarch_method 0
+raymarch_steps 100
+cam_dist 14
+colormap_scale 2
+param r 1
+expr y^2*x^2+y^2*z^2-x^4-2*x^2*z^2-z^4
+
+name Goursat
+thumb textures/thumbs/quartic/goursat.png
+bound_shape 0
+bound_radius 1.5
+raymarch_method 0
+raymarch_steps 65
+cam_dist 9
+colormap_scale 2.5
+expr x^4+y^4+z^4-1
+
+name Miter
+thumb textures/thumbs/quartic/miter.png
+bound_shape 0
+bound_radius 2.5
+raymarch_method 0
+raymarch_steps 180
+cam_dist 6
+colormap_scale 7
+expr 4*x^2*(x^2+y^2+z^2)-y^2*(1-y^2-z^2)
+
+name Nordstrand
+thumb textures/thumbs/quartic/nordstrand.png
+bound_shape 0
+bound_radius 1.2
+raymarch_method 0
+raymarch_steps 120
+cam_dist 6
+colormap_scale 1
+expr 25*[x^3*(y+z)+y^3*(x+z)+z^3*(x+y)]+50*(x^2*y^2+x^2*z^2+y^2*x^2)-\n
+125*(x^2*y*z+y^2*x*z+z^2*x*y)-4*(x*y+x*z+y*z)+60*x*y*z
+
+name Pillow Tooth
+thumb textures/thumbs/quartic/pillow_tooth.png
+bound_shape 0
+bound_radius 2
+raymarch_method 0
+raymarch_steps 60
+cam_dist 9
+colormap_scale 3
+expr x^4+y^4+z^4-x^2-y^2-z^2
+
+name Piriform
+thumb textures/thumbs/quartic/piriform.png
+bound_shape 0
+bound_radius 2
+raymarch_method 0
+raymarch_steps 100
+cam_dist 7
+colormap_scale 12
+param a 1
+expr (x^4-a*x^3)+a^2*(y^2+z^2)
+
+name Steiner
+thumb textures/thumbs/quartic/steiner.png
+bound_shape 0
+bound_radius 3
+raymarch_method 0
+raymarch_steps 150
+cam_dist 10
+colormap_scale 12
+expr x^2*y^2+x^2*z^2+y^2*z^2-2*x*y*z
+
+name Tetrahedroid
+thumb textures/thumbs/quartic/tetrahedroid.png
+bound_shape 0
+bound_radius 3
+raymarch_method 0
+raymarch_steps 75
+cam_dist 13
+colormap_scale 1.5
+expr x^4+y^4+z^4-x^2-y^2-z^2-x^2*y^2-y^2*z^2-z^2*x^2+1
+
+name Torus
+thumb textures/thumbs/quartic/torus.png
+bound_shape 0
+bound_radius 2.5
+raymarch_method 0
+raymarch_steps 80
+cam_dist 9
+colormap_scale 3
+param r 0.5
+param R 1
+expr (x^2+y^2+z^2+R^2-r^2)^2-4*R^2*(x^2+y^2)
