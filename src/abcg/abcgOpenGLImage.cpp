@@ -1,6 +1,6 @@
 /**
- * @file abcg_image.cpp
- * @brief Definition of texture loading helper functions.
+ * @file abcgOpenGLImage.cpp
+ * @brief Definition of OpenGL texture loading helper functions.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
@@ -8,82 +8,21 @@
  * This project is released under the MIT License.
  */
 
-#include "abcg_image.hpp"
+#include "abcgOpenGLImage.hpp"
+#include "abcgImage.hpp"
 
 #include <cppitertools/itertools.hpp>
 #include <fmt/core.h>
 #include <fstream>
-#include <gsl/gsl>
-#include <span>
 #include <vector>
 
-#include "SDL_image.h"
+#include "abcgException.hpp"
 
-#include "abcg_exception.hpp"
-#include "abcg_external.hpp"
-
-static void flipHorizontally(gsl::not_null<SDL_Surface *> const surface) {
-  auto const width{
-      static_cast<std::size_t>(surface->w * surface->format->BytesPerPixel)};
-  auto const height{static_cast<std::size_t>(surface->h)};
-  std::span const pixels{static_cast<std::byte *>(surface->pixels),
-                         width * height};
-
-  // Row of pixels for the swap
-  std::vector<std::byte> pixelRow(width, std::byte{});
-
-  // For each row
-  for (auto const rowIndex : iter::range(height)) {
-    auto const rowStart{width * rowIndex};
-    auto const rowEnd{rowStart + width - 1};
-    // For each RGB triplet of this row
-    // C++23: for (auto tripletStart : iter::range(0uz, width, 3uz)) {
-    for (auto const tripletStart : iter::range<std::size_t>(0, width, 3)) {
-      pixelRow.at(tripletStart + 0) = pixels[rowEnd - tripletStart - 2];
-      pixelRow.at(tripletStart + 1) = pixels[rowEnd - tripletStart - 1];
-      pixelRow.at(tripletStart + 2) = pixels[rowEnd - tripletStart - 0];
-    }
-    memcpy(pixels.subspan(rowStart).data(), pixelRow.data(), width);
-  }
-}
-
-static void flipVertically(gsl::not_null<SDL_Surface *> const surface) {
-  auto const width{
-      static_cast<std::size_t>(surface->w * surface->format->BytesPerPixel)};
-  auto const height{static_cast<std::size_t>(surface->h)};
-  std::span const pixels{static_cast<std::byte *>(surface->pixels),
-                         width * height};
-
-  // Row of pixels for the swap
-  std::vector<std::byte> pixelRow(width, std::byte{});
-
-  // If height is odd, don't need to swap middle row
-  for (auto const halfHeight{height / 2};
-       auto const rowIndex : iter::range(halfHeight)) {
-    auto const rowStartFromTop{width * rowIndex};
-    auto const rowStartFromBottom{width * (height - rowIndex - 1)};
-    memcpy(pixelRow.data(), pixels.subspan(rowStartFromTop).data(), width);
-    memcpy(pixels.subspan(rowStartFromTop).data(),
-           pixels.subspan(rowStartFromBottom).data(), width);
-    memcpy(pixels.subspan(rowStartFromBottom).data(), pixelRow.data(), width);
-  }
-}
-
-GLuint abcg::opengl::loadTexture(std::string_view path,
-                                 bool const generateMipmaps,
-                                 bool const flipUpsideDown) {
+GLuint abcg::loadOpenGLTexture(std::string_view path,
+                               bool const generateMipmaps,
+                               bool const flipUpsideDown) {
   GLuint textureID{};
 
-  // Copy file data into buffer
-  std::ifstream input(path.data(), std::ios::binary);
-  if (!input) {
-    throw abcg::RunTimeError(
-        fmt::format("Failed to open texture file {}", path));
-  }
-  std::vector<char> buffer((std::istreambuf_iterator<char>(input)),
-                           std::istreambuf_iterator<char>());
-
-  // Load the bitmap
   if (SDL_Surface *const surface{IMG_Load(path.data())}) {
     // Enforce RGB/RGBA
     GLenum format{};
@@ -130,7 +69,7 @@ GLuint abcg::opengl::loadTexture(std::string_view path,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   } else {
-    throw abcg::RunTimeError(
+    throw abcg::RuntimeError(
         fmt::format("Failed to load texture file {}", path));
   }
 
@@ -139,23 +78,14 @@ GLuint abcg::opengl::loadTexture(std::string_view path,
   return textureID;
 }
 
-GLuint abcg::opengl::loadCubemap(std::array<std::string, 6> paths,
-                                 bool const generateMipmaps,
-                                 bool const rightHandedSystem) {
+GLuint abcg::loadOpenGLCubemap(std::array<std::string, 6> paths,
+                               bool const generateMipmaps,
+                               bool const rightHandedSystem) {
   GLuint textureID{};
   glGenTextures(1, &textureID);
   glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
   for (auto &&[index, path] : iter::enumerate(paths)) {
-    // Copy file data into buffer
-    std::ifstream input(path.data(), std::ios::binary);
-    if (!input) {
-      throw abcg::RunTimeError(
-          fmt::format("Failed to open texture file {}", path));
-    }
-    std::vector<char> buffer((std::istreambuf_iterator<char>(input)),
-                             std::istreambuf_iterator<char>());
-
     // Load the bitmap
     if (SDL_Surface *const surface{IMG_Load(path.data())}) {
       // Enforce RGB
@@ -188,7 +118,7 @@ GLuint abcg::opengl::loadCubemap(std::array<std::string, 6> paths,
 
       SDL_FreeSurface(formattedSurface);
     } else {
-      throw abcg::RunTimeError(
+      throw abcg::RuntimeError(
           fmt::format("Failed to load texture file {}", path));
     }
   }

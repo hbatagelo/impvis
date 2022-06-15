@@ -1,6 +1,6 @@
 /**
- * @file abcg_elapsedtimer.cpp
- * @brief Definition of abcg::ElapsedTimer members.
+ * @file abcgTimer.cpp
+ * @brief Definition of abcg::Timer members.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
@@ -8,7 +8,7 @@
  * This project is released under the MIT License.
  */
 
-#include "abcg_elapsedtimer.hpp"
+#include "abcgTimer.hpp"
 
 using namespace std::chrono;
 
@@ -16,9 +16,9 @@ using namespace std::chrono;
  * @brief Returns how much time has elapsed since the timer has started.
  *
  * @return Time, in seconds, since the timer object was created, or since the
- * last call to abcg::ElapsedTimer::restart.
+ * last call to abcg::Timer::restart.
  */
-double abcg::ElapsedTimer::elapsed() const {
+double abcg::Timer::elapsed() const {
   return duration_cast<duration<double>>(steady_clock::now() - start).count();
 }
 
@@ -26,9 +26,9 @@ double abcg::ElapsedTimer::elapsed() const {
  * @brief Restarts the timer and returns the last elapsed time.
  *
  * @return Time, in seconds, since the timer object was created, or since the
- * last call to abcg::ElapsedTimer::restart.
+ * last call to abcg::Timer::restart.
  */
-double abcg::ElapsedTimer::restart() {
+double abcg::Timer::restart() {
   auto const now{steady_clock::now()};
   auto const elapsed{duration_cast<duration<double>>(now - start).count()};
   start = now;

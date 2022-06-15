@@ -1,5 +1,5 @@
 /**
- * @file abcg_exception.hpp
+ * @file abcgException.hpp
  * @brief Header file of abcg::Exception and derived classes.
  *
  * Declaration of abcg::Exception and derived classes.
@@ -17,12 +17,16 @@
 #if defined(__clang__)
 #include <experimental/source_location>
 namespace abcg {
+// @cond Skipped by Doxygen
 using source_location = std::experimental::source_location;
+// @endcond
 } // namespace abcg
 #else
 #include <source_location>
 namespace abcg {
+// @cond Skipped by Doxygen
 using source_location = std::source_location;
+// @endcond
 } // namespace abcg
 #endif
 #endif
@@ -32,10 +36,31 @@ using source_location = std::source_location;
 
 namespace abcg {
 class Exception;
-class RunTimeError;
-class OpenGLError;
+class RuntimeError;
 class SDLError;
 class SDLImageError;
+
+// @cond Skipped by Doxygen
+constexpr inline auto codeBoldRed{"\033[1;31m"};
+constexpr inline auto codeBoldYellow{"\033[1;33m"};
+constexpr inline auto codeBoldBlue{"\033[1;34m"};
+constexpr inline auto codeReset{"\033[0m"};
+
+[[maybe_unused]] [[nodiscard]] inline std::string
+toRedString(std::string_view str) {
+  return std::string{codeBoldRed} + str.data() + std::string{codeReset};
+}
+
+[[maybe_unused]] [[nodiscard]] inline std::string
+toYellowString(std::string_view str) {
+  return std::string{codeBoldYellow} + str.data() + std::string{codeReset};
+}
+
+[[maybe_unused]] [[nodiscard]] inline std::string
+toBlueString(std::string_view str) {
+  return std::string{codeBoldBlue} + str.data() + std::string{codeReset};
+}
+// @endcond
 } // namespace abcg
 
 /**
@@ -68,10 +93,10 @@ private:
  *
  * The explanatory error message is appended with source location information.
  */
-class abcg::RunTimeError : public abcg::Exception {
+class abcg::RuntimeError : public abcg::Exception {
 #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__) && !defined(__APPLE__)
 public:
-  explicit RunTimeError(
+  explicit RuntimeError(
       std::string_view what,
       source_location const &sourceLocation = source_location::current());
 
@@ -80,44 +105,11 @@ private:
   prettyPrint(std::string_view what, source_location const &sourceLocation);
 #else
 public:
-  explicit RunTimeError(std::string_view what);
+  explicit RuntimeError(std::string_view what);
 
 private:
   [[nodiscard]] static std::string prettyPrint(std::string_view what);
 #endif
-};
-
-/**
- * @brief Represents an exception object for OpenGL errors.
- *
- * This is used for throwing exceptions for OpenGL errors that can be checked
- * with `glGetError`.
- *
- * The explanatory error message is appended with source location information,
- * and descriptive messages regarding the GL error codes.
- */
-class abcg::OpenGLError : public abcg::Exception {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__) && !defined(__APPLE__)
-public:
-  explicit OpenGLError(
-      std::string_view what, unsigned int errorCode,
-      source_location const &sourceLocation = source_location::current());
-
-private:
-  [[nodiscard]] static std::string
-  prettyPrint(std::string_view what, unsigned int errorCode,
-              source_location const &sourceLocation);
-#else
-public:
-  explicit OpenGLError(std::string_view what, unsigned int errorCode);
-
-private:
-  [[nodiscard]] static std::string prettyPrint(std::string_view what,
-                                               unsigned int errorCode);
-#endif
-
-  [[nodiscard]] static std::string_view
-  getGLErrorString(unsigned int errorCode);
 };
 
 /**

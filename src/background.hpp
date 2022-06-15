@@ -10,14 +10,14 @@
 #ifndef BACKGROUND_HPP_
 #define BACKGROUND_HPP_
 
-#include "abcg.hpp"
+#include "abcgOpenGL.hpp"
 
 class Background {
 public:
-  void initializeGL();
-  void paintGL(GLuint renderTexture) const;
-  void resizeGL(int width, int height);
-  void terminateGL();
+  void onCreate();
+  void onPaint(GLuint renderTexture) const;
+  void onResize(glm::ivec2 const &size);
+  void onDestroy();
 
 private:
   GLuint m_FBO{};

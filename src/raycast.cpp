@@ -14,12 +14,12 @@
 #include <cppitertools/itertools.hpp>
 #include <fmt/core.h>
 
-#include "abcg_openglfunctions.hpp"
+#include "abcgOpenGLFunction.hpp"
 #include "raycast.hpp"
 #include "settings.hpp"
 #include "util.hpp"
 
-void RayCast::handleEvent(SDL_Event &event) {
+void RayCast::onEvent(SDL_Event const &event) {
   glm::ivec2 mousePosition;
   SDL_GetMouseState(&mousePosition.x, &mousePosition.y);
 
@@ -52,7 +52,7 @@ void RayCast::handleEvent(SDL_Event &event) {
   }
 }
 
-void RayCast::initializeGL(Settings const &settings) {
+void RayCast::onCreate(Settings const &settings) {
   abcg::glGenFramebuffers(1, &m_FBO);
   createProgram(settings);
   createVBOs();
@@ -64,7 +64,7 @@ void RayCast::initializeGL(Settings const &settings) {
   m_lastLookAtDistance = m_lookAtDistance;
 }
 
-void RayCast::paintGL(Settings const &settings, GLuint renderTexture) {
+void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
   if (settings.rebuildProgram) {
     // Disable exception throwing when creating user-defined shader programs to
     // avoid printing the information log to the console.
@@ -87,8 +87,9 @@ void RayCast::paintGL(Settings const &settings, GLuint renderTexture) {
   if (m_programBuildPhase == ProgramBuildPhase::Compile &&
       m_programBuildTime.elapsed() >= buildPhaseTimeout) {
     m_programBuildPhase = ProgramBuildPhase::Done;
-    if (abcg::opengl::checkCompile(m_shaderIDs, m_throwOnBuild)) {
-      m_nextProgram = abcg::opengl::triggerLink(m_shaderIDs, m_throwOnBuild);
+    if (abcg::checkOpenGLShaderCompile(m_shaderIDs, m_throwOnBuild)) {
+      m_nextProgram =
+          abcg::triggerOpenGLShaderLink(m_shaderIDs, m_throwOnBuild);
       if (m_nextProgram != 0) {
         m_programBuildTime.restart();
         m_programBuildPhase = ProgramBuildPhase::Link;
@@ -98,7 +99,7 @@ void RayCast::paintGL(Settings const &settings, GLuint renderTexture) {
 
   if (m_programBuildPhase == ProgramBuildPhase::Link &&
       m_programBuildTime.elapsed() >= buildPhaseTimeout) {
-    if (abcg::opengl::checkLink(m_nextProgram, m_throwOnBuild)) {
+    if (abcg::checkOpenGLShaderLink(m_nextProgram, m_throwOnBuild)) {
       // Replace with new program
       abcg::glDeleteProgram(m_program);
       m_program = m_nextProgram;
@@ -185,17 +186,17 @@ void RayCast::paintGL(Settings const &settings, GLuint renderTexture) {
   }
 }
 
-void RayCast::resizeGL(int width, int height) {
-  auto const aspectRatio{static_cast<float>(width) /
-                         static_cast<float>(height)};
+void RayCast::onResize(glm::ivec2 const &size) {
+  auto const aspectRatio{static_cast<float>(size.x) /
+                         static_cast<float>(size.y)};
   m_camera.scale = aspectRatio > 1.0f ? glm::vec2(aspectRatio, 1.0f)
                                       : glm::vec2(1.0f, 1.0f / aspectRatio);
 
-  m_trackBallCamera.resizeViewport({width, height});
-  m_trackBallLight.resizeViewport({width, height});
+  m_trackBallCamera.resizeViewport(size);
+  m_trackBallLight.resizeViewport(size);
 }
 
-void RayCast::terminateGL() {
+void RayCast::onDestroy() {
   abcg::glDeleteVertexArrays(1, &m_VAO);
   abcg::glDeleteBuffers(1, &m_VBO);
   abcg::glDeleteBuffers(1, &m_UBOParams);
@@ -230,7 +231,7 @@ void RayCast::createUBOs() {
     // Connect the binding point to the block index of the buffer
     auto const index{abcg::glGetUniformBlockIndex(m_program, uniformBlockName)};
     if (index == GL_INVALID_INDEX) {
-      throw abcg::RunTimeError(fmt::format(
+      throw abcg::RuntimeError(fmt::format(
           "\"{}\" does not identify an active uniform block of program",
           uniformBlockName));
     }
@@ -273,16 +274,18 @@ void RayCast::createProgram(Settings const &settings) {
       shaderSource << stream.rdbuf();
       stream.close();
     } else {
-      throw abcg::RunTimeError(
+      throw abcg::RuntimeError(
           fmt::format("Failed to read shader file {}", filename));
     }
     return shaderSource.str();
   }};
 
   static auto const &assetsPath{abcg::Application::getAssetsPath()};
-  abcg::Shaders sources{};
-  sources.vertexShader = readFile(assetsPath + m_vertexShaderPath);
-  sources.fragmentShader = readFile(assetsPath + m_fragmentShaderPath);
+  std::vector<abcg::ShaderSource> sources{
+      {.source = readFile(assetsPath + m_vertexShaderPath),
+       .stage = abcg::ShaderStage::Vertex},
+      {.source = readFile(assetsPath + m_fragmentShaderPath),
+       .stage = abcg::ShaderStage::Fragment}};
 
   // Replace placeholders
   std::string definitions{};
@@ -314,12 +317,13 @@ void RayCast::createProgram(Settings const &settings) {
   definitions += "#define RAY_MARCH_STEPS " +
                  std::to_string(settings.renderSettings.rayMarchSteps) + '\n';
 
-  replaceAll(sources.fragmentShader, "@DEFINITIONS@", definitions);
+  auto &fragmentShader{sources.at(1)};
+  replaceAll(fragmentShader.source, "@DEFINITIONS@", definitions);
 
-  replaceAll(sources.fragmentShader, "@ISOVALUE@",
+  replaceAll(fragmentShader.source, "@ISOVALUE@",
              std::to_string(settings.isoValue));
 
-  replaceAll(sources.fragmentShader, "@BOUND_RADIUS@",
+  replaceAll(fragmentShader.source, "@BOUND_RADIUS@",
              std::to_string(settings.renderSettings.boundRadius));
 
   auto const &loadedData{settings.equation.getLoadedData()};
@@ -339,17 +343,17 @@ void RayCast::createProgram(Settings const &settings) {
                fmt::format("uParams.data[{}].{}", vecIndex, var).c_str(), true);
   }
 
-  replaceAll(sources.fragmentShader, "@CODE_LOCAL@", codeLocal);
-  replaceAll(sources.fragmentShader, "@CODE_GLOBAL@", codeGlobal);
-  replaceAll(sources.fragmentShader, "@EQUATION@", equation);
+  replaceAll(fragmentShader.source, "@CODE_LOCAL@", codeLocal);
+  replaceAll(fragmentShader.source, "@CODE_GLOBAL@", codeGlobal);
+  replaceAll(fragmentShader.source, "@EQUATION@", equation);
 
   // Interrupted during building?
   if (m_programBuildPhase != ProgramBuildPhase::Done) {
     // Delete shaders
     for (auto const &shaderID : m_shaderIDs) {
-      if (shaderID == 0)
+      if (shaderID.shader == 0)
         continue;
-      abcg::glDeleteShader(shaderID);
+      abcg::glDeleteShader(shaderID.shader);
     }
   }
   // Interrupted during linking?
@@ -358,7 +362,7 @@ void RayCast::createProgram(Settings const &settings) {
   }
 
   m_programBuildTime.restart();
-  m_shaderIDs = abcg::opengl::triggerCompile(sources);
+  m_shaderIDs = abcg::triggerOpenGLShaderCompile(sources);
   m_programBuildPhase = ProgramBuildPhase::Compile;
 }
 
@@ -380,7 +384,7 @@ void RayCast::setupVAO() {
                                   GL_FALSE, sizeof(Vertex),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
-      throw abcg::RunTimeError(fmt::format("Failed to find attribute {} in {}",
+      throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
                                            name, m_vertexShaderPath));
     }
   }};

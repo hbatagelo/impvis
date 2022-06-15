@@ -9,10 +9,10 @@
 
 #include <fmt/core.h>
 
-#include "abcg_application.hpp"
+#include "abcgApplication.hpp"
 #include "background.hpp"
 
-void Background::initializeGL() {
+void Background::onCreate() {
   // Create FBO
   abcg::glGenFramebuffers(1, &m_FBO);
 
@@ -20,8 +20,11 @@ void Background::initializeGL() {
   auto const *vertexShaderPath{"shaders/radialgradient.vert"};
   auto const *fragmentShaderPath{"shaders/radialgradient.frag"};
   auto const &assetsPath{abcg::Application::getAssetsPath()};
-  m_program = abcg::opengl::createProgram(
-      {assetsPath + vertexShaderPath, assetsPath + fragmentShaderPath});
+  m_program =
+      abcg::createOpenGLProgram({{.source = assetsPath + vertexShaderPath,
+                                  .stage = abcg::ShaderStage::Vertex},
+                                 {.source = assetsPath + fragmentShaderPath,
+                                  .stage = abcg::ShaderStage::Fragment}});
 
   // Create VBO
   abcg::glGenBuffers(1, &m_VBO);
@@ -50,7 +53,7 @@ void Background::initializeGL() {
                                   GL_FALSE, sizeof(Vertex),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
-      throw abcg::RunTimeError(fmt::format("Failed to find attribute {} in {}",
+      throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
                                            name, vertexShaderPath));
     }
   }};
@@ -65,7 +68,7 @@ void Background::initializeGL() {
   m_resolutionLocation = abcg::glGetUniformLocation(m_program, "uResolution");
 }
 
-void Background::paintGL(GLuint renderTexture) const {
+void Background::onPaint(GLuint renderTexture) const {
   if (renderTexture > 0) {
     abcg::glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
     abcg::glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
@@ -91,11 +94,9 @@ void Background::paintGL(GLuint renderTexture) const {
   }
 }
 
-void Background::resizeGL(int width, int height) {
-  m_resolution = {width, height};
-}
+void Background::onResize(glm::ivec2 const &size) { m_resolution = size; }
 
-void Background::terminateGL() {
+void Background::onDestroy() {
   abcg::glDeleteVertexArrays(1, &m_VAO);
   abcg::glDeleteBuffers(1, &m_VBO);
   abcg::glDeleteProgram(m_program);

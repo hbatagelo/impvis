@@ -1,5 +1,5 @@
 /**
- * @file abcg_application.hpp
+ * @file abcgApplication.hpp
  * @brief Header file of abcg::Application.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
@@ -13,12 +13,16 @@
 
 #include <string>
 
+#define ABCG_VERSION_MAJOR 3
+#define ABCG_VERSION_MINOR 0
+#define ABCG_VERSION_PATCH 0
+
 /**
  * @brief Root namespace.
  */
 namespace abcg {
 class Application;
-class OpenGLWindow;
+class Window;
 #if defined(__EMSCRIPTEN__)
 void mainLoopCallback(void *userData);
 #endif
@@ -34,21 +38,22 @@ class abcg::Application {
 public:
   Application(int argc, char **argv);
 
-  void run(OpenGLWindow &window);
+  void run(Window &window);
 
   /**
    * @brief Returns the path to the application's assets directory, relative to
-   * the directory the executable is launched in.
+   * the directory the executable is launched from.
    *
    * @return Path to the application's `assets` directory, relative to the
-   * directory the executable is launched. For example, the assets path is
-   * `./app/assets/` if the application is located in `./app` and is launched
-   * from its parent directory. The assets path is `./assets/` if the
-   * application is launched from the same directory of the executable.
+   * location from which the application was launched. For example, the assets
+   * path will be `./app/assets/` if the application is located in `./app` and
+   * is launched from its parent directory. The assets path will be `./assets/`
+   * if the application is launched from the same directory of the executable.
    *
-   * @remark The assets path is appended with the base path (see
-   * abcg::Application::getBasePath).
-   * @remark The assetss path always ends with a forward slash.
+   * @remark The assets path is appended with the base path and ends with a
+   * forward slash.
+   *
+   * @sa abcg::Application::getBasePath
    */
   [[nodiscard]] static std::string const &getAssetsPath() {
     return m_assetsPath;
@@ -60,18 +65,18 @@ public:
    *
    * @return Path to the directory that contains the application executable,
    * relative to the directory the executable is launched. For example, the base
-   * path is `./app` if the executable is located in `./app` and is called from
-   * the parent directory. The base path is `.` if the application is launched
-   * from the same directory of the executable.
+   * path will be `./app` if the executable is located in `./app` and is called
+   * from the parent directory. The base path will be `.` if the application is
+   * launched from the same directory of the executable.
    *
-   * @remark The returned path does not ends with a slash.
+   * @remark The returned path does not end with a slash.
    */
   [[nodiscard]] static std::string const &getBasePath() { return m_basePath; }
 
 private:
   void mainLoopIterator(bool &done) const;
 
-  OpenGLWindow *m_window{};
+  Window *m_window{};
 
 #if defined(__EMSCRIPTEN__)
   friend void mainLoopCallback(void *userData);
@@ -79,8 +84,8 @@ private:
 
   // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
   // See https://bugs.llvm.org/show_bug.cgi?id=48040
-  static std::string m_assetsPath;
-  static std::string m_basePath;
+  static inline std::string m_assetsPath{};
+  static inline std::string m_basePath{};
   // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 };
 

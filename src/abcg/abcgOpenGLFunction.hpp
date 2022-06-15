@@ -1,5 +1,5 @@
 /**
- * @file abcg_openglfunctions.hpp
+ * @file abcgOpenGLFunction.hpp
  * @brief Declaration of OpenGL-related error checking functions.
  *
  * Error checking wrappers for OpenGL functions are defined here as inline
@@ -11,8 +11,8 @@
  * This project is released under the MIT License.
  */
 
-#ifndef ABCG_OPENGLFUNCTIONS_HPP_
-#define ABCG_OPENGLFUNCTIONS_HPP_
+#ifndef ABCG_OPENGL_FUNCTION_HPP_
+#define ABCG_OPENGL_FUNCTION_HPP_
 
 #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__) && !defined(__APPLE__)
 #if __clang__
@@ -31,7 +31,7 @@ using source_location = std::source_location;
 #include <string_view>
 #include <type_traits>
 
-#include "abcg_external.hpp"
+#include "abcgOpenGLExternal.hpp"
 
 #if defined(_MSC_VER)
 // Disable "unreachable code" warnings for the case callGl is not specialized

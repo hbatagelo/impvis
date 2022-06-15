@@ -1,5 +1,5 @@
 /**
- * @file abcg_trackball.cpp
+ * @file abcgTrackball.cpp
  * @brief Definition of abcg::TrackBall members.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
@@ -8,10 +8,9 @@
  * This project is released under the MIT License.
  */
 
-#include "abcg_trackball.hpp"
+#include "abcgTrackball.hpp"
 
 #include <algorithm>
-#include <glm/gtc/epsilon.hpp>
 #include <limits>
 
 constexpr static auto epsilon{std::numeric_limits<float>::epsilon()};

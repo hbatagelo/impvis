@@ -1,5 +1,5 @@
 /**
- * @file abcg_trackball.hpp
+ * @file abcgTrackball.hpp
  * @brief Header file of abcg::TrackBall.
  *
  * Declaration of abcg::TrackBall class.
@@ -13,10 +13,8 @@
 #ifndef ABCG_TRACKBALL_HPP_
 #define ABCG_TRACKBALL_HPP_
 
-#include <glm/ext/vector_int2.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-#include "abcg_elapsedtimer.hpp"
+#include "abcgExternal.hpp"
+#include "abcgTimer.hpp"
 
 namespace abcg {
 class TrackBall;
@@ -63,7 +61,7 @@ private:
   float m_durationSinceLastEvent{};
 
   glm::vec3 m_lastPosition{};
-  ElapsedTimer m_lastTime;
+  Timer m_lastTime;
   bool m_mouseTracking{};
 
   glm::ivec2 m_viewportSize{0};

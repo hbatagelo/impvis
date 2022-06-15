@@ -13,9 +13,8 @@
 #include <imgui.h>
 #include <memory>
 
-#include "abcg_application.hpp"
+#include "abcgOpenGL.hpp"
 
-#include "abcg_openglfunctions.hpp"
 #include "equation.hpp"
 #include "imgui_internal.h"
 #include "settings.hpp"
@@ -62,17 +61,17 @@ EMSCRIPTEN_BINDINGS(module) {
 }
 #endif
 
-void Window::handleEvent(SDL_Event &event) {
+void Window::onEvent(SDL_Event const &event) {
   if (!m_settings.drawUI) {
     if (event.type == SDL_KEYUP) {
       m_settings.drawUI = true;
     }
   }
 
-  m_rayCast.handleEvent(event);
+  m_rayCast.onEvent(event);
 }
 
-void Window::initializeGL() {
+void Window::onCreate() {
   auto const assetsPath{abcg::Application::getAssetsPath()};
 
   // Load equations from a catalogue file
@@ -96,7 +95,7 @@ void Window::initializeGL() {
 
   for (auto &equationGroup : m_equationGroups) {
     for (auto &equation : equationGroup.equations) {
-      equation.initializeGL();
+      equation.onCreate();
     }
   }
 
@@ -117,12 +116,12 @@ void Window::initializeGL() {
                  m_settings.overlayMathJaxComment ? loadedData.comment : "");
 #endif
 
-  m_background.initializeGL();
-  m_textureBlit.initializeGL();
-  m_rayCast.initializeGL(m_settings);
+  m_background.onCreate();
+  m_textureBlit.onCreate();
+  m_rayCast.onCreate(m_settings);
 
   for (auto const &index : iter::range(m_buttonTexture.size())) {
-    m_buttonTexture.at(index) = abcg::opengl::loadTexture(
+    m_buttonTexture.at(index) = abcg::loadOpenGLTexture(
         assetsPath + fmt::format("textures/top_button{}.png", index), false,
         false);
   }
@@ -144,7 +143,7 @@ void Window::initializeGL() {
   if (m_proportionalFont = guiIO.Fonts->AddFontFromFileTTF(
           (assetsPath + proportionalFontFile).c_str(), fontSize, &fontConfig);
       m_proportionalFont == nullptr) {
-    throw abcg::RunTimeError(
+    throw abcg::RuntimeError(
         fmt::format("Failed to load {}", proportionalFontFile));
   }
 
@@ -152,21 +151,21 @@ void Window::initializeGL() {
   if (m_monospacedFont = guiIO.Fonts->AddFontFromFileTTF(
           (assetsPath + monospacedFontFile).c_str(), fontSize, &fontConfig);
       m_monospacedFont == nullptr) {
-    throw abcg::RunTimeError(
+    throw abcg::RuntimeError(
         fmt::format("Failed to load {}", monospacedFontFile));
   }
 }
 
-void Window::paintGL() {
+void Window::onPaint() {
   abcg::glViewport(0, 0, static_cast<GLsizei>(m_settings.viewportSize.x),
                    static_cast<GLsizei>(m_settings.viewportSize.y));
 
   if (m_settings.drawBackground) {
     if (m_settings.redrawBackgroundRenderTex) {
-      m_background.paintGL(m_backgroundRenderTex);
+      m_background.onPaint(m_backgroundRenderTex);
       m_settings.redrawBackgroundRenderTex = false;
     }
-    m_textureBlit.draw(m_backgroundRenderTex);
+    m_textureBlit.onPaint(m_backgroundRenderTex);
   }
 
   // Override settings?
@@ -203,12 +202,12 @@ void Window::paintGL() {
   if (m_settings.drawBackground && !m_settings.takeScreenshot) {
     static auto const KaIaRed{glm::vec4{0.12f, 0.12f, 0.25f, 1.0f}};
     m_rayCast.setKaIa(KaIaRed);
-    m_rayCast.paintGL(m_settings, m_implicitSurfaceRenderTex);
+    m_rayCast.onPaint(m_settings, m_implicitSurfaceRenderTex);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    m_textureBlit.draw(m_implicitSurfaceRenderTex);
+    m_textureBlit.onPaint(m_implicitSurfaceRenderTex);
 
     glDisable(GL_BLEND);
   } else {
@@ -218,7 +217,7 @@ void Window::paintGL() {
 
     static auto const KaIaBlue{glm::vec4{0.075f, 0.04f, 0.04f, 1.0f}};
     m_rayCast.setKaIa(KaIaBlue);
-    m_rayCast.paintGL(m_settings);
+    m_rayCast.onPaint(m_settings);
 
     glDisable(GL_BLEND);
     abcg::glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -233,8 +232,8 @@ void Window::paintGL() {
   lastSettings = m_settings;
 }
 
-void Window::paintUI() {
-  abcg::OpenGLWindow::paintUI();
+void Window::onPaintUI() {
+  abcg::OpenGLWindow::onPaintUI();
 
   // Disable UI when taking screenshots
   if (m_settings.takeScreenshot || !m_settings.drawUI)
@@ -692,6 +691,8 @@ void Window::paintSettingsTab() {
   if (ImGui::Button("Hide UI windows", ImVec2(-1, 0))) {
     m_settings.drawUI = false;
   }
+  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown())
+    ImGui::SetTooltip("Press any key\nto unhide");
 }
 
 void Window::paintGeometryComboBox() {
@@ -878,23 +879,21 @@ void Window::paintEquationEditor() {
   ImGui::Text("Equation:");
   auto const eqIsovalue{fmt::format("= {:.3g}", m_settings.isoValue)};
   auto const eqIsoValueSize{ImGui::CalcTextSize(eqIsovalue.c_str())};
-  std::array<char, maxTextSize + 1> text{};
-  auto const &expr{loadedData.expression};
-#if defined(_MSC_VER)
-  strncpy_s(text.data(), text.size(), expr.c_str(),
-            std::min(maxTextSize, expr.length()));
-#else
-  strncpy(text.data(), expr.c_str(), std::min(maxTextSize, expr.length()));
-#endif
+
+  // Multiline text is prefilled with zeros to indicate its maximum size
+  std::string multilineText(maxTextSize + 1, '\0');
+  loadedData.expression.copy(
+      multilineText.data(),
+      std::min(maxTextSize, loadedData.expression.length()));
 
   ImGui::PushFont(m_monospacedFont);
   ImGui::InputTextMultiline(
-      "##eqn_edit", text.data(), text.size(),
+      "##eqn_edit", multilineText.data(), multilineText.size(),
       ImVec2(windowSize.x - (eqIsoValueSize.x + 25), inputTextHeight * 2 + 4),
       ImGuiInputTextFlags_AllowTabInput);
   ImGui::PopFont();
 
-  newExpression.assign(text.data(), maxTextSize);
+  newExpression.assign(multilineText.data(), maxTextSize);
   newExpression.resize(newExpression.find('\0'));
   ImGui::SameLine();
   ImGui::AlignTextToFramePadding();
@@ -1033,8 +1032,8 @@ void Window::paintParserDebugInfo() {
   ImGui::End();
 }
 
-void Window::resizeGL(int width, int height) {
-  m_settings.viewportSize = {width, height};
+void Window::onResize(glm::ivec2 const &size) {
+  m_settings.viewportSize = size;
 
   m_settings.updateEquationEditorLayout = true;
   m_settings.updateLogWindowLayout = true;
@@ -1047,8 +1046,8 @@ void Window::resizeGL(int width, int height) {
   }
 
   // Initialize textures with an array of zeros to prevent WebGL warnings
-  auto size{static_cast<unsigned long>(width * height * 4)};
-  auto zeroBuffer{std::vector<std::byte>(size, std::byte{})};
+  auto zeroBufferSize{static_cast<unsigned long>(size.x * size.y * 4)};
+  auto zeroBuffer{std::vector<std::byte>(zeroBufferSize, std::byte{})};
 
   abcg::glGenTextures(1, &m_backgroundRenderTex);
   abcg::glBindTexture(GL_TEXTURE_2D, m_backgroundRenderTex);
@@ -1056,7 +1055,7 @@ void Window::resizeGL(int width, int height) {
   abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+  abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, zeroBuffer.data());
   abcg::glBindTexture(GL_TEXTURE_2D, 0);
   m_settings.redrawBackgroundRenderTex = true;
@@ -1067,28 +1066,28 @@ void Window::resizeGL(int width, int height) {
   abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+  abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, zeroBuffer.data());
   abcg::glBindTexture(GL_TEXTURE_2D, 0);
 
-  m_background.resizeGL(width, height);
-  m_textureBlit.resizeGL(width, height);
-  m_rayCast.resizeGL(width, height);
+  m_background.onResize(size);
+  m_textureBlit.onResize(size);
+  m_rayCast.onResize(size);
 }
 
-void Window::terminateGL() {
+void Window::onDestroy() {
   for (auto &buttonTexture : m_buttonTexture) {
     abcg::glDeleteTextures(1, &buttonTexture);
   }
   abcg::glDeleteTextures(1, &m_backgroundRenderTex);
   abcg::glDeleteTextures(1, &m_implicitSurfaceRenderTex);
-  m_rayCast.terminateGL();
-  m_textureBlit.terminateGL();
-  m_background.terminateGL();
+  m_rayCast.onDestroy();
+  m_textureBlit.onDestroy();
+  m_background.onDestroy();
 
   for (auto &equationGroup : m_equationGroups) {
     for (auto &equation : equationGroup.equations) {
-      equation.terminateGL();
+      equation.onDestroy();
     }
   }
 }

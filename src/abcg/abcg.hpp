@@ -13,10 +13,11 @@
 #ifndef ABCG_HPP_
 #define ABCG_HPP_
 
-#include "abcg_application.hpp"
-#include "abcg_exception.hpp"
-#include "abcg_image.hpp"
-#include "abcg_openglwindow.hpp"
-#include "abcg_trackball.hpp"
+#include "abcgApplication.hpp"
+#include "abcgException.hpp"
+#include "abcgExternal.hpp"
+#include "abcgTrackball.hpp"
+#include "abcgUtil.hpp"
+#include "abcgWindow.hpp"
 
 #endif

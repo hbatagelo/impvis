@@ -1,16 +1,17 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.21)
 
 project(imgui)
 
-add_library(
-  ${PROJECT_NAME}
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  imgui_impl_sdl.cpp
-  imgui_impl_opengl3.cpp)
+set(IMGUI_FILES
+    imgui.cpp
+    imgui_demo.cpp
+    imgui_draw.cpp
+    imgui_tables.cpp
+    imgui_widgets.cpp
+    imgui_impl_sdl.cpp
+    imgui_impl_opengl3.cpp)
+
+add_library(${PROJECT_NAME} ${IMGUI_FILES})
 
 target_include_directories(
   ${PROJECT_NAME}

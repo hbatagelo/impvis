@@ -1,5 +1,5 @@
 /**
- * @file abcg_openglfunctions.cpp
+ * @file abcgOpenGLFunction.cpp
  * @brief Definition of OpenGL-related error checking functions.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
@@ -8,15 +8,15 @@
  * This project is released under the MIT License.
  */
 
-#include "abcg_openglfunctions.hpp"
-
-#include "abcg_exception.hpp"
+#include "abcgOpenGLFunction.hpp"
+#include "abcgOpenGLError.hpp"
 
 #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__) && !defined(__APPLE__)
 /**
  * @brief Checks OpenGL error status and throws on error with a log message.
  *
- * @param sourceLocation Information about the source code, used for logging.
+ * @param sourceLocation Information about the source code, to be used for
+ * logging.
  * @param appendString A string to be appended to "OpenGL error " in the
  * exception explanatory string.
  *

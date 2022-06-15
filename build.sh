@@ -8,7 +8,7 @@ rm -rf build
 mkdir -p build && cd build
 
 # Configure
-cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" ..
 
 # Build
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -17,4 +17,4 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
   NUM_PROCESSORS="$(nproc)"
 fi
-cmake --build . --config $BUILD_TYPE -- -j $NUM_PROCESSORS
+cmake --build . --config "$BUILD_TYPE" -- -j "$NUM_PROCESSORS"

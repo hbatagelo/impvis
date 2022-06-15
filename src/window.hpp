@@ -10,7 +10,6 @@
 #ifndef WINDOW_HPP_
 #define WINDOW_HPP_
 
-#include "abcg.hpp"
 #include "background.hpp"
 #include "equation.hpp"
 #include "raycast.hpp"
@@ -22,12 +21,12 @@
 
 class Window : public abcg::OpenGLWindow {
 protected:
-  void handleEvent(SDL_Event &event) override;
-  void initializeGL() override;
-  void paintGL() override;
-  void paintUI() override;
-  void resizeGL(int width, int height) override;
-  void terminateGL() override;
+  void onEvent(SDL_Event const &event) override;
+  void onCreate() override;
+  void onPaint() override;
+  void onPaintUI() override;
+  void onResize(glm::ivec2 const &size) override;
+  void onDestroy() override;
 
 private:
   struct EquationGroup {

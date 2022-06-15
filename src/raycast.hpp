@@ -10,16 +10,15 @@
 #ifndef RAYCAST_HPP_
 #define RAYCAST_HPP_
 
-#include "abcg.hpp"
 #include "settings.hpp"
 
 class RayCast {
 public:
-  void handleEvent(SDL_Event &event);
-  void initializeGL(Settings const &settings);
-  void paintGL(Settings const &settings, GLuint renderTexture = 0);
-  void resizeGL(int width, int height);
-  void terminateGL();
+  void onEvent(SDL_Event const &event);
+  void onCreate(Settings const &settings);
+  void onPaint(Settings const &settings, GLuint renderTexture = 0);
+  void onResize(glm::ivec2 const &size);
+  void onDestroy();
 
   [[nodiscard]] bool isProgramValid() const noexcept { return m_program > 0; }
   void setLookAtDistance(float distance) noexcept {
@@ -38,31 +37,30 @@ private:
     glm::vec2 position{};
   };
 
-  struct alignas(16) Camera {
+  struct Camera {
     glm::vec3 eye{0.0f};
     float focalLength{4.0f};
-    glm::vec2 scale{1.0f};
-    float lookAtDistance{0.0f};
 
-    std::array<unsigned char, 4> padding{};
+    glm::vec2 scale{1.0f};
+    alignas(8) float lookAtDistance{0.0f};
   };
 
-  struct alignas(16) Shading {
+  struct Shading {
     glm::vec4 KaIa{0.1f, 0.1f, 0.25f, 1.0f};
     glm::vec4 KdId{0.9f, 0.2f, 0.01f, 1.0f};
     glm::vec4 KsIs{1.0f};
+
     glm::vec3 lightVector{1.0f};
     float shininess{100.0f};
-    float gaussianEps{0.75f};
 
-    std::array<unsigned char, 12> padding{};
+    alignas(16) float gaussianEps{0.75f};
   };
 
-  struct alignas(16) Transform {
+  struct Transform {
     glm::mat4 MV_I{1.0f};
   };
 
-  struct alignas(16) Params {
+  struct Params {
     std::array<glm::vec4, 4> data;
   };
 
@@ -88,8 +86,8 @@ private:
 
   enum class ProgramBuildPhase { Compile, Link, Done };
   ProgramBuildPhase m_programBuildPhase{ProgramBuildPhase::Done};
-  abcg::ElapsedTimer m_programBuildTime;
-  std::vector<GLuint> m_shaderIDs{};
+  abcg::Timer m_programBuildTime;
+  std::vector<abcg::OpenGLShader> m_shaderIDs{};
   GLuint m_nextProgram{};
   bool m_throwOnBuild{};
 

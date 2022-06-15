@@ -1,5 +1,5 @@
 /**
- * @file abcg_external.hpp
+ * @file abcgExternal.hpp
  * @brief Header file for including third-party dependencies.
  *
  * Preprocessor definitions and includes of third-party dependencies.
@@ -13,27 +13,20 @@
 #ifndef ABCG_EXTERNAL_HPP_
 #define ABCG_EXTERNAL_HPP_
 
-// \cond (skipped by Doxygen)
+// @cond Skipped by Doxygen
 
 #define GLM_ENABLE_EXPERIMENTAL
 
-#if !defined(__EMSCRIPTEN__)
-#if !defined(GLEW_STATIC)
-#define GLEW_STATIC
-#endif
-#include <GL/glew.h>
-#endif
-
 #include <SDL.h>
+#include <cppitertools/itertools.hpp>
+#include <fmt/core.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtx/hash.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <gsl/gsl>
+#include <imgui.h>
 
-#if defined(__EMSCRIPTEN__)
-#include <GLES3/gl3.h>
-
-#include "SDL_opengles2.h"
-#include "emscripten.h"
-#include "emscripten/html5.h"
-#endif
-
-// \endcond
+// @endcond
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * @file abcg_application.cpp
+ * @file abcgApplication.cpp
  * @brief Definition of abcg::Application members.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
@@ -8,24 +8,18 @@
  * This project is released under the MIT License.
  */
 
-#include "abcg_application.hpp"
+#include "abcgApplication.hpp"
 
+#include <SDL_thread.h>
 #include <span>
 
 #include "SDL_image.h"
-#include "abcg_exception.hpp"
-#include "abcg_openglwindow.hpp"
+#include "abcgException.hpp"
+#include "abcgWindow.hpp"
 
-// \cond (skipped by Doxygen)
-#define TINYOBJLOADER_IMPLEMENTATION
-// \endcond
-#include "tiny_obj_loader.h"
-
-// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
-// See https://bugs.llvm.org/show_bug.cgi?id=48040
-std::string abcg::Application::m_assetsPath = std::string{};
-std::string abcg::Application::m_basePath = std::string{};
-// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
+#if defined(__EMSCRIPTEN__)
+#include "abcgOpenGLExternal.hpp"
+#endif
 
 #if defined(__EMSCRIPTEN__)
 void abcg::mainLoopCallback(void *userData) {
@@ -40,8 +34,8 @@ void abcg::mainLoopCallback(void *userData) {
  *
  * @param argc Number of arguments passed to the program from the environment in
  * which the program is run.
- * @param argv Pointer to the first element of an array of `argc+1` pointers, of
- * which the last one is null and the previous ones, if any, point to
+ * @param argv Pointer to the first element of an array of @a argc + 1 pointers,
+ * of which the last one is nullptr and the previous ones, if any, point to
  * null-terminated multibyte strings that represent the arguments passed to the
  * program from the execution environment.
  */
@@ -64,25 +58,25 @@ abcg::Application::Application([[maybe_unused]] int argc, char **argv) {
 }
 
 /**
- * @brief Runs the application for the given OpenGL window.
+ * @brief Runs the application for the given window.
  *
- * Initializes the SDL library and its subsystems, initializes the OpenGL window
- * and runs the event loop.
+ * Initializes the SDL library and its subsystems, initializes the window and
+ * runs the event loop.
  *
- * @param window L-value reference to the OpenGL window object.
+ * @param window L-value reference to the window object.
  *
  * @throw abcg::SDLError if `SDL_Init` failed.
  * @throw abcg::SDLImageError if `IMG_Init` failed.
  */
-void abcg::Application::run(OpenGLWindow &window) {
-  if (constexpr Uint32 subsystemMask{SDL_INIT_VIDEO};
+void abcg::Application::run(Window &window) {
+  if (Uint32 const subsystemMask{SDL_INIT_VIDEO};
       SDL_Init(subsystemMask) != 0) {
     throw abcg::SDLError("SDL_Init failed");
   }
 
 #if !defined(__EMSCRIPTEN__)
   // Load support for PNG image format
-  constexpr auto imageFlags{IMG_INIT_PNG};
+  auto const imageFlags{IMG_INIT_PNG};
   if (auto const initialized{IMG_Init(imageFlags)};
       (initialized & imageFlags) != imageFlags) {
     throw abcg::SDLImageError("IMG_Init failed");
@@ -90,7 +84,7 @@ void abcg::Application::run(OpenGLWindow &window) {
 #endif
 
   m_window = &window;
-  m_window->initialize();
+  m_window->templateCreate();
 
 #if defined(__EMSCRIPTEN__)
   emscripten_set_main_loop_arg(mainLoopCallback, this, 0, true);
@@ -101,8 +95,7 @@ void abcg::Application::run(OpenGLWindow &window) {
   };
 #endif
 
-  m_window->terminateGL();
-  m_window->cleanup();
+  m_window->templateDestroy();
 
 #if !defined(__EMSCRIPTEN__)
   IMG_Quit();
@@ -117,7 +110,7 @@ void abcg::Application::mainLoopIterator([[maybe_unused]] bool &done) const {
     if (event.type == SDL_QUIT)
       done = true;
 #endif
-    m_window->handleEvent(event, done);
+    m_window->templateHandleEvent(event, done);
   }
-  m_window->paint();
+  m_window->templatePaint();
 }

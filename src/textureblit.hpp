@@ -10,14 +10,14 @@
 #ifndef TEXTUREBLIT_HPP_
 #define TEXTUREBLIT_HPP_
 
-#include "abcg.hpp"
+#include "abcgOpenGL.hpp"
 
 class TextureBlit {
 public:
-  void initializeGL();
-  void draw(GLuint texture) const;
-  void resizeGL(int width, int height);
-  void terminateGL();
+  void onCreate();
+  void onPaint(GLuint texture) const;
+  void onResize(glm::ivec2 const &size);
+  void onDestroy();
 
 private:
   GLuint m_VAO{};

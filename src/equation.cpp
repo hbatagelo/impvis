@@ -230,15 +230,15 @@ bool Equation::setParameter(std::string_view name, float value) {
   return false;
 }
 
-void Equation::initializeGL() {
+void Equation::onCreate() {
   auto const path{abcg::Application::getAssetsPath()};
   if (!m_loadedData.thumbnail.empty()) {
     m_thumbnailId =
-        abcg::opengl::loadTexture(path + m_loadedData.thumbnail, false, false);
+        abcg::loadOpenGLTexture(path + m_loadedData.thumbnail, false, false);
   }
 }
 
-void Equation::terminateGL() { abcg::glDeleteTextures(1, &m_thumbnailId); }
+void Equation::onDestroy() { abcg::glDeleteTextures(1, &m_thumbnailId); }
 
 // Get all names from the given expression.
 // A name is a string that starts with '_' or an alphabet letter, and is
@@ -664,7 +664,7 @@ std::vector<Equation> Equation::loadCatalogue(std::string_view filename) {
     sstream << stream.rdbuf();
     stream.close();
   } else {
-    throw abcg::RunTimeError(fmt::format("Failed to load {}", filename));
+    throw abcg::RuntimeError(fmt::format("Failed to load {}", filename));
   }
 
   auto trimLeftWhitespaces{[](std::string str) {

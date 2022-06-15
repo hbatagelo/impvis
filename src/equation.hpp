@@ -10,7 +10,7 @@
 #ifndef EQUATION_HPP_
 #define EQUATION_HPP_
 
-#include "abcg.hpp"
+#include "abcgOpenGL.hpp"
 
 #include <algorithm>
 #include <string>
@@ -43,8 +43,8 @@ public:
   Equation() = default;
   explicit Equation(LoadedData data);
 
-  void initializeGL();
-  void terminateGL();
+  void onCreate();
+  void onDestroy();
 
   [[nodiscard]] LoadedData const &getLoadedData() const { return m_loadedData; }
   [[nodiscard]] std::string getGLSLExpression() const { return m_exprGLSL; };

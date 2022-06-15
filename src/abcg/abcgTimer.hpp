@@ -1,6 +1,6 @@
 /**
- * @file abcg_elapsedtimer.hpp
- * @brief Header file of abcg::ElapsedTimer.
+ * @file abcgTimer.hpp
+ * @brief Header file of abcg::Timer.
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
@@ -8,22 +8,20 @@
  * This project is released under the MIT License.
  */
 
-#ifndef ABCG_ELAPSEDTIMER_HPP_
-#define ABCG_ELAPSEDTIMER_HPP_
+#ifndef ABCG_TIMER_HPP_
+#define ABCG_TIMER_HPP_
 
 #include <chrono>
 
 namespace abcg {
-class ElapsedTimer;
+class Timer;
 } // namespace abcg
 
 /**
- * @brief Represents a timer that calculates how much time has elapsed between
- * two events.
- *
- * The timer is based on the monotonic clock `std::chrono::steady_clock`.
+ * @brief Represents a timer based on the monotonic clock
+ * `std::chrono::steady_clock`.
  */
-class abcg::ElapsedTimer {
+class abcg::Timer {
 public:
   [[nodiscard]] double elapsed() const;
   double restart();

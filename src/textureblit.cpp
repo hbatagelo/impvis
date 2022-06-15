@@ -9,16 +9,19 @@
 
 #include <fmt/core.h>
 
-#include "abcg_application.hpp"
+#include "abcgOpenGL.hpp"
 #include "textureblit.hpp"
 
-void TextureBlit::initializeGL() {
+void TextureBlit::onCreate() {
   // Create shader program
-  auto const *vertexShaderFilename{"shaders/textureblit.vert"};
-  auto const *fragmentShaderFilename{"shaders/textureblit.frag"};
+  auto const *vertexShaderPath{"shaders/textureblit.vert"};
+  auto const *fragmentShaderPath{"shaders/textureblit.frag"};
   auto const &assetsPath{abcg::Application::getAssetsPath()};
-  m_program = abcg::opengl::createProgram(
-      {assetsPath + vertexShaderFilename, assetsPath + fragmentShaderFilename});
+  m_program =
+      abcg::createOpenGLProgram({{.source = assetsPath + vertexShaderPath,
+                                  .stage = abcg::ShaderStage::Vertex},
+                                 {.source = assetsPath + fragmentShaderPath,
+                                  .stage = abcg::ShaderStage::Fragment}});
 
   // Create VBO
   abcg::glGenBuffers(1, &m_VBO);
@@ -47,8 +50,8 @@ void TextureBlit::initializeGL() {
                                   GL_FALSE, sizeof(Vertex),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
-      throw abcg::RunTimeError(fmt::format("Failed to find attribute {} in {}",
-                                           name, vertexShaderFilename));
+      throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
+                                           name, vertexShaderPath));
     }
   }};
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
@@ -62,7 +65,7 @@ void TextureBlit::initializeGL() {
   m_resolutionLocation = abcg::glGetUniformLocation(m_program, "uResolution");
 }
 
-void TextureBlit::draw(GLuint texture) const {
+void TextureBlit::onPaint(GLuint texture) const {
   abcg::glDisable(GL_DEPTH_TEST);
 
   abcg::glUseProgram(m_program);
@@ -86,11 +89,9 @@ void TextureBlit::draw(GLuint texture) const {
   abcg::glUseProgram(0);
 }
 
-void TextureBlit::resizeGL(int width, int height) {
-  m_resolution = {width, height};
-}
+void TextureBlit::onResize(glm::ivec2 const &size) { m_resolution = size; }
 
-void TextureBlit::terminateGL() {
+void TextureBlit::onDestroy() {
   abcg::glDeleteVertexArrays(1, &m_VAO);
   abcg::glDeleteBuffers(1, &m_VBO);
   abcg::glDeleteProgram(m_program);
