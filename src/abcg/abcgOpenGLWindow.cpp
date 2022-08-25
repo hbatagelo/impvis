@@ -223,26 +223,7 @@ void abcg::OpenGLWindow::handleEvent(SDL_Event const &event) {
     }
   }
 
-  // Won't pass mouse events to the application if ImGUI has captured the
-  // mouse
-  auto useCustomEventHandler{true};
-  if (ImGui::GetIO().WantCaptureMouse &&
-      (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN ||
-       event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL)) {
-    useCustomEventHandler = false;
-  }
-
-  // Won't pass keyboard events to the application if ImGUI has captured the
-  // keyboard
-  if (ImGui::GetIO().WantCaptureKeyboard &&
-      (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
-       event.type == SDL_TEXTEDITING || event.type == SDL_TEXTINPUT ||
-       event.type == SDL_KEYMAPCHANGED)) {
-    useCustomEventHandler = false;
-  }
-
-  if (useCustomEventHandler)
-    onEvent(event);
+  onEvent(event);
 }
 
 void abcg::OpenGLWindow::create() {
@@ -352,32 +333,26 @@ void abcg::OpenGLWindow::create() {
   SDL_GL_SetSwapInterval(m_openGLSettings.vSync ? 1 : 0);
 #endif
 
-  auto const toCharPtr{
-      [](GLubyte const *str) { return reinterpret_cast<char const *>(str); }};
-
 #if !defined(__EMSCRIPTEN__)
   if (auto const err{glewInit()}; GLEW_OK != err) {
-    std::string const header{"Failed to initialize OpenGL loader: "};
-    auto const *const message{toCharPtr(glewGetErrorString(err))};
-    throw abcg::Exception{header + message};
+    throw abcg::Exception{fmt::format("Failed to initialize OpenGL loader: {}",
+                                      glewGetErrorString(err))};
   }
-  fmt::print("Using GLEW.....: {}\n", toCharPtr(glewGetString(GLEW_VERSION)));
+  fmt::print("Using GLEW.....: {}\n", glewGetString(GLEW_VERSION));
 #endif
 
-  fmt::print("OpenGL vendor..: {}\n", toCharPtr(glGetString(GL_VENDOR)));
-  fmt::print("OpenGL renderer: {}\n", toCharPtr(glGetString(GL_RENDERER)));
-  fmt::print("OpenGL version.: {}\n", toCharPtr(glGetString(GL_VERSION)));
-  fmt::print("GLSL version...: {}\n",
-             toCharPtr(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+  fmt::print("OpenGL vendor..: {}\n", glGetString(GL_VENDOR));
+  fmt::print("OpenGL renderer: {}\n", glGetString(GL_RENDERER));
+  fmt::print("OpenGL version.: {}\n", glGetString(GL_VERSION));
+  fmt::print("GLSL version...: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   /*
   // Print out extensions
   GLint numExtensions{};
   glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
   for (std::size_t posStart{}; auto const index : iter::range(numExtensions)) {
-    std::string name{
-        reinterpret_cast<char const *>(glGetStringi(GL_EXTENSIONS, index))};
-    fmt::print("GL extension {}: {}\n", index, name);
+    fmt::print("GL extension {}: {}\n", index,
+               glGetStringi(GL_EXTENSIONS, index));
   }
   */
 

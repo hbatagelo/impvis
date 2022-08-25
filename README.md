@@ -1,5 +1,5 @@
 ![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b2873e61cc9943a2bb4f482a5ba087c8)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hbatagelo/impvis&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hbatagelo/impvis&amp;utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
 
 # ImpVis - 3D Implicit Function Viewer
