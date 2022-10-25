@@ -46,7 +46,7 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
                std::pair<char, char> brackets) {
   auto const failed{std::pair{std::string::npos, std::string::npos}};
 
-  // Advance through whitespaces from pos to position of open bracket
+  // Advance through whitespaces, from pos to the position of the open bracket.
   // If any non-whitespace character is found, return (npos, npos)
   auto startPos{pos};
   for (; startPos < str.length(); ++startPos) {
@@ -57,7 +57,7 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
       return failed;
   }
 
-  // Look for the corresponding close bracket
+  // Look for corresponding close bracket
   auto numNestedParens{0};
   if (!str.empty()) {
     for (auto endPos{startPos}; endPos < str.length() - 1; ++endPos) {
@@ -83,7 +83,7 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
 // Returns (npos, npos) if the brackets are not found or if there is a
 // non-whitespace character from pos and the open bracket.
 //
-// Examples (using round brackets):
+// Examples using round brackets:
 // str="(x)+"        pos=2 -> returns (2,0)
 //        ^
 // str="((x)+1)   +" pos=9 -> returns (6,0)
@@ -95,7 +95,7 @@ getBracketsPosReverse(std::string_view str, std::string::size_type pos,
                       std::pair<char, char> brackets) {
   auto const failed{std::pair{std::string::npos, std::string::npos}};
 
-  // Reverse through whitespaces from pos to position of close bracket
+  // Reverse through whitespaces, from pos to the position of the close bracket.
   // If any non-whitespace character is found, return (npos, npos)
   auto startPos{pos};
   for (; startPos > 0; --startPos) {
@@ -126,8 +126,7 @@ getBracketsPosReverse(std::string_view str, std::string::size_type pos,
   return failed;
 }
 
-// Returns the sizes of the left and right operands of the operator located at
-// str[pos]
+// Returns the sizes of the left and right operands of the operator at str[pos]
 std::pair<std::string::size_type, std::string::size_type>
 getOperandSizes(std::string str, std::string::size_type pos) {
   auto sizes{std::pair{0UL, 0UL}};
@@ -141,12 +140,12 @@ getOperandSizes(std::string str, std::string::size_type pos) {
   // Compute size of right operand
 
   // Go to first non-whitespace character
-  if (auto itr{std::find_if(str.begin() + static_cast<long>(pos) + 1, str.end(),
+  if (auto itr{std::find_if(str.begin() + gsl::narrow<long>(pos) + 1, str.end(),
                             notWhitespace)};
       itr != str.end()) {
     if (*itr == '(') {
       // Open bracket
-      auto const startPos{static_cast<unsigned long>(itr - str.begin())};
+      auto const startPos{gsl::narrow<unsigned long>(itr - str.begin())};
       auto const bracketPos{getBracketsPos(str, startPos, {'(', ')'})};
       if (bracketPos.first != std::string_view::npos) {
 #if defined(_MSC_VER)
@@ -168,7 +167,7 @@ getOperandSizes(std::string str, std::string::size_type pos) {
 #pragma warning(push)
 #pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
 #endif
-      sizes.second = static_cast<unsigned long>(endPos) - pos - 1;
+      sizes.second = gsl::narrow<unsigned long>(endPos) - pos - 1;
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
@@ -178,14 +177,14 @@ getOperandSizes(std::string str, std::string::size_type pos) {
   // Compute size of left operand
 
   // Go to first non-whitespace character
-  if (auto itr{std::find_if(str.rbegin() + static_cast<long>(str.size() - pos),
+  if (auto itr{std::find_if(str.rbegin() + gsl::narrow<long>(str.size() - pos),
                             str.rend(), notWhitespace)};
       itr != str.rend()) {
     if (*itr == ')') {
       // Close bracket
       auto const startPos{std::distance(itr, str.rend()) - 1};
       auto const bracketPos{getBracketsPosReverse(
-          str, static_cast<unsigned long>(startPos), {'(', ')'})};
+          str, gsl::narrow<unsigned long>(startPos), {'(', ')'})};
       if (bracketPos.first != std::string_view::npos) {
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -203,7 +202,7 @@ getOperandSizes(std::string str, std::string::size_type pos) {
 #pragma warning(push)
 #pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
 #endif
-      sizes.first = pos - static_cast<unsigned long>(endPos) - 1;
+      sizes.first = pos - gsl::narrow_cast<unsigned long>(endPos) - 1;
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
@@ -295,7 +294,7 @@ void Equation::extractParameters() {
     std::vector<std::string> customFunctionNames{};
     for (std::smatch match; std::regex_search(str, match, regex);
          str = str.substr(
-             static_cast<unsigned long>(match.position() + match.length()))) {
+             gsl::narrow<unsigned long>(match.position() + match.length()))) {
       auto matchString{match[1].str()};
       customFunctionNames.push_back(matchString);
     }
@@ -328,11 +327,11 @@ void Equation::extractParameters() {
     std::string str{m_loadedData.codeGlobal};
     for (std::smatch sm; std::regex_search(str, sm, regex);
          str = str.substr(
-             static_cast<unsigned long>(sm.position() + sm.length()))) {
+             gsl::narrow<unsigned long>(sm.position() + sm.length()))) {
       auto match{sm[1].str()};
 
       if (!insideCurlyBrackets(str,
-                               static_cast<unsigned long>(sm.position()))) {
+                               gsl::narrow<unsigned long>(sm.position()))) {
         customConstantNames.push_back(match);
       }
     }
@@ -350,10 +349,10 @@ void Equation::extractParameters() {
     std::string str{m_loadedData.codeLocal};
     for (std::smatch sm; std::regex_search(str, sm, regex);
          str = str.substr(
-             static_cast<unsigned long>(sm.position() + sm.length()))) {
+             gsl::narrow<unsigned long>(sm.position() + sm.length()))) {
       auto match{sm[1].str()};
       if (!insideCurlyBrackets(str,
-                               static_cast<unsigned long>(sm.position()))) {
+                               gsl::narrow<unsigned long>(sm.position()))) {
         customVariableNames.push_back(match);
       }
     }
@@ -429,7 +428,7 @@ void Equation::convertToMathJax() {
   }
 
   // From inout[pos], replace the first group of srcBrackets with dstBrackets
-  std::pair srcBrackets{'(', ')'};
+  std::pair const srcBrackets{'(', ')'};
   std::pair dstBrackets{'{', '}'};
   auto replaceBrackets{[&srcBrackets, &dstBrackets](auto &inout, auto pos) {
     if (auto const bracketsPos{getBracketsPos(inout, pos, srcBrackets)};
@@ -456,7 +455,7 @@ void Equation::convertToMathJax() {
     for (std::string ns{result}; std::regex_search(ns, match, regex);) {
       auto const posAfterName{match.position(1) + match.length(1) - 1};
       auto bracketPos{getBracketsPos(
-          ns, static_cast<unsigned long>(posAfterName + 1), {'(', ')'})};
+          ns, gsl::narrow<unsigned long>(posAfterName + 1), {'(', ')'})};
       std::string bracketedArgs{};
       if (bracketPos.first != std::string::npos &&
           bracketPos.second != std::string::npos) {
@@ -465,20 +464,21 @@ void Equation::convertToMathJax() {
       }
       auto const what{match[1].str() + bracketedArgs}; // "name" + "(...)"
       auto const with{"{" + what + "}"};               // "{name(...)}"
-      result.replace(pos + static_cast<unsigned long>(match.position(1)),
+      result.replace(pos + gsl::narrow<unsigned long>(match.position(1)),
                      what.length(), with.data(), with.length());
-      ns.replace(static_cast<unsigned long>(match.position(1)), what.length(),
+      ns.replace(gsl::narrow<unsigned long>(match.position(1)), what.length(),
                  with.data(), with.length());
 
       auto const advancePos{
-          static_cast<unsigned long>(match.position(1) + match.length(1))};
+          gsl::narrow<unsigned long>(match.position(1) + match.length(1))};
       pos += advancePos;
       ns = ns.substr(advancePos);
     }
   }
 
-  for (std::array names{"asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh",
-                        "acosh", "atanh", "sin", "cos", "tan", "min", "max"};
+  for (std::array const names{"asin", "acos", "atan", "sinh", "cosh", "tanh",
+                              "asinh", "acosh", "atanh", "sin", "cos", "tan",
+                              "min", "max"};
        auto const &name : names) {
     auto const with{std::string{"\\"} + name};
     // Replace "name" with "\name"
@@ -535,17 +535,17 @@ void Equation::convertToMathJax() {
     for (std::string ns{result}; std::regex_search(ns, match, regex);
          ns = result) {
       auto const posOpenParens{
-          static_cast<unsigned long>(match.position() + 1)};
+          gsl::narrow<unsigned long>(match.position() + 1)};
       auto bracketPos{getBracketsPos(ns, posOpenParens, {'(', ')'})};
       // Check if the position of the closing parenthesis matches the ")}" at
       // the end of the expression
       if (bracketPos.second ==
-          static_cast<std::size_t>(match.position() + match.length() - 2)) {
+          gsl::narrow<std::size_t>(match.position() + match.length() - 2)) {
         auto const expr{ns.substr(bracketPos.first + 1,
                                   bracketPos.second - bracketPos.first - 1)};
         auto const &what{match.str()};     // "{(expr)}"
         auto const with{"{" + expr + "}"}; // "{expr}"
-        result.replace(static_cast<unsigned long>(match.position()),
+        result.replace(gsl::narrow<unsigned long>(match.position()),
                        what.length(), with.data(), with.length());
       }
     }
@@ -573,10 +573,10 @@ void Equation::convertToGLSL() {
                                   std::regex_constants::optimize);
     for (std::string ns{result}; std::regex_search(ns, match, regex);
          ns = ns.substr(
-             static_cast<unsigned long>(match.position() + match.length()))) {
+             gsl::narrow<unsigned long>(match.position() + match.length()))) {
       auto const startPos{match.position() + match.length() - 1};
       auto const bracketPos{
-          getBracketsPos(ns, static_cast<unsigned long>(startPos), {'(', ')'})};
+          getBracketsPos(ns, gsl::narrow<unsigned long>(startPos), {'(', ')'})};
       auto const callArgs{ns.substr(bracketPos.first + 1,
                                     bracketPos.second - bracketPos.first)};
       functionCalls.emplace(match.str() + callArgs); // "name(" + "...)"
@@ -633,18 +633,18 @@ void Equation::convertToGLSL() {
                                   std::regex_constants::optimize);
     for (std::string ns{result}; std::regex_search(ns, match, regex);
          ns = ns.substr(
-             static_cast<unsigned long>(match.position() + match.length()))) {
+             gsl::narrow<unsigned long>(match.position() + match.length()))) {
       auto const number{std::stod(match.str())};
       auto integralPart{0.0};
       auto const fractionalPart{std::modf(number, &integralPart)};
       auto const formattedString{fractionalPart == 0.0
                                      ? fmt::format("{:.1f}", number)
                                      : fmt::format("{:.12g}", number)};
-      result.replace(pos + static_cast<unsigned long>(match.position()),
-                     static_cast<unsigned long>(match.length()),
+      result.replace(pos + gsl::narrow<unsigned long>(match.position()),
+                     gsl::narrow<unsigned long>(match.length()),
                      formattedString);
       pos += formattedString.length() +
-             static_cast<unsigned long>(match.position());
+             gsl::narrow<unsigned long>(match.position());
     }
   }
 
@@ -723,87 +723,86 @@ std::vector<Equation> Equation::loadCatalogue(std::string_view filename) {
     Count
   };
 
-  auto const attributeCount{static_cast<std::size_t>(Attribute::Count) - 1};
+  auto const attributeCount{gsl::narrow<std::size_t>(Attribute::Count) - 1};
   using ParserFunction = void(std::string const &, LoadedData &);
   std::array<std::tuple<Attribute, std::string, ParserFunction *>,
-             attributeCount>
-      attribParsers{
-          std::tuple{Attribute::Name, "name",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.name = attribValue;
-                     }},
-          std::tuple{Attribute::Thumb, "thumb",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.thumbnail = attribValue;
-                     }},
-          std::tuple{Attribute::Param, "param",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       std::string str{attribValue};
-                       static std::regex const regex(
-                           R"del(\s*[A-Za-z_\d.+-]*)del",
-                           std::regex_constants::optimize);
-                       std::smatch match{};
-                       if (std::regex_search(str, match, regex)) {
-                         auto const name{match.str()}; // Parameter name found
-                         str = str.substr(static_cast<unsigned long>(
-                             match.position() + match.length()));
-                         if (std::regex_search(str, match, regex)) {
-                           auto const value{
-                               std::stof(match.str())}; // Parameter value found
-                           data.parameters.push_back({name, value});
-                         }
-                       }
-                     }},
-          std::tuple{Attribute::Expr, "expr",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.expression = attribValue;
-                     }},
-          std::tuple{Attribute::CodeLocal, "code_local",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.codeLocal = attribValue;
-                     }},
-          std::tuple{Attribute::CodeGlobal, "code_global",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.codeGlobal = attribValue;
-                     }},
-          std::tuple{Attribute::Comment, "comment",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.comment = attribValue;
-                     }},
-          std::tuple{Attribute::BoundShape, "bound_shape",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.boundShape = std::stoi(attribValue);
-                     }},
-          std::tuple{Attribute::BoundRadius, "bound_radius",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.boundRadius = std::stof(attribValue);
-                     }},
-          std::tuple{Attribute::RayMarchMethod, "raymarch_method",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.rayMarchMethod = std::stoi(attribValue);
-                     }},
-          std::tuple{Attribute::RayMarchSteps, "raymarch_steps",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.rayMarchSteps = std::stoi(attribValue);
-                     }},
-          std::tuple{Attribute::RayMarchRootTest, "raymarch_root_test",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.rayMarchRootTest = std::stoi(attribValue);
-                     }},
-          std::tuple{Attribute::CamDist, "cam_dist",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.camDist = std::stof(attribValue);
-                     }},
-          std::tuple{Attribute::ColormapScale, "colormap_scale",
-                     [](std::string const &attribValue, LoadedData &data) {
-                       data.colormapScale = std::stof(attribValue);
-                     }}};
+             attributeCount> const attribParsers{
+      std::tuple{Attribute::Name, "name",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.name = attribValue;
+                 }},
+      std::tuple{Attribute::Thumb, "thumb",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.thumbnail = attribValue;
+                 }},
+      std::tuple{Attribute::Param, "param",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   std::string str{attribValue};
+                   static std::regex const regex(
+                       R"del(\s*[A-Za-z_\d.+-]*)del",
+                       std::regex_constants::optimize);
+                   std::smatch match{};
+                   if (std::regex_search(str, match, regex)) {
+                     auto const name{match.str()}; // Parameter name found
+                     str = str.substr(gsl::narrow<unsigned long>(
+                         match.position() + match.length()));
+                     if (std::regex_search(str, match, regex)) {
+                       auto const value{
+                           std::stof(match.str())}; // Parameter value found
+                       data.parameters.push_back({name, value});
+                     }
+                   }
+                 }},
+      std::tuple{Attribute::Expr, "expr",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.expression = attribValue;
+                 }},
+      std::tuple{Attribute::CodeLocal, "code_local",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.codeLocal = attribValue;
+                 }},
+      std::tuple{Attribute::CodeGlobal, "code_global",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.codeGlobal = attribValue;
+                 }},
+      std::tuple{Attribute::Comment, "comment",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.comment = attribValue;
+                 }},
+      std::tuple{Attribute::BoundShape, "bound_shape",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.boundShape = std::stoi(attribValue);
+                 }},
+      std::tuple{Attribute::BoundRadius, "bound_radius",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.boundRadius = std::stof(attribValue);
+                 }},
+      std::tuple{Attribute::RayMarchMethod, "raymarch_method",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.rayMarchMethod = std::stoi(attribValue);
+                 }},
+      std::tuple{Attribute::RayMarchSteps, "raymarch_steps",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.rayMarchSteps = std::stoi(attribValue);
+                 }},
+      std::tuple{Attribute::RayMarchRootTest, "raymarch_root_test",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.rayMarchRootTest = std::stoi(attribValue);
+                 }},
+      std::tuple{Attribute::CamDist, "cam_dist",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.camDist = std::stof(attribValue);
+                 }},
+      std::tuple{Attribute::ColormapScale, "colormap_scale",
+                 [](std::string const &attribValue, LoadedData &data) {
+                   data.colormapScale = std::stof(attribValue);
+                 }}};
 
   Attribute currentAttribute{Attribute::None};
 
   for (std::string line{}; std::getline(sstream, line);) {
     if (line.empty()) {
-      result.emplace_back(Equation{loadedData});
+      result.emplace_back(loadedData);
       loadedData = {};
       continue;
     }
@@ -840,7 +839,7 @@ std::vector<Equation> Equation::loadCatalogue(std::string_view filename) {
   }
 
   if (!loadedData.expression.empty()) {
-    result.emplace_back(Equation{loadedData});
+    result.emplace_back(loadedData);
   }
 
   return result;

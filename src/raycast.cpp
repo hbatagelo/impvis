@@ -44,7 +44,7 @@ void RayCast::onEvent(SDL_Event const &event) {
     }
   }
   if (event.type == SDL_MOUSEWHEEL) {
-    m_lookAtDistance -= static_cast<float>(event.wheel.y);
+    m_lookAtDistance -= gsl::narrow<float>(event.wheel.y);
 
     auto const minDistance{0.1f};
     auto const maxDistance{100.0f};
@@ -113,9 +113,9 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
 #endif
   }
 
-  auto lookAtDistance{m_programBuildPhase != ProgramBuildPhase::Done
-                          ? m_lastLookAtDistance
-                          : m_lookAtDistance};
+  auto const lookAtDistance{m_programBuildPhase != ProgramBuildPhase::Done
+                                ? m_lastLookAtDistance
+                                : m_lookAtDistance};
 
   auto const camRot{glm::inverse(m_trackBallCamera.getRotation())};
   auto const camPos{camRot * glm::vec3{0.0f, 0.0f, lookAtDistance}};
@@ -141,7 +141,7 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
     for (auto &&[index, param] :
          iter::enumerate(settings.equation.getParameters())) {
       auto const vecIndex{index / 4};
-      auto const varIndex{static_cast<int>(index % 4)};
+      auto const varIndex{gsl::narrow<int>(index % 4)};
       m_params.data.at(vecIndex)[varIndex] = param.value;
     }
 
@@ -159,11 +159,10 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
   if (m_program != 0) {
     abcg::glUseProgram(m_program);
 
-    // Set uniform blocks
     auto updateUBO{[]<typename T>(GLuint buffer, std::span<T> const span) {
       abcg::glBindBuffer(GL_UNIFORM_BUFFER, buffer);
       abcg::glBufferSubData(GL_UNIFORM_BUFFER, 0,
-                            static_cast<GLsizeiptr>(span.size()), span.data());
+                            gsl::narrow<GLsizeiptr>(span.size()), span.data());
       abcg::glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }};
     updateUBO(m_UBOCamera, std::span{&m_camera, sizeof(m_camera)});
@@ -171,7 +170,6 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
     updateUBO(m_UBOTransform, std::span{&m_transform, sizeof(m_transform)});
     updateUBO(m_UBOParams, std::span{&m_params, sizeof(m_params)});
 
-    // Set uniform variables
     abcg::glUniform1f(m_isoValueLocation, settings.isoValue);
 
     abcg::glBindVertexArray(m_VAO);
@@ -187,8 +185,8 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
 }
 
 void RayCast::onResize(glm::ivec2 const &size) {
-  auto const aspectRatio{static_cast<float>(size.x) /
-                         static_cast<float>(size.y)};
+  auto const aspectRatio{gsl::narrow<float>(size.x) /
+                         gsl::narrow<float>(size.y)};
   m_camera.scale = aspectRatio > 1.0f ? glm::vec2(aspectRatio, 1.0f)
                                       : glm::vec2(1.0f, 1.0f / aspectRatio);
 
@@ -208,7 +206,6 @@ void RayCast::onDestroy() {
 }
 
 void RayCast::createUBOs() {
-  // Delete previous buffers
   abcg::glDeleteBuffers(1, &m_UBOParams);
   abcg::glDeleteBuffers(1, &m_UBOTransform);
   abcg::glDeleteBuffers(1, &m_UBOShading);
@@ -216,7 +213,6 @@ void RayCast::createUBOs() {
 
   auto createUBO{[this](GLsizeiptr size, void const *data, GLuint bindingPoint,
                         GLchar const *uniformBlockName) {
-    // Create the UBO
     GLuint buffer{};
     abcg::glGenBuffers(1, &buffer);
 
@@ -228,7 +224,7 @@ void RayCast::createUBOs() {
     // Link the buffer to a binding point
     abcg::glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, buffer);
 
-    // Connect the binding point to the block index of the buffer
+    // Connect the binding point to the block index of the program
     auto const index{abcg::glGetUniformBlockIndex(m_program, uniformBlockName)};
     if (index == GL_INVALID_INDEX) {
       throw abcg::RuntimeError(fmt::format(
@@ -252,10 +248,8 @@ void RayCast::createUBOs() {
 }
 
 void RayCast::createVBOs() {
-  // Delete previous buffers
   abcg::glDeleteBuffers(1, &m_VBO);
 
-  // Create VBO
   abcg::glGenBuffers(1, &m_VBO);
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   std::array const vertices{
@@ -327,17 +321,17 @@ void RayCast::createProgram(Settings const &settings) {
              std::to_string(settings.renderSettings.boundRadius));
 
   auto const &loadedData{settings.equation.getLoadedData()};
-  std::string codeLocal{loadedData.codeLocal};
-  std::string codeGlobal{loadedData.codeGlobal};
+  std::string const codeLocal{loadedData.codeLocal};
+  std::string const codeGlobal{loadedData.codeGlobal};
   std::string equation = settings.equation.getGLSLExpression();
 
   // Replace parameter names with uParams.data[index]
   for (auto &&[index, param] :
        iter::enumerate(settings.equation.getParameters())) {
 
-    auto vecIndex{index / 4};
+    auto const vecIndex{index / 4};
     static std::array const variables{'x', 'y', 'z', 'w'};
-    auto var{variables.at(index % 4)};
+    auto const var{variables.at(index % 4)};
 
     replaceAll(equation, param.name,
                fmt::format("uParams.data[{}].{}", vecIndex, var).c_str(), true);
@@ -367,20 +361,17 @@ void RayCast::createProgram(Settings const &settings) {
 }
 
 void RayCast::setupVAO() {
-  // Release previous VAO
   abcg::glDeleteVertexArrays(1, &m_VAO);
 
-  // Create VAO
   abcg::glGenVertexArrays(1, &m_VAO);
   abcg::glBindVertexArray(m_VAO);
 
-  // Set up vertex attributes
   auto const setUpVertexAttribute{[&](auto name, auto size, intptr_t offset) {
     auto const location{abcg::glGetAttribLocation(m_program, name)};
     if (location >= 0) {
-      abcg::glEnableVertexAttribArray(static_cast<GLuint>(location));
+      abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
 
-      abcg::glVertexAttribPointer(static_cast<GLuint>(location), size, GL_FLOAT,
+      abcg::glVertexAttribPointer(gsl::narrow<GLuint>(location), size, GL_FLOAT,
                                   GL_FALSE, sizeof(Vertex),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
@@ -391,7 +382,6 @@ void RayCast::setupVAO() {
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   setUpVertexAttribute("inPosition", 2, 0);
 
-  // End of binding
   abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
   abcg::glBindVertexArray(0);
 }

@@ -157,8 +157,8 @@ void Window::onCreate() {
 }
 
 void Window::onPaint() {
-  abcg::glViewport(0, 0, static_cast<GLsizei>(m_settings.viewportSize.x),
-                   static_cast<GLsizei>(m_settings.viewportSize.y));
+  abcg::glViewport(0, 0, gsl::narrow<GLsizei>(m_settings.viewportSize.x),
+                   gsl::narrow<GLsizei>(m_settings.viewportSize.y));
 
   if (m_settings.drawBackground) {
     if (m_settings.redrawBackgroundRenderTex) {
@@ -183,8 +183,8 @@ void Window::onPaint() {
     if (!m_settings.renderSettings.useShadows) {
       if (rayMarchSteps > 60) {
         auto const scaleFactor{0.75f};
-        rayMarchSteps =
-            static_cast<int>(static_cast<float>(rayMarchSteps) * scaleFactor);
+        rayMarchSteps = gsl::narrow_cast<int>(
+            gsl::narrow<float>(rayMarchSteps) * scaleFactor);
       }
     }
     m_settings.renderSettings.rayMarchSteps = rayMarchSteps;
@@ -252,17 +252,17 @@ void Window::onPaintUI() {
   // Refresh equation rendering using MathJax
   static auto lastElapsedTime{0.0};
   if (auto const timeOut{0.125}; getElapsedTime() - lastElapsedTime > timeOut) {
-    lastElapsedTime = getElapsedTime();
-    static auto lastIsoValue{0.0f};
-    if (lastIsoValue != m_settings.isoValue) {
-#if defined(__EMSCRIPTEN__)
-      auto const &loadedData{m_settings.equation.getLoadedData()};
-      updateEquation(
-          m_settings.equation.getMathJaxExpression(m_settings.isoValue),
-          m_settings.overlayMathJaxComment ? loadedData.comment : "");
-#endif
-      lastIsoValue = m_settings.isoValue;
-    }
+    /*    lastElapsedTime = getElapsedTime();
+        static auto lastIsoValue{0.0f};
+        if (lastIsoValue != m_settings.isoValue) {
+    #if defined(__EMSCRIPTEN__)
+          auto const &loadedData{m_settings.equation.getLoadedData()};
+          updateEquation(
+              m_settings.equation.getMathJaxExpression(m_settings.isoValue),
+              m_settings.overlayMathJaxComment ? loadedData.comment : "");
+    #endif
+          lastIsoValue = m_settings.isoValue;
+        }*/
   }
 
   ImGui::PopFont();
@@ -323,7 +323,7 @@ void Window::paintMainWindow() {
     ImGui::SetNextWindowPos(ImVec2(m_settings.viewportSize.x - windowSize.x - 5,
                                    windowSize.y + 10));
     ImGui::SetNextWindowSize(
-        ImVec2(windowSize.x, static_cast<float>(parametersExtraHeight)));
+        ImVec2(windowSize.x, gsl::narrow<float>(parametersExtraHeight)));
     ImGui::Begin("Parameters", nullptr,
                  ImGuiWindowFlags_NoFocusOnAppearing |
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
@@ -468,7 +468,7 @@ void Window::paintTopButtonBar() {
       ImGui::PushStyleColor(ImGuiCol_Button, color);
     }
 
-    auto const texture{static_cast<intptr_t>(m_buttonTexture.at(index))};
+    auto const texture{gsl::narrow<intptr_t>(m_buttonTexture.at(index))};
     auto *const texID{reinterpret_cast<ImTextureID>(texture)}; // NOLINT
     if (ImGui::ImageButton(texID, buttonSize)) {
       onClicked(index);
@@ -544,7 +544,7 @@ void Window::paintEquationHeader(unsigned long groupIndex,
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       if (auto const thumbnailID{
-              static_cast<intptr_t>(equation.getThumbnailId())};
+              gsl::narrow<intptr_t>(equation.getThumbnailId())};
           thumbnailID > 0) {
         auto *const texture{
             reinterpret_cast<ImTextureID>(thumbnailID)}; // NOLINT
@@ -782,17 +782,17 @@ void Window::paintAboutTab() {
     static std::array<float, 218> frames{};
 
     while (refreshTime < ImGui::GetTime()) {
-      constexpr auto refreshFrequency{60.0};
+      auto const refreshFrequency{60.0};
       frames.at(offset) = fps;
       offset = (offset + 1) % frames.size();
       refreshTime += (1.0 / refreshFrequency);
     }
 
     auto const label{fmt::format("{:.1f} FPS", fps)};
-    ImGui::PlotLines("##fps", frames.data(), static_cast<int>(frames.size()),
-                     static_cast<int>(offset), label.c_str(), 0.0f,
+    ImGui::PlotLines("##fps", frames.data(), gsl::narrow<int>(frames.size()),
+                     gsl::narrow<int>(offset), label.c_str(), 0.0f,
                      *std::max_element(frames.begin(), frames.end()) * 2,
-                     ImVec2(static_cast<float>(frames.size()), 50));
+                     ImVec2(gsl::narrow<float>(frames.size()), 50));
   }
   ImGui::PopItemWidth();
   ImGui::EndChild();
@@ -1046,7 +1046,7 @@ void Window::onResize(glm::ivec2 const &size) {
   }
 
   // Initialize textures with an array of zeros to prevent WebGL warnings
-  auto zeroBufferSize{static_cast<unsigned long>(size.x * size.y * 4)};
+  auto zeroBufferSize{gsl::narrow<unsigned long>(size.x * size.y * 4)};
   auto zeroBuffer{std::vector<std::byte>(zeroBufferSize, std::byte{})};
 
   abcg::glGenTextures(1, &m_backgroundRenderTex);

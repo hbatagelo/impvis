@@ -13,10 +13,8 @@
 #include "background.hpp"
 
 void Background::onCreate() {
-  // Create FBO
   abcg::glGenFramebuffers(1, &m_FBO);
 
-  // Create shader program
   auto const *vertexShaderPath{"shaders/radialgradient.vert"};
   auto const *fragmentShaderPath{"shaders/radialgradient.frag"};
   auto const &assetsPath{abcg::Application::getAssetsPath()};
@@ -26,31 +24,24 @@ void Background::onCreate() {
                                  {.source = assetsPath + fragmentShaderPath,
                                   .stage = abcg::ShaderStage::Fragment}});
 
-  // Create VBO
   abcg::glGenBuffers(1, &m_VBO);
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 
-  struct Vertex {
-    glm::vec2 position{};
-  };
-  std::array const vertices{
-      Vertex{.position = {-1, +1}}, Vertex{.position = {-1, -1}},
-      Vertex{.position = {+1, +1}}, Vertex{.position = {+1, -1}}};
+  std::array const vertices{glm::vec2{-1, +1}, glm::vec2{-1, -1},
+                            glm::vec2{+1, +1}, glm::vec2{+1, -1}};
   abcg::glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(),
                      GL_STATIC_DRAW);
   abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  // Create and bind VAO
   abcg::glGenVertexArrays(1, &m_VAO);
   abcg::glBindVertexArray(m_VAO);
 
-  // Set up vertex attributes
   auto const setUpVertexAttribute{[&](auto name, auto size, intptr_t offset) {
     auto const location{abcg::glGetAttribLocation(m_program, name)};
     if (location >= 0) {
-      abcg::glEnableVertexAttribArray(static_cast<GLuint>(location));
-      abcg::glVertexAttribPointer(static_cast<GLuint>(location), size, GL_FLOAT,
-                                  GL_FALSE, sizeof(Vertex),
+      abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
+      abcg::glVertexAttribPointer(gsl::narrow<GLuint>(location), size, GL_FLOAT,
+                                  GL_FALSE, sizeof(glm::vec2),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
       throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
@@ -60,11 +51,9 @@ void Background::onCreate() {
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   setUpVertexAttribute("inPosition", 2, 0);
 
-  // End of binding
   abcg::glBindBuffer(GL_ARRAY_BUFFER, 0);
   abcg::glBindVertexArray(0);
 
-  // Save location of uniform variables
   m_resolutionLocation = abcg::glGetUniformLocation(m_program, "uResolution");
 }
 

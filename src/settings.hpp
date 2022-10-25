@@ -34,8 +34,8 @@ struct Settings {
     bool useFog{false};
     bool useNormalsAsColors{false};
 
-    friend bool operator==(const RenderSettings &,
-                           const RenderSettings &) = default;
+    friend bool operator==(RenderSettings const &,
+                           RenderSettings const &) = default;
   } renderSettings{};
 
   bool usePredefinedSettings{true};
