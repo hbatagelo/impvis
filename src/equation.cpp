@@ -127,9 +127,11 @@ getBracketsPosReverse(std::string_view str, std::string::size_type pos,
 }
 
 // Returns the sizes of the left and right operands of the operator at str[pos]
-std::pair<std::string::size_type, std::string::size_type>
-getOperandSizes(std::string str, std::string::size_type pos) {
-  auto sizes{std::pair{0UL, 0UL}};
+std::pair<std::size_t, std::size_t> getOperandSizes(std::string str,
+                                                    std::size_t pos) {
+  assert(pos < str.size()); // NOLINT
+
+  auto sizes{std::pair{std::size_t{}, std::size_t{}}};
 
   auto notWhitespace{[](char chr) { return std::isspace(chr) == 0; }};
   auto notName{[](char chr) { return std::isalnum(chr) == 0 && chr != '_'; }};
@@ -140,72 +142,48 @@ getOperandSizes(std::string str, std::string::size_type pos) {
   // Compute size of right operand
 
   // Go to first non-whitespace character
-  if (auto itr{std::find_if(str.begin() + gsl::narrow<long>(pos) + 1, str.end(),
-                            notWhitespace)};
+  if (auto itr{std::find_if(str.begin() + gsl::narrow<std::ptrdiff_t>(pos) + 1,
+                            str.end(), notWhitespace)};
       itr != str.end()) {
     if (*itr == '(') {
       // Open bracket
-      auto const startPos{gsl::narrow<unsigned long>(itr - str.begin())};
-      auto const bracketPos{getBracketsPos(str, startPos, {'(', ')'})};
+      auto const startPos{std::distance(str.begin(), itr)};
+      auto const bracketPos{
+          getBracketsPos(str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
       if (bracketPos.first != std::string_view::npos) {
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
-#endif
         sizes.second = bracketPos.second - pos;
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
       }
     } else {
       if (*itr == '-' || *itr == '+') {
         itr = std::next(itr);
       }
       itr = std::find_if(itr, str.end(), notNameOrNumber);
-      auto const endPos{itr - str.begin()};
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
-#endif
-      sizes.second = gsl::narrow<unsigned long>(endPos) - pos - 1;
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
+      auto const endPos{std::distance(str.begin(), itr)};
+      auto const opSize{endPos - gsl::narrow<std::ptrdiff_t>(pos) - 1};
+      sizes.second = gsl::narrow<std::size_t>(opSize);
     }
   }
 
   // Compute size of left operand
 
   // Go to first non-whitespace character
-  if (auto itr{std::find_if(str.rbegin() + gsl::narrow<long>(str.size() - pos),
+  if (auto itr{std::find_if(str.rbegin() +
+                                gsl::narrow<std::ptrdiff_t>(str.size() - pos),
                             str.rend(), notWhitespace)};
       itr != str.rend()) {
     if (*itr == ')') {
       // Close bracket
       auto const startPos{std::distance(itr, str.rend()) - 1};
       auto const bracketPos{getBracketsPosReverse(
-          str, gsl::narrow<unsigned long>(startPos), {'(', ')'})};
+          str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
       if (bracketPos.first != std::string_view::npos) {
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
-#endif
         sizes.first = pos - bracketPos.second;
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
       }
     } else {
       itr = std::find_if(itr, str.rend(), notNameOrNumber);
       auto const endPos{std::distance(itr, str.rend()) - 1};
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
-#endif
-      sizes.first = pos - gsl::narrow_cast<unsigned long>(endPos) - 1;
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
+      auto const opSize{gsl::narrow<std::ptrdiff_t>(pos) - endPos - 1};
+      sizes.first = gsl::narrow<std::size_t>(opSize);
     }
   }
 
