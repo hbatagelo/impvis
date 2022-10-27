@@ -9,9 +9,9 @@ function(enable_abcg project_target)
   endif()
 
   if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-    target_compile_options(${project_target} PUBLIC -Wall -Wextra -pedantic)
     target_compile_options(
       ${project_target}
+      PUBLIC ${PROJECT_WARNINGS}
       PUBLIC "-std=c++20"
       PUBLIC "-Oz"
       PUBLIC "-sUSE_SDL=2"
@@ -41,12 +41,6 @@ function(enable_abcg project_target)
       PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public"
                  LINK_FLAGS "${LINK_FLAGS}")
   else()
-    target_compile_features(${project_target} PUBLIC cxx_std_20)
-
-    if(NOT MSVC)
-      target_compile_options(${project_target} PUBLIC -Wall -Wextra -pedantic)
-    endif()
-
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set_target_properties(
       ${project_target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
