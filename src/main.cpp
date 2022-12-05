@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
     abcg::Application app(argc, argv);
 
     Window window;
-    window.setWindowSettings({.width = 800,
-                              .height = 800,
+    window.setWindowSettings({.width = 1024,
+                              .height = 1024,
                               .showFPS = false,
                               .showFullscreenButton = false,
                               .fullscreenElementID = "#container",

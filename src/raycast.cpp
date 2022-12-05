@@ -94,6 +94,8 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
         m_programBuildTime.restart();
         m_programBuildPhase = ProgramBuildPhase::Link;
       }
+    } else {
+      m_buildFailed = true;
     }
   }
 
@@ -104,8 +106,11 @@ void RayCast::onPaint(Settings const &settings, GLuint renderTexture) {
       abcg::glDeleteProgram(m_program);
       m_program = m_nextProgram;
       m_nextProgram = 0;
+      m_buildFailed = false;
       createUBOs();
       setupVAO();
+    } else {
+      m_buildFailed = true;
     }
     m_programBuildPhase = ProgramBuildPhase::Done;
 #if defined(__EMSCRIPTEN__)
@@ -206,10 +211,7 @@ void RayCast::onDestroy() {
 }
 
 void RayCast::createUBOs() {
-  abcg::glDeleteBuffers(1, &m_UBOParams);
-  abcg::glDeleteBuffers(1, &m_UBOTransform);
-  abcg::glDeleteBuffers(1, &m_UBOShading);
-  abcg::glDeleteBuffers(1, &m_UBOCamera);
+  destroyUBOs();
 
   auto createUBO{[this](GLsizeiptr size, void const *data, GLuint bindingPoint,
                         GLchar const *uniformBlockName) {
@@ -227,6 +229,7 @@ void RayCast::createUBOs() {
     // Connect the binding point to the block index of the program
     auto const index{abcg::glGetUniformBlockIndex(m_program, uniformBlockName)};
     if (index == GL_INVALID_INDEX) {
+      destroyUBOs();
       throw abcg::RuntimeError(fmt::format(
           "\"{}\" does not identify an active uniform block of program",
           uniformBlockName));
@@ -245,6 +248,13 @@ void RayCast::createUBOs() {
 
   // Get location of other uniform variables
   m_isoValueLocation = abcg::glGetUniformLocation(m_program, "uIsoValue");
+}
+
+void RayCast::destroyUBOs() {
+  abcg::glDeleteBuffers(1, &m_UBOParams);
+  abcg::glDeleteBuffers(1, &m_UBOTransform);
+  abcg::glDeleteBuffers(1, &m_UBOShading);
+  abcg::glDeleteBuffers(1, &m_UBOCamera);
 }
 
 void RayCast::createVBOs() {
@@ -375,6 +385,7 @@ void RayCast::setupVAO() {
                                   GL_FALSE, sizeof(Vertex),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
+      abcg::glDeleteVertexArrays(1, &m_VAO);
       throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
                                            name, m_vertexShaderPath));
     }

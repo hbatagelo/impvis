@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-project(external)
+project(abcg_external)
 
 add_library(${PROJECT_NAME} INTERFACE)
 

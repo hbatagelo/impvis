@@ -442,7 +442,7 @@ raymarch_method 0
 raymarch_steps 100
 cam_dist 14
 colormap_scale 1
-param a -0.26
+param a -0.25
 param b 0.25
 exprx^4+2*x^2*z^2+a*x^2-y^4+b*y^2+z^4
 
@@ -2910,7 +2910,7 @@ void main() {
   gl_Position = vec4(inPosition, 0.0, 1.0);
 }#version 300 es
 
-precision mediump float;
+precision highp float;
 
 in vec2 fragPosition;
 
@@ -3073,7 +3073,7 @@ float mpow(in float b, in float n)
 
   if (fract(n) == 0.0) {
     // Iterative squaring
-    int ni = int(n);    
+    int ni = int(n);
     float y = 1.0;
     while (ni > 1) {
       if (ni - (ni / 2) * 2 == 0) {

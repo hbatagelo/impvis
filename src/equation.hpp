@@ -12,7 +12,19 @@
 
 #include "abcgOpenGL.hpp"
 
-#include <algorithm>
+/*
+  static RE2 const regexName{R"del(([A-Za-z_]\w*))del"};
+  assert(regexName.ok()); // NOLINT
+
+void insertMatches(RE2 const &regex, re2::StringPiece str,
+                   std::set<std::string> &output) {
+
+  for (std::string match; RE2::FindAndConsume(&str, regex, &match);) {
+    output.insert(match);
+  }
+
+*/
+
 #include <string>
 #include <vector>
 

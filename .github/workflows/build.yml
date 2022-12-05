@@ -49,30 +49,31 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
 
-  macOS-build:
-    runs-on: macos-latest
-    env:
-      BUILD_TYPE: Release
+  # macOS-build:
+  #   runs-on: macos-latest
+  #   env:
+  #     BUILD_TYPE: Release
 
-    steps:
-    - uses: actions/checkout@v3
+  #   steps:
+  #   - uses: actions/checkout@v3
            
-    - name: Install dependencies
-      run: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        brew update
-        brew install conan
+  #   - name: Install dependencies
+  #     run: |
+  #       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  #       brew update
+  #       brew install conan
+  #       conan profile new default --detect --force
 
-    - name: Configure CMake
-      run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+  #   - name: Configure CMake
+  #     run: |
+  #       cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j $(sysctl -n hw.ncpu)
+  #   - name: Build
+  #     run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j $(sysctl -n hw.ncpu)
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
+  #   - name: Test
+  #     working-directory: ${{github.workspace}}/build
+  #     run: ctest -C ${{env.BUILD_TYPE}}
 
   windows-build:
     runs-on: windows-latest

@@ -13,8 +13,8 @@
 #include "textureblit.hpp"
 
 void TextureBlit::onCreate() {
-  auto const *vertexShaderPath{"shaders/textureblit.vert"};
-  auto const *fragmentShaderPath{"shaders/textureblit.frag"};
+  auto const *const vertexShaderPath{"shaders/textureblit.vert"};
+  auto const *const fragmentShaderPath{"shaders/textureblit.frag"};
   auto const &assetsPath{abcg::Application::getAssetsPath()};
   m_program =
       abcg::createOpenGLProgram({{.source = assetsPath + vertexShaderPath,
@@ -35,13 +35,14 @@ void TextureBlit::onCreate() {
   abcg::glBindVertexArray(m_VAO);
 
   auto const setUpVertexAttribute{[&](auto name, auto size, intptr_t offset) {
-    auto const location{abcg::glGetAttribLocation(m_program, name)};
-    if (location >= 0) {
+    if (auto const location{abcg::glGetAttribLocation(m_program, name)};
+        location >= 0) {
       abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
       abcg::glVertexAttribPointer(gsl::narrow<GLuint>(location), size, GL_FLOAT,
                                   GL_FALSE, sizeof(glm::vec2),
                                   reinterpret_cast<void *>(offset)); // NOLINT
     } else {
+      onDestroy();
       throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
                                            name, vertexShaderPath));
     }

@@ -29,9 +29,11 @@ public:
   [[nodiscard]] glm::vec4 getKaIa() const noexcept { return m_shading.KaIa; }
   void setKaIa(glm::vec4 KaIa) { m_shading.KaIa = KaIa; };
 
+  [[nodiscard]] bool buildFailed() const noexcept { return m_buildFailed; }
+
 private:
-  char const *m_vertexShaderPath{"shaders/raycast.vert"};
-  char const *m_fragmentShaderPath{"shaders/raycast.frag"};
+  static inline char const *const m_vertexShaderPath{"shaders/raycast.vert"};
+  static inline char const *const m_fragmentShaderPath{"shaders/raycast.frag"};
 
   struct Vertex {
     glm::vec2 position{};
@@ -90,9 +92,11 @@ private:
   std::vector<abcg::OpenGLShader> m_shaderIDs{};
   GLuint m_nextProgram{};
   bool m_throwOnBuild{};
+  bool m_buildFailed{};
 
   void createProgram(Settings const &settings);
   void createUBOs();
+  void destroyUBOs();
   void createVBOs();
   void setupVAO();
 };

@@ -15,13 +15,13 @@ set(ABCG_FILES
     abcgOpenGLShader.cpp
     abcgOpenGLWindow.cpp)
 
-add_subdirectory(external)
+add_subdirectory(abcg_external)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   add_library(${PROJECT_NAME} ${ABCG_FILES})
 
   target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-  target_link_libraries(${PROJECT_NAME} PUBLIC external)
+  target_link_libraries(${PROJECT_NAME} PUBLIC abcg_external)
   target_compile_options(
     ${PROJECT_NAME}
     PUBLIC "-std=c++20"
@@ -49,7 +49,7 @@ else()
 
   target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC external
+    PUBLIC abcg_external
     PUBLIC ${OPTIONS_TARGET})
 
   # Enable warnings only for selected files

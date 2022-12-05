@@ -1,5 +1,3 @@
-add_subdirectory(abcg)
-
 set(IMPVIS_FILES main.cpp background.cpp textureblit.cpp equation.cpp
                  window.cpp raycast.cpp)
 
@@ -13,6 +11,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${OPTIONS_TARGET})
 enable_abcg(${PROJECT_NAME})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  target_link_libraries(${PROJECT_NAME} PUBLIC external)
   set_property(
     TARGET ${PROJECT_NAME}
     APPEND_STRING

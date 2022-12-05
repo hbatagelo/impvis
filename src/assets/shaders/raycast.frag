@@ -1,6 +1,6 @@
 #version 300 es
 
-precision mediump float;
+precision highp float;
 
 in vec2 fragPosition;
 
@@ -163,7 +163,7 @@ float mpow(in float b, in float n)
 
   if (fract(n) == 0.0) {
     // Iterative squaring
-    int ni = int(n);    
+    int ni = int(n);
     float y = 1.0;
     while (ni > 1) {
       if (ni - (ni / 2) * 2 == 0) {

@@ -7,68 +7,57 @@
  * This project is released under the MIT license.
  */
 
-#include <cctype>
-#include <cstddef>
 #include <fstream>
-#include <regex>
 #include <set>
 #include <sstream>
-#include <string>
 
-#include <cppitertools/itertools.hpp>
-#include <fmt/core.h>
+#include <re2/re2.h>
 
 #include "equation.hpp"
 #include "util.hpp"
 
-void removeWhitespaces(std::string &str) {
-  std::array const whitespaces{' ', '\f', '\n', '\r', '\t', '\v'};
-  for (auto const &whitespace : whitespaces) {
-    std::erase(str, whitespace);
-  }
-}
-
-// Returns the position of the first pair of enclosing brackets starting from
+// Returns the position of the first pair of enclosing braces starting from
 // str[pos].
 //
-// Returns (npos, npos) if the brackets are not found or if there is a
-// non-whitespace character from pos and the open bracket.
+// Returns (npos, npos) if the braces are not found or if there is a
+// non-whitespace character from pos and the opening brace.
 //
-// Examples (using round brackets):
-// str="f(x)"        pos=1 -> returns (1,2)
+// Examples using parens:
+// str="f(x)"        pos=1 -> returns (1,3)
 //       ^
 // str="f   ((x)+1)" pos=1 -> returns (4,10)
 //       ^
 // str="f(x)"        pos=0 -> returns (npos, npos)
 //      ^
 std::pair<std::string::size_type, std::string::size_type>
-getBracketsPos(std::string_view str, std::string::size_type pos,
-               std::pair<char, char> brackets) {
+getBracesPos(std::string_view str, std::string::size_type pos,
+             std::pair<char, char> braces) {
   auto const failed{std::pair{std::string::npos, std::string::npos}};
 
-  // Advance through whitespaces, from pos to the position of the open bracket.
+  // Advance through whitespaces, from pos to the position of the opening brace.
   // If any non-whitespace character is found, return (npos, npos)
   auto startPos{pos};
   for (; startPos < str.length(); ++startPos) {
     auto const chr{str.at(startPos)};
-    if (chr == brackets.first)
-      break; // Open bracket found
+    if (chr == braces.first)
+      break; // Opening brace found
     if (std::isspace(chr) == 0)
       return failed;
   }
 
-  // Look for corresponding close bracket
+  // Look for corresponding closing brace
   auto numNestedParens{0};
   if (!str.empty()) {
     for (auto endPos{startPos}; endPos < str.length() - 1; ++endPos) {
       auto const chr{str.at(endPos + 1)};
-      if (chr == brackets.first)
+      if (chr == braces.first)
         ++numNestedParens;
-      if (chr == brackets.second) {
+      if (chr == braces.second) {
         if (numNestedParens > 0)
           --numNestedParens;
         else {
           ++endPos;
+          assert(startPos <= endPos); // NOLINT
           return std::pair{startPos, endPos};
         }
       }
@@ -78,12 +67,12 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
 }
 
 // Returns the position, in reverse order, of the first pair of enclosing
-// brackets starting from str[pos].
+// braces starting from str[pos].
 //
-// Returns (npos, npos) if the brackets are not found or if there is a
-// non-whitespace character from pos and the open bracket.
+// Returns (npos, npos) if the braces are not found or if there is a
+// non-whitespace character from pos and the opening brace.
 //
-// Examples using round brackets:
+// Examples using parens:
 // str="(x)+"        pos=2 -> returns (2,0)
 //        ^
 // str="((x)+1)   +" pos=9 -> returns (6,0)
@@ -91,30 +80,30 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
 // str="(x)+"        pos=3 -> returns (npos, npos)
 //         ^
 std::pair<std::string::size_type, std::string::size_type>
-getBracketsPosReverse(std::string_view str, std::string::size_type pos,
-                      std::pair<char, char> brackets) {
+getBracesPosReverse(std::string_view str, std::string::size_type pos,
+                    std::pair<char, char> braces) {
   auto const failed{std::pair{std::string::npos, std::string::npos}};
 
-  // Reverse through whitespaces, from pos to the position of the close bracket.
+  // Reverse through whitespaces, from pos to the position of the closing brace.
   // If any non-whitespace character is found, return (npos, npos)
   auto startPos{pos};
   for (; startPos > 0; --startPos) {
     auto const chr{str.at(startPos)};
-    if (chr == brackets.second)
-      break; // Close bracket found
+    if (chr == braces.second)
+      break; // Closing brace found
     if (std::isspace(chr) == 0)
       return failed;
   }
   if (startPos == 0)
     return failed;
 
-  // Look for the corresponding open bracket
+  // Look for corresponding opening brace
   auto numNestedParens{0};
   for (auto endPos{startPos}; endPos > 0; --endPos) {
     auto const chr{str.at(endPos - 1)};
-    if (chr == brackets.second)
+    if (chr == braces.second)
       ++numNestedParens;
-    if (chr == brackets.first) {
+    if (chr == braces.first) {
       if (numNestedParens > 0)
         --numNestedParens;
       else {
@@ -146,12 +135,12 @@ std::pair<std::size_t, std::size_t> getOperandSizes(std::string str,
                             str.end(), notWhitespace)};
       itr != str.end()) {
     if (*itr == '(') {
-      // Open bracket
+      // Open brace
       auto const startPos{std::distance(str.begin(), itr)};
-      auto const bracketPos{
-          getBracketsPos(str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
-      if (bracketPos.first != std::string_view::npos) {
-        sizes.second = bracketPos.second - pos;
+      auto const bracePos{
+          getBracesPos(str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
+      if (bracePos.first != std::string_view::npos) {
+        sizes.second = bracePos.second - pos;
       }
     } else {
       if (*itr == '-' || *itr == '+') {
@@ -172,12 +161,12 @@ std::pair<std::size_t, std::size_t> getOperandSizes(std::string str,
                             str.rend(), notWhitespace)};
       itr != str.rend()) {
     if (*itr == ')') {
-      // Close bracket
+      // Close brace
       auto const startPos{std::distance(itr, str.rend()) - 1};
-      auto const bracketPos{getBracketsPosReverse(
+      auto const bracePos{getBracesPosReverse(
           str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
-      if (bracketPos.first != std::string_view::npos) {
-        sizes.first = pos - bracketPos.second;
+      if (bracePos.first != std::string_view::npos) {
+        sizes.first = pos - bracePos.second;
       }
     } else {
       itr = std::find_if(itr, str.rend(), notNameOrNumber);
@@ -217,77 +206,31 @@ void Equation::onCreate() {
 
 void Equation::onDestroy() { abcg::glDeleteTextures(1, &m_thumbnailId); }
 
-// Get all names from the given expression.
-// A name is a string that starts with '_' or an alphabet letter, and is
-// composed of the characters [A-Za-z0-9_].
-std::set<std::string> getNames(std::string_view expression) {
-  std::set<std::string> names;
-  std::string str{};
-  for (auto const chr : expression) {
-    if (str.empty()) {
-      if (std::isalpha(chr) != 0 || chr == '_') {
-        str.push_back(chr);
-      }
-    } else {
-      if (std::isalnum(chr) != 0 || chr == '_') {
-        str.push_back(chr);
-      } else {
-        names.insert(str);
-        str.clear();
-      }
-    }
+// Insert matches to output set
+void insertMatches(RE2 const &regex, re2::StringPiece str,
+                   std::set<std::string> &output) {
+  for (std::string match; RE2::FindAndConsume(&str, regex, &match);) {
+    output.insert(match);
   }
-  if (!str.empty()) {
-    names.insert(str);
-    str.clear();
-  }
-  return names;
 }
 
-void Equation::extractParameters() {
-  std::set<std::string> parameters{getNames(m_loadedData.expression)};
-
-  // Remove reserved names
-  std::array const reservedNames{"x",
-                                 "y",
-                                 "z",
-                                 "pi",
-                                 "kBoundRadius",
-                                 "kBoundRadiusSquared",
-                                 "fragPosition",
-                                 "outColor",
-                                 "uCamera",
-                                 "uShading",
-                                 "uTransform",
-                                 "uParams",
-                                 "uIsoValue"};
-  for (auto const &name : reservedNames) {
-    parameters.erase(name);
+// Remove matches from output set
+void removeMatches(RE2 const &regex, re2::StringPiece str,
+                   std::set<std::string> &output) {
+  for (std::string match; RE2::FindAndConsume(&str, regex, &match);) {
+    output.erase(match);
   }
+}
 
-  // Remove function names found in str
-  auto removeFunctionNames{[&parameters](std::string str) {
-    static std::regex const regex{R"del((([a-zA-Z_])\w*)\s*\()del",
-                                  std::regex_constants::optimize};
-    std::vector<std::string> customFunctionNames{};
-    for (std::smatch match; std::regex_search(str, match, regex);
-         str = str.substr(
-             gsl::narrow<unsigned long>(match.position() + match.length()))) {
-      auto matchString{match[1].str()};
-      customFunctionNames.push_back(matchString);
-    }
-    for (auto const &name : customFunctionNames) {
-      parameters.erase(name);
-    }
-  }};
-  removeFunctionNames(m_loadedData.codeGlobal);
-  removeFunctionNames(m_loadedData.expression);
-
-  // Check if the character at str[pos] is enclosed by curly brackets
-  auto insideCurlyBrackets{[](std::string_view str, std::size_t pos) {
+// Remove matches that are not enclosed by a block scope
+void removeMatchesInSameScope(RE2 const &regex, re2::StringPiece str,
+                              std::set<std::string> &output) {
+  // Helper lambda that checks if the character at `str[pos]` is enclosed
+  // by curly braces (assuming no dangling braces)
+  auto insideCurlyBraces{[](std::string_view view, std::size_t pos) {
     int groups{};
-    for (auto const idx : iter::range(pos, str.length())) {
-      auto chr{str.at(idx)};
+    for (auto const idx : iter::range(pos, view.length())) {
+      auto const chr{view.at(idx)};
       if (chr == '{')
         ++groups;
       if (chr == '}')
@@ -296,50 +239,62 @@ void Equation::extractParameters() {
     return groups != 0;
   }};
 
-  // Remove names of constant variables found in global scope
-  {
-    std::vector<std::string> customConstantNames{};
-    static std::regex const regex{
-        R"del(const\s+[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*=)del",
-        std::regex_constants::optimize};
-    std::string str{m_loadedData.codeGlobal};
-    for (std::smatch sm; std::regex_search(str, sm, regex);
-         str = str.substr(
-             gsl::narrow<unsigned long>(sm.position() + sm.length()))) {
-      auto match{sm[1].str()};
+  for (re2::StringPiece match; RE2::PartialMatch(str, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - str.begin())};
+    if (!insideCurlyBraces(str, matchPosition)) {
+      output.erase(match.as_string());
+    }
+    str.remove_prefix(matchPosition + match.size());
+  }
+}
 
-      if (!insideCurlyBrackets(str,
-                               gsl::narrow<unsigned long>(sm.position()))) {
-        customConstantNames.push_back(match);
-      }
-    }
-    for (auto const &name : customConstantNames) {
-      parameters.erase(name);
-    }
+void Equation::extractParameters() {
+  std::set<std::string> parameters;
+
+  // Insert names
+  static RE2 const regexName{R"del(([A-Za-z_]\w*))del"};
+  assert(regexName.ok()); // NOLINT
+  insertMatches(regexName, m_loadedData.expression, parameters);
+
+  // Remove reserved names
+  static std::array const reservedNames{"x",
+                                        "y",
+                                        "z",
+                                        "pi",
+                                        "kBoundRadius",
+                                        "kBoundRadiusSquared",
+                                        "fragPosition",
+                                        "outColor",
+                                        "uCamera",
+                                        "uShading",
+                                        "uTransform",
+                                        "uParams",
+                                        "uIsoValue"};
+  for (auto const &name : reservedNames) {
+    parameters.erase(name);
   }
 
-  // Remove names of variables found in local scope
-  {
-    std::vector<std::string> customVariableNames{};
-    static std::regex const regex{
-        R"del(\b[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*=)del",
-        std::regex_constants::optimize};
-    std::string str{m_loadedData.codeLocal};
-    for (std::smatch sm; std::regex_search(str, sm, regex);
-         str = str.substr(
-             gsl::narrow<unsigned long>(sm.position() + sm.length()))) {
-      auto match{sm[1].str()};
-      if (!insideCurlyBrackets(str,
-                               gsl::narrow<unsigned long>(sm.position()))) {
-        customVariableNames.push_back(match);
-      }
-    }
-    for (auto const &name : customVariableNames) {
-      parameters.erase(name);
-    }
-  }
+  // Remove function names
+  static RE2 const regexFunctionName{R"del((([a-zA-Z_])\w*)\s*\()del"};
+  assert(regexFunctionName.ok()); // NOLINT
+  removeMatches(regexFunctionName, m_loadedData.codeGlobal, parameters);
+  removeMatches(regexFunctionName, m_loadedData.expression, parameters);
 
-  // Populate vector of Parameter
+  // Remove global constant variables
+  static RE2 const regexConstantVariable{
+      R"del(const\s+[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*=)del"};
+  assert(regexConstantVariable.ok()); // NOLINT
+  removeMatchesInSameScope(regexConstantVariable, m_loadedData.codeGlobal,
+                           parameters);
+
+  // Remove local variables
+  static RE2 const regexVariable{
+      R"del(\b[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*=)del"};
+  assert(regexVariable.ok()); // NOLINT
+  removeMatchesInSameScope(regexVariable, m_loadedData.codeLocal, parameters);
+
+  // Populate vector of parameters
   for (auto const &parameter : parameters) {
     m_parameters.push_back({parameter, 1.0f});
   }
@@ -347,6 +302,35 @@ void Equation::extractParameters() {
   // Set parameters values from loaded data
   for (auto const &parameter : m_loadedData.parameters) {
     setParameter(parameter.name, parameter.value);
+  }
+}
+
+void encloseMatchesInCurlyBraces(std::string &str, RE2 const &regex) {
+  std::size_t pos{};
+  re2::StringPiece match;
+
+  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
+    auto const posAfterName{matchPosition + match.size()};
+    auto const bracePos{getBracesPos(ns, posAfterName, {'(', ')'})};
+
+    std::string bracetedArgs{};
+    if (bracePos.first != std::string::npos &&
+        bracePos.second != std::string::npos) {
+      assert(bracePos.second >= bracePos.first); // NOLINT
+      bracetedArgs =
+          ns.substr(bracePos.first, 1 + bracePos.second - bracePos.first);
+    }
+
+    auto const what{match.as_string() + bracetedArgs}; // "name" + "(...)"
+    auto const with{"{" + what + "}"};                 // "{name(...)}"
+    str.replace(pos + matchPosition, what.length(), with.data(), with.length());
+    ns.replace(matchPosition, what.length(), with.data(), with.length());
+
+    auto const advancePos{matchPosition + match.size()};
+    pos += advancePos;
+    ns = ns.substr(advancePos);
   }
 }
 
@@ -370,15 +354,6 @@ void Equation::convertToMathJax() {
   for (auto const &greekLetter : greekLetters) {
     singleTokenArgs.emplace_back(greekLetter);
   }
-
-  // Replace "name(x)" with "name{x}" where x is a single-token argument
-  auto reformatCallWithSingleToken{
-      [&singleTokenArgs](std::string &str, std::string_view name) {
-        for (auto const &variable : singleTokenArgs) {
-          replaceAll(str, fmt::format("{}({})", name, variable),
-                     fmt::format("{}{{{}}}", name, variable));
-        }
-      }};
 
   // Remove "\" (backslash)
   std::erase(result, '\\');
@@ -405,14 +380,14 @@ void Equation::convertToMathJax() {
     replaceAll(result, name, with, true);
   }
 
-  // From inout[pos], replace the first group of srcBrackets with dstBrackets
-  std::pair const srcBrackets{'(', ')'};
-  std::pair dstBrackets{'{', '}'};
-  auto replaceBrackets{[&srcBrackets, &dstBrackets](auto &inout, auto pos) {
-    if (auto const bracketsPos{getBracketsPos(inout, pos, srcBrackets)};
-        bracketsPos.first != inout.npos) {
-      inout.at(bracketsPos.first) = dstBrackets.first;
-      inout.at(bracketsPos.second) = dstBrackets.second;
+  // From inout[pos], replace the first group of srcBraces with dstBraces
+  std::pair const srcBraces{'(', ')'};
+  std::pair dstBraces{'{', '}'};
+  auto replaceBraces{[&srcBraces, &dstBraces](auto &inout, auto pos) {
+    if (auto const bracesPos{getBracesPos(inout, pos, srcBraces)};
+        bracesPos.first != inout.npos) {
+      inout.at(bracesPos.first) = dstBraces.first;
+      inout.at(bracesPos.second) = dstBraces.second;
     }
   }};
 
@@ -423,36 +398,18 @@ void Equation::convertToMathJax() {
   replaceAll(result, "exp2", "2^", true);
 
   // Replace "^expr" with "^{expr}"
-  {
-    std::size_t pos{};
-    std::smatch match;
-    // Capture "name" from "^name(" match
-    static std::regex const regex(R"del(\^([a-zA-Z_]*[a-zA-Z0-9_.]*\s*))del",
-                                  std::regex_constants::optimize);
+  static RE2 const regexExponent{R"del(\^([a-zA-Z_]*[a-zA-Z0-9_.]*\s*))del"};
+  assert(regexExponent.ok()); // NOLINT
+  encloseMatchesInCurlyBraces(result, regexExponent);
 
-    for (std::string ns{result}; std::regex_search(ns, match, regex);) {
-      auto const posAfterName{match.position(1) + match.length(1) - 1};
-      auto bracketPos{getBracketsPos(
-          ns, gsl::narrow<unsigned long>(posAfterName + 1), {'(', ')'})};
-      std::string bracketedArgs{};
-      if (bracketPos.first != std::string::npos &&
-          bracketPos.second != std::string::npos) {
-        bracketedArgs = ns.substr(bracketPos.first,
-                                  bracketPos.second - bracketPos.first + 1);
-      }
-      auto const what{match[1].str() + bracketedArgs}; // "name" + "(...)"
-      auto const with{"{" + what + "}"};               // "{name(...)}"
-      result.replace(pos + gsl::narrow<unsigned long>(match.position(1)),
-                     what.length(), with.data(), with.length());
-      ns.replace(gsl::narrow<unsigned long>(match.position(1)), what.length(),
-                 with.data(), with.length());
-
-      auto const advancePos{
-          gsl::narrow<unsigned long>(match.position(1) + match.length(1))};
-      pos += advancePos;
-      ns = ns.substr(advancePos);
-    }
-  }
+  // Replace "name(x)" with "name{x}" where x is a single-token argument
+  auto reformatCallWithSingleToken{
+      [&singleTokenArgs](std::string &str, std::string_view name) {
+        for (auto const &variable : singleTokenArgs) {
+          replaceAll(str, fmt::format("{}({})", name, variable),
+                     fmt::format("{}{{{}}}", name, variable));
+        }
+      }};
 
   for (std::array const names{"asin", "acos", "atan", "sinh", "cosh", "tanh",
                               "asinh", "acosh", "atanh", "sin", "cos", "tan",
@@ -478,21 +435,21 @@ void Equation::convertToMathJax() {
   reformatCallWithSingleToken(result, "\\sgn"); // sgn(x) to sgn{x}
 
   // Replace "sqrt(...)" with "\sqrt{...}"
-  replaceAllAndInvoke(result, "sqrt", "\\sqrt", replaceBrackets, true);
+  replaceAllAndInvoke(result, "sqrt", "\\sqrt", replaceBraces, true);
 
   // Replace "abs(...)" with "|...|"
-  dstBrackets = std::pair{'|', '|'};
-  replaceAllAndInvoke(result, "abs", "", replaceBrackets, true);
+  dstBraces = std::pair{'|', '|'};
+  replaceAllAndInvoke(result, "abs", "", replaceBraces, true);
 
   // Replace "floor(...)" with "@...#"
-  dstBrackets = std::pair{'@', '#'};
-  replaceAllAndInvoke(result, "floor", "", replaceBrackets, true);
+  dstBraces = std::pair{'@', '#'};
+  replaceAllAndInvoke(result, "floor", "", replaceBraces, true);
   // Replace "@" with "\lfloor"
   replaceAll(result, "@", "\\lfloor", false);
   // Replace "#" with "\rfloor"
   replaceAll(result, "#", "\\rfloor", false);
   // Replace "ceil(...)" with "@...#"
-  replaceAllAndInvoke(result, "ceil", "", replaceBrackets, true);
+  replaceAllAndInvoke(result, "ceil", "", replaceBraces, true);
   // Replace "@" with "\lceil"
   replaceAll(result, "@", "\\lceil", false);
   // Replace "#" with "\rceil"
@@ -505,31 +462,71 @@ void Equation::convertToMathJax() {
   replaceAll(result, "(x,y,z)", "", false);
 
   // Replace "{(...)}" with "{...}"
-  {
-    std::smatch match;
-    // Match "{(expr)}"
-    static std::regex const regex(R"del(\{(\(.+\))\})del",
-                                  std::regex_constants::optimize);
-    for (std::string ns{result}; std::regex_search(ns, match, regex);
-         ns = result) {
-      auto const posOpenParens{
-          gsl::narrow<unsigned long>(match.position() + 1)};
-      auto bracketPos{getBracketsPos(ns, posOpenParens, {'(', ')'})};
-      // Check if the position of the closing parenthesis matches the ")}" at
-      // the end of the expression
-      if (bracketPos.second ==
-          gsl::narrow<std::size_t>(match.position() + match.length() - 2)) {
-        auto const expr{ns.substr(bracketPos.first + 1,
-                                  bracketPos.second - bracketPos.first - 1)};
-        auto const &what{match.str()};     // "{(expr)}"
-        auto const with{"{" + expr + "}"}; // "{expr}"
-        result.replace(gsl::narrow<unsigned long>(match.position()),
-                       what.length(), with.data(), with.length());
-      }
-    }
-  }
+  static RE2 const regexNameInParensInCurlyBraces{R"del(\{\((.+)\)\})del"};
+  assert(regexNameInParensInCurlyBraces.ok()); // NOLINT
+  encloseMatchesInCurlyBraces(result, regexNameInParensInCurlyBraces);
 
   m_exprMathJax = result;
+}
+
+void removeWhitespaces(std::string &str) {
+  std::array const whitespaces{' ', '\f', '\n', '\r', '\t', '\v'};
+  for (auto const &whitespace : whitespaces) {
+    std::erase(str, whitespace);
+  }
+}
+
+void parenthesizeFunctionCalls(std::string &str) {
+  std::unordered_set<std::string> functionCalls;
+
+  // Match "name(" where name is a function name
+  static RE2 const regex(R"del(\b([a-zA-Z_]*\w*\s*\())del");
+  assert(regex.ok()); // NOLINT
+
+  re2::StringPiece match;
+
+  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
+    auto const advancePos{matchPosition + match.size()};
+    auto const startPos{advancePos - 1};
+    auto const bracePos{getBracesPos(ns, startPos, {'(', ')'})};
+    auto const callArgs{
+        ns.substr(bracePos.first + 1, bracePos.second - bracePos.first)};
+
+    functionCalls.emplace(match.as_string() + callArgs); // "name(" + "...)"
+
+    ns = ns.substr(advancePos);
+  }
+
+  for (auto const &fcall : functionCalls) {
+    replaceAll(str, fcall, fmt::format("({})", fcall));
+  }
+}
+
+void reformatIntegralsAsFloats(std::string &str) {
+  // Match integers (e.g. 42) or floats (e.g. .42 or 4.2)
+  static RE2 const regex(R"del(((\.\d+\.?\d*)|\b(\d+\.?\d*)))del");
+  assert(regex.ok()); // NOLINT
+
+  std::size_t pos{};
+  re2::StringPiece match;
+
+  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
+
+    auto const number{std::stod(match.as_string())};
+    auto integralPart{0.0};
+    auto const fractionalPart{std::modf(number, &integralPart)};
+    auto const formattedString{FP_ZERO == std::fpclassify(fractionalPart)
+                                   ? fmt::format("{:.1f}", number)
+                                   : fmt::format("{:.12g}", number)};
+    str.replace(pos + matchPosition, match.size(), formattedString);
+    pos += formattedString.length() + matchPosition;
+
+    ns = ns.substr(matchPosition + match.size());
+  }
 }
 
 void Equation::convertToGLSL() {
@@ -542,30 +539,11 @@ void Equation::convertToGLSL() {
   replaceAll(result, "[", "(");
   replaceAll(result, "]", ")");
 
-  // Parenthesize function calls: f(...) to (f(...))
-  {
-    std::smatch match;
-    std::unordered_set<std::string> functionCalls;
-    // Match "name("
-    static std::regex const regex(R"del(\b[a-zA-Z_]*[a-zA-Z0-9_]*\s*\()del",
-                                  std::regex_constants::optimize);
-    for (std::string ns{result}; std::regex_search(ns, match, regex);
-         ns = ns.substr(
-             gsl::narrow<unsigned long>(match.position() + match.length()))) {
-      auto const startPos{match.position() + match.length() - 1};
-      auto const bracketPos{
-          getBracketsPos(ns, gsl::narrow<unsigned long>(startPos), {'(', ')'})};
-      auto const callArgs{ns.substr(bracketPos.first + 1,
-                                    bracketPos.second - bracketPos.first)};
-      functionCalls.emplace(match.str() + callArgs); // "name(" + "...)"
-    }
-    for (auto const &fcall : functionCalls) {
-      replaceAll(result, fcall, fmt::format("({})", fcall));
-    }
-  }
+  // Replace fun(...) with (fun(...))
+  parenthesizeFunctionCalls(result);
 
   // Replace x^y with mpowy(x) or mpow(x,y)
-  auto const maxPowerByMultiplication{16.0f};
+  auto const maxPowerByMultiplication{16.0};
   for (std::string::size_type idx{}; idx < result.length(); ++idx) {
     if (result[idx] == '^') {
       auto const operandSizes{getOperandSizes(result, idx)};
@@ -575,20 +553,19 @@ void Equation::convertToGLSL() {
       auto const rightOperand{result.substr(
           exprFirstPos + operandSizes.first + 1, operandSizes.second)};
 
-      auto isIntegral{false};
       char *end{};
-      auto power{std::strtof(rightOperand.c_str(), &end)};
-      if (power > 0.0f && power <= maxPowerByMultiplication) {
-        auto integralPart{0.0f};
-        isIntegral = std::modf(power, &integralPart) == 0.0f;
+      auto power{std::strtod(rightOperand.c_str(), &end)};
+      auto isIntegral{false};
+      if (power > 0.0 && power <= maxPowerByMultiplication) {
+        auto integralPart{0.0};
+        auto fractionalPart{std::modf(power, &integralPart)};
+        isIntegral = FP_ZERO == std::fpclassify(fractionalPart);
       }
       std::string with{};
       if (isIntegral) {
-        if (power == 1.0f) {
-          with = fmt::format("({})", leftOperand);
-        } else {
-          with = fmt::format("mpow{:.0f}({})", power, leftOperand);
-        }
+        with = gsl::narrow_cast<int>(power) == 1
+                   ? fmt::format("({})", leftOperand)
+                   : fmt::format("mpow{:.0f}({})", power, leftOperand);
       } else {
         with = fmt::format("mpow({},{})", leftOperand, rightOperand);
       }
@@ -602,29 +579,8 @@ void Equation::convertToGLSL() {
     replaceAll(result, chr, fmt::format("p.{}", chr), true);
   }
 
-  // Format numbers as decimals
-  {
-    std::smatch match;
-    std::size_t pos{};
-    // Match either integers (e.g. 42) or floats (e.g. .42 or 4.2)
-    static std::regex const regex(R"del((\.\d+\.?\d*)|\b(\d+\.?\d*))del",
-                                  std::regex_constants::optimize);
-    for (std::string ns{result}; std::regex_search(ns, match, regex);
-         ns = ns.substr(
-             gsl::narrow<unsigned long>(match.position() + match.length()))) {
-      auto const number{std::stod(match.str())};
-      auto integralPart{0.0};
-      auto const fractionalPart{std::modf(number, &integralPart)};
-      auto const formattedString{fractionalPart == 0.0
-                                     ? fmt::format("{:.1f}", number)
-                                     : fmt::format("{:.12g}", number)};
-      result.replace(pos + gsl::narrow<unsigned long>(match.position()),
-                     gsl::narrow<unsigned long>(match.length()),
-                     formattedString);
-      pos += formattedString.length() +
-             gsl::narrow<unsigned long>(match.position());
-    }
-  }
+  // Reformat integrals as floats (e.g. 42 as 42.0)
+  reformatIntegralsAsFloats(result);
 
   m_exprGLSL = result;
 }
@@ -713,24 +669,18 @@ std::vector<Equation> Equation::loadCatalogue(std::string_view filename) {
                  [](std::string const &attribValue, LoadedData &data) {
                    data.thumbnail = attribValue;
                  }},
-      std::tuple{Attribute::Param, "param",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   std::string str{attribValue};
-                   static std::regex const regex(
-                       R"del(\s*[A-Za-z_\d.+-]*)del",
-                       std::regex_constants::optimize);
-                   std::smatch match{};
-                   if (std::regex_search(str, match, regex)) {
-                     auto const name{match.str()}; // Parameter name found
-                     str = str.substr(gsl::narrow<unsigned long>(
-                         match.position() + match.length()));
-                     if (std::regex_search(str, match, regex)) {
-                       auto const value{
-                           std::stof(match.str())}; // Parameter value found
-                       data.parameters.push_back({name, value});
-                     }
-                   }
-                 }},
+      std::tuple{
+          Attribute::Param, "param",
+          [](std::string const &attribValue, LoadedData &data) {
+            static RE2 const regex{R"del(\s*([A-Za-z_])\w*)del"};
+            assert(regex.ok()); // NOLINT
+
+            re2::StringPiece str{attribValue};
+            std::string match;
+            if (RE2::FindAndConsume(&str, regex, &match)) {
+              data.parameters.push_back({match, std::stof(str.as_string())});
+            }
+          }},
       std::tuple{Attribute::Expr, "expr",
                  [](std::string const &attribValue, LoadedData &data) {
                    data.expression = attribValue;

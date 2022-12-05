@@ -8,11 +8,6 @@
  * This project is released under the MIT license.
  */
 
-#include <cppitertools/itertools.hpp>
-#include <fmt/core.h>
-#include <imgui.h>
-#include <memory>
-
 #include "abcgOpenGL.hpp"
 
 #include "equation.hpp"
@@ -21,7 +16,7 @@
 #include "util.hpp"
 #include "window.hpp"
 
-static char const *const kAppVersion{"v2.0.0"};
+static char const *const kAppVersion{"v2.0.1"};
 
 #if defined(__EMSCRIPTEN__)
 extern "C" {
@@ -74,7 +69,7 @@ void Window::onEvent(SDL_Event const &event) {
 void Window::onCreate() {
   auto const assetsPath{abcg::Application::getAssetsPath()};
 
-  // Load equations from a catalogue file
+  // Load equations from catalogue file
   auto loadEqn{[&](std::string_view filename) {
     return Equation::loadCatalogue(assetsPath + "equations/" +
                                    std::string{filename});
@@ -139,7 +134,7 @@ void Window::onCreate() {
   ImFontConfig fontConfig;
   auto const fontSize{16.0f};
 
-  auto const *proportionalFontFile{"fonts/Roboto-Medium.ttf"};
+  auto const *const proportionalFontFile{"fonts/Roboto-Medium.ttf"};
   if (m_proportionalFont = guiIO.Fonts->AddFontFromFileTTF(
           (assetsPath + proportionalFontFile).c_str(), fontSize, &fontConfig);
       m_proportionalFont == nullptr) {
@@ -147,7 +142,7 @@ void Window::onCreate() {
         fmt::format("Failed to load {}", proportionalFontFile));
   }
 
-  auto const *monospacedFontFile{"fonts/RobotoMono-Regular.ttf"};
+  auto const *const monospacedFontFile{"fonts/RobotoMono-Regular.ttf"};
   if (m_monospacedFont = guiIO.Fonts->AddFontFromFileTTF(
           (assetsPath + monospacedFontFile).c_str(), fontSize, &fontConfig);
       m_monospacedFont == nullptr) {
@@ -252,17 +247,17 @@ void Window::onPaintUI() {
   // Refresh equation rendering using MathJax
   static auto lastElapsedTime{0.0};
   if (auto const timeOut{0.125}; getElapsedTime() - lastElapsedTime > timeOut) {
-    /*    lastElapsedTime = getElapsedTime();
-        static auto lastIsoValue{0.0f};
-        if (lastIsoValue != m_settings.isoValue) {
-    #if defined(__EMSCRIPTEN__)
-          auto const &loadedData{m_settings.equation.getLoadedData()};
-          updateEquation(
-              m_settings.equation.getMathJaxExpression(m_settings.isoValue),
-              m_settings.overlayMathJaxComment ? loadedData.comment : "");
-    #endif
-          lastIsoValue = m_settings.isoValue;
-        }*/
+    lastElapsedTime = getElapsedTime();
+    static auto lastIsoValue{0.0f};
+    if (lastIsoValue != m_settings.isoValue) {
+#if defined(__EMSCRIPTEN__)
+      auto const &loadedData{m_settings.equation.getLoadedData()};
+      updateEquation(
+          m_settings.equation.getMathJaxExpression(m_settings.isoValue),
+          m_settings.overlayMathJaxComment ? loadedData.comment : "");
+#endif
+      lastIsoValue = m_settings.isoValue;
+    }
   }
 
   ImGui::PopFont();
@@ -270,8 +265,8 @@ void Window::onPaintUI() {
 
 void Window::paintMainWindow() {
   // Create main window widget
-  auto minWindowSize{ImVec2(248, 534)};
-  auto maxWindowSize{minWindowSize};
+  auto const minWindowSize{ImVec2(248, 534)};
+  auto const maxWindowSize{minWindowSize};
   auto parametersExtraHeight{0UL};
   auto const &parameters{m_settings.equation.getParameters()};
   if (!parameters.empty()) {
@@ -285,7 +280,7 @@ void Window::paintMainWindow() {
 #endif
   }
 
-  ImVec2 windowSize{
+  ImVec2 const windowSize{
       minWindowSize.x,
       std::max(minWindowSize.y,
                std::min(maxWindowSize.y, m_settings.viewportSize.y * 0.5f))};
@@ -460,11 +455,11 @@ void Window::paintTopButtonBar() {
   for (auto const index : iter::range(m_buttonTexture.size())) {
     auto const selected{isSelected(index)};
     if (selected) {
-      auto color{ImVec4(0.62f, 0.62f, 0.62f, 1.0f)};
+      auto const color{ImVec4(0.62f, 0.62f, 0.62f, 1.0f)};
       ImGui::PushStyleColor(ImGuiCol_Button, color);
       ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
     } else {
-      auto color{ImVec4(0.11f, 0.11f, 0.11f, 1.0f)};
+      auto const color{ImVec4(0.11f, 0.11f, 0.11f, 1.0f)};
       ImGui::PushStyleColor(ImGuiCol_Button, color);
     }
 
@@ -835,6 +830,15 @@ void Window::paintEquationEditor() {
   static const std::size_t maxTextSize{80UL * 16};
 
   ImGui::Text("Injected code (GLSL ES 3.00):");
+  if (m_rayCast.buildFailed()) {
+    auto const *const errorMessage{"ERROR: Ill-formed code or expression"};
+
+    auto const textSize{ImGui::CalcTextSize(errorMessage)};
+    ImGui::SameLine(windowSize.x - textSize.x - 8);
+
+    ImVec4 const redColor{1.0f, 0.35f, 0.35f, 1.0f};
+    ImGui::TextColored(redColor, "%s", errorMessage);
+  }
   ImGui::BeginChild("##code_child", ImVec2(0, windowSize.y - 134), true);
   ImGui::Text("Global scope:");
   ImGui::SameLine(windowSize.x / 2 - 4);
@@ -876,7 +880,7 @@ void Window::paintEquationEditor() {
   }
   ImGui::EndChild();
 
-  ImGui::Text("Equation:");
+  ImGui::Text("Expression:");
   auto const eqIsovalue{fmt::format("= {:.3g}", m_settings.isoValue)};
   auto const eqIsoValueSize{ImGui::CalcTextSize(eqIsovalue.c_str())};
 
@@ -1046,8 +1050,8 @@ void Window::onResize(glm::ivec2 const &size) {
   }
 
   // Initialize textures with an array of zeros to prevent WebGL warnings
-  auto zeroBufferSize{gsl::narrow<unsigned long>(size.x * size.y * 4)};
-  auto zeroBuffer{std::vector<std::byte>(zeroBufferSize, std::byte{})};
+  auto const zeroBufferSize{gsl::narrow<unsigned long>(size.x * size.y * 4)};
+  auto const zeroBuffer{std::vector<std::byte>(zeroBufferSize, std::byte{})};
 
   abcg::glGenTextures(1, &m_backgroundRenderTex);
   abcg::glBindTexture(GL_TEXTURE_2D, m_backgroundRenderTex);

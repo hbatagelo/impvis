@@ -4,4 +4,5 @@ project(impvis)
 
 include(cmake/Common.cmake)
 
+add_subdirectory(external)
 add_subdirectory(src)
