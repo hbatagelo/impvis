@@ -63,6 +63,7 @@ getBracesPos(std::string_view str, std::string::size_type pos,
       }
     }
   }
+
   return failed;
 }
 
@@ -391,12 +392,6 @@ void Equation::convertToMathJax() {
     }
   }};
 
-  // Replace "exp" with "e^"
-  replaceAll(result, "exp", "e^", true);
-
-  // Replace "exp2" with "2^"
-  replaceAll(result, "exp2", "2^", true);
-
   // Replace "^expr" with "^{expr}"
   static RE2 const regexExponent{R"del(\^([a-zA-Z_]*[a-zA-Z0-9_.]*\s*))del"};
   assert(regexExponent.ok()); // NOLINT
@@ -422,6 +417,12 @@ void Equation::convertToMathJax() {
     reformatCallWithSingleToken(result, with);
   }
 
+  // Replace "exp(...)" with "e^{...}"
+  replaceAllAndInvoke(result, "exp", "e^", replaceBraces, true);
+
+  // Replace "exp2(...)" with "2^{...}"
+  replaceAllAndInvoke(result, "exp2", "2^", replaceBraces, true);
+
   // Replace "log" with "\ln"
   replaceAll(result, "log", "\\ln", true);
   reformatCallWithSingleToken(result, "\\ln"); // ln(x) to ln{x}
@@ -444,14 +445,19 @@ void Equation::convertToMathJax() {
   // Replace "floor(...)" with "@...#"
   dstBraces = std::pair{'@', '#'};
   replaceAllAndInvoke(result, "floor", "", replaceBraces, true);
+
   // Replace "@" with "\lfloor"
   replaceAll(result, "@", "\\lfloor", false);
+
   // Replace "#" with "\rfloor"
   replaceAll(result, "#", "\\rfloor", false);
+
   // Replace "ceil(...)" with "@...#"
   replaceAllAndInvoke(result, "ceil", "", replaceBraces, true);
+
   // Replace "@" with "\lceil"
   replaceAll(result, "@", "\\lceil", false);
+
   // Replace "#" with "\rceil"
   replaceAll(result, "#", "\\rceil", false);
 

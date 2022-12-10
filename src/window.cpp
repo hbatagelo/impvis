@@ -71,8 +71,7 @@ void Window::onCreate() {
       EquationGroup{"Decic and higher", loadEqn("decp.txt")});
   m_equationGroups.push_back(
       EquationGroup{"Non-algebraic", loadEqn("nonalg.txt")});
-  m_equationGroups.push_back(
-      EquationGroup{"User-defined", std::vector<Equation>{Equation{}}});
+  m_equationGroups.push_back(EquationGroup{"Other", loadEqn("other.txt")});
 
   for (auto &equationGroup : m_equationGroups) {
     for (auto &equation : equationGroup.equations) {
@@ -913,24 +912,30 @@ void Window::paintEquationEditor() {
       oldLoadedData.codeLocal = newInjectedCodeLocal;
       oldLoadedData.comment = "";
 
-      // Change selection to the user-defined equation
-      m_settings.selectedUIGroupIndex = m_equationGroups.size() - 1;
-      m_settings.selectedUIEquationIndex = 0;
+      // Change selection to the last equation of the last equation group
+      static auto const originalNumberOfEquationsInLastGroup{
+          m_equationGroups.back().equations.size()};
+      static auto const indexOfLastGroup{m_equationGroups.size() - 1};
+
+      m_settings.selectedUIGroupIndex = indexOfLastGroup;
+      m_settings.selectedUIEquationIndex = originalNumberOfEquationsInLastGroup;
       m_settings.rebuildProgram = true;
 
-      Equation equation{oldLoadedData};
-      auto &equations{
-          m_equationGroups.at(m_settings.selectedUIGroupIndex).equations};
-      equations.clear();
-      equations.push_back(equation);
+      Equation userDefinedEquation{oldLoadedData};
+      auto &equations{m_equationGroups.at(indexOfLastGroup).equations};
+      if (equations.size() == originalNumberOfEquationsInLastGroup) {
+        equations.push_back(userDefinedEquation);
+      } else {
+        equations.back() = userDefinedEquation;
+      }
 
-      m_settings.equation = equation;
+      m_settings.equation = userDefinedEquation;
 
 #if defined(__EMSCRIPTEN__)
       updateEquationName(oldLoadedData.name);
-      updateEquation(equation.getMathJaxExpression(m_settings.isoValue),
-                     m_settings.overlayMathJaxComment ? oldLoadedData.comment
-                                                      : "");
+      updateEquation(
+          userDefinedEquation.getMathJaxExpression(m_settings.isoValue),
+          m_settings.overlayMathJaxComment ? oldLoadedData.comment : "");
 #endif
     }
   }

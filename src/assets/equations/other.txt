@@ -1,0 +1,22 @@
+name Superquadric
+thumb textures/thumbs/other/superquadric.png
+bound_shape 0
+bound_radius 1.7
+raymarch_method 0
+raymarch_steps 100
+cam_dist 7
+colormap_scale 5
+param r 1.5
+param s 0.75
+param t 4
+expr abs(x)^r+abs(y)^s+abs(z)^t-1
+
+name Tetrahedron
+thumb textures/thumbs/other/tetrahedron.png
+bound_shape 0
+bound_radius 6.1
+raymarch_method 0
+raymarch_steps 300
+cam_dist 27
+colormap_scale 1.5
+expr abs(abs(abs(x)+2*y)+abs(x)+2*z)+abs(abs(x)+2*y)+abs(x)-5
