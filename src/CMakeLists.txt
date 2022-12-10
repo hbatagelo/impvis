@@ -12,20 +12,4 @@ enable_abcg(${PROJECT_NAME})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   target_link_libraries(${PROJECT_NAME} PUBLIC external)
-  set_property(
-    TARGET ${PROJECT_NAME}
-    APPEND_STRING
-    PROPERTY LINK_FLAGS "--bind -s")
-
-  if(${CMAKE_GENERATOR} MATCHES "Ninja")
-    set_property(
-      TARGET ${PROJECT_NAME}
-      APPEND_STRING
-      PROPERTY LINK_FLAGS EXPORTED_RUNTIME_METHODS="[""ccall"",""cwrap""]")
-  else()
-    set_property(
-      TARGET ${PROJECT_NAME}
-      APPEND_STRING
-      PROPERTY LINK_FLAGS EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]')
-  endif()
 endif()

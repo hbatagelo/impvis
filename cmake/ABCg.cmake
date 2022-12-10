@@ -22,7 +22,6 @@ function(enable_abcg project_target)
     list(APPEND LINK_FLAGS "-sASSERTIONS=0")
     list(APPEND LINK_FLAGS "-sDISABLE_EXCEPTION_CATCHING=1")
     list(APPEND LINK_FLAGS "-sALLOW_MEMORY_GROWTH=1")
-    list(APPEND LINK_FLAGS "-sEXIT_RUNTIME=1")
     list(APPEND LINK_FLAGS "-sFULL_ES3=1")
     list(APPEND LINK_FLAGS "-sMAX_WEBGL_VERSION=2")
     list(APPEND LINK_FLAGS "-sMIN_WEBGL_VERSION=2")
@@ -73,35 +72,18 @@ function(enable_abcg project_target)
       file(GLOB SDL2_IMG_DLLS "${SDL2_IMG_LIBPATH}*.dll")
       file(COPY ${SDL2_IMG_DLLS} DESTINATION ${output_dir})
     else()
-      # PRE_BUILD: clean up build directory
-      add_custom_command(
-        TARGET ${project_target}
-        PRE_BUILD
-        COMMAND # Remove directory ${project_target}
-                ${CMAKE_COMMAND} -E remove_directory
-                ${output_dir}/${project_target})
-
       # POST_BUILD: copy executable and assets to bin directory
       if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set(extension ".exe")
       endif()
 
-      # Make directory ${project_target}.dir
-      add_custom_command(
-        TARGET ${project_target}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-                ${output_dir}/${project_target}.dir)
-
-      # Copy assets directory to ${project_target}.dir
+      # Copy assets directory to ${output_dir}
       if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/assets)
         add_custom_command(
           TARGET ${project_target}
           POST_BUILD
-          COMMAND
-            ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_SOURCE_DIR}/assets
-            ${output_dir}/${project_target}.dir/assets)
+          COMMAND ${CMAKE_COMMAND} -E copy_directory
+                  ${CMAKE_CURRENT_SOURCE_DIR}/assets ${output_dir}/assets)
       endif()
 
       # Take into account that, on Windows with MSVC, binaries are placed in a
@@ -113,44 +95,30 @@ function(enable_abcg project_target)
           "$<$<CONFIG:Release>:Release/>" "$<$<CONFIG:MinSizeRel>:MinSizeRel/>"
           "$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/>")
 
-        # Copy DLLs of SDL2: etract first string delimited by ';', extract path
+        # Copy DLLs of SDL2: extract first string delimited by ';', extract path
         # then copy
         list(GET SDL2_LIBRARY 0 SDL2_FIRSTPATH)
         string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL2_LIBPATH
                              ${SDL2_FIRSTPATH})
         file(GLOB SDL2_DLLS "${SDL2_LIBPATH}*.dll")
-        file(COPY ${SDL2_DLLS} DESTINATION ${output_dir}/${project_target}.dir/)
+        file(COPY ${SDL2_DLLS} DESTINATION ${output_dir}/)
 
         # Copy DLLs of SDL2_image
         list(GET SDL2_IMAGE_LIBRARIES 0 SDL2_IMG_FIRSTPATH)
         string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL2_IMG_LIBPATH
                              ${SDL2_IMG_FIRSTPATH})
         file(GLOB SDL2_IMG_DLLS "${SDL2_IMG_LIBPATH}*.dll")
-        file(COPY ${SDL2_IMG_DLLS}
-             DESTINATION ${output_dir}/${project_target}.dir/)
+        file(COPY ${SDL2_IMG_DLLS} DESTINATION ${output_dir}/)
       endif()
 
       add_custom_command(
         TARGET ${project_target}
         POST_BUILD
         COMMAND
-          # Copy executable from output directory to ${project_target}.dir
+          # Copy executable from output directory to ${project_target}
           ${CMAKE_COMMAND} -E copy
           ${output_dir}/${build_type}${project_target}${extension}
-          ${output_dir}/${project_target}.dir/${project_target}${extension}
-        COMMAND # Remove executable from output directory
-                ${CMAKE_COMMAND} -E remove
-                ${output_dir}/${build_type}${project_target}${extension}
-        COMMAND_EXPAND_LISTS)
-
-      add_custom_command(
-        TARGET ${project_target}
-        POST_BUILD
-        COMMAND # Rename ${project_target}.dir to ${project_target}
-                ${CMAKE_COMMAND} -E rename ${output_dir}/${project_target}.dir
-                ${output_dir}/${project_target}
-        COMMAND # Remove ${project_target}.dir (useful if renaming has failed)
-                ${CMAKE_COMMAND} -E rm -rf ${output_dir}/${project_target}.dir)
+          ${output_dir}/${project_target}${extension})
     endif()
 
   endif()

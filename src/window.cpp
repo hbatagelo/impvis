@@ -19,15 +19,6 @@
 static char const *const kAppVersion{"v2.0.1"};
 
 #if defined(__EMSCRIPTEN__)
-extern "C" {
-EMSCRIPTEN_KEEPALIVE
-float my_sqrt(float x) { return sqrt(x); }
-}
-#endif
-
-#if defined(__EMSCRIPTEN__)
-#include <emscripten/bind.h>
-
 EM_JS(void, jsUpdateEquation,
       (char const *equation, int equationLength, char const *comment,
        int commentLength),
@@ -48,11 +39,6 @@ bool updateEquation(std::string equation, std::string comment) {
 bool updateEquationName(std::string name) {
   jsUpdateEquationName(name.c_str(), name.length());
   return true;
-}
-
-EMSCRIPTEN_BINDINGS(module) {
-  emscripten::function("updateEquation", &updateEquation);
-  emscripten::function("updateEquationName", &updateEquationName);
 }
 #endif
 
