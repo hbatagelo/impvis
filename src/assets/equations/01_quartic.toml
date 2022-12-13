@@ -1,0 +1,171 @@
+title = "Quartic"
+
+[bifolia]
+name = "Bifolia"
+thumbnail = "textures/thumbs/quartic/bifolia.png"
+bounds_radius = 2
+raymarch_steps = 80
+camera_distance = 7
+colormap_scale = 7
+expression = "(x^2+y^2+z^2)^2-3*y*(x^2+z^2)"
+
+[cassini]
+name = "Cassini"
+thumbnail = "textures/thumbs/quartic/cassini.png"
+bounds_radius = 3
+raymarch_steps = 75
+camera_distance = 13
+colormap_scale = 0.75
+parameters = [{name = "r", value = 1}]
+expression = "[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2"
+
+[chair]
+name = "Chair"
+thumbnail = "textures/thumbs/quartic/chair.png"
+bounds_radius = 2
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 8
+parameters = [{name = "a", value = 0.95},
+              {name = "b", value = 0.8},
+              {name = "k", value = 1}]
+expression = "(x^2+y^2+z^2-a*k^2)^2-b*[(z-k)^2-2*x^2]*[(z+k)^2-2*y^2]"
+
+[chmutov_quartic]
+name = "Chmutov Quartic"
+thumbnail = "textures/thumbs/quartic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.2
+raymarch_steps = 70
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_4(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return 8.*x4-8.*x2+1.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\; T_4(x)=8x^4-8x^2+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;4.}
+'''
+expression = "T_4(x)+T_4(y)+T_4(z)"
+
+[cross_cap]
+name = "Cross-Cap"
+thumbnail = "textures/thumbs/quartic/cross-cap.png"
+bounds_radius = 2.5
+raymarch_steps = 250
+camera_distance = 8
+colormap_scale = 5
+parameters = [{name = "a", value = 1}]
+expression = "4*x^2*(x^2+y^2+z^2+a*z)+y^2*(y^2+z^2-a^2)"
+
+[cushion]
+name = "Cushion"
+thumbnail = "textures/thumbs/quartic/cushion.png"
+bounds_radius = 2
+raymarch_steps = 150
+camera_distance = 9
+colormap_scale = 8
+expression = '''
+z^2*x^2-z^4+2*z^3+x^2-2*z^2-x^4-y^4-
+2*x^2*y^2-y^2*z^2+2*y^2*z+y^2'''
+
+[devil]
+name = "Devil"
+thumbnail = "textures/thumbs/quartic/devil.png"
+bounds_radius = 3
+raymarch_steps = 100
+camera_distance = 14
+colormap_scale = 1
+parameters = [{name = "a", value = -0.25}, 
+              {name = "b", value = 0.25}]
+expression = "x^4+2*x^2*z^2+a*x^2-y^4+b*y^2+z^4"
+
+[double_cone]
+name = "Double Cone"
+thumbnail = "textures/thumbs/quartic/double-cone.png"
+bounds_radius = 3
+raymarch_steps = 100
+camera_distance = 14
+colormap_scale = 2
+parameters = [{name = "r", value = 1}]
+expression = "y^2*x^2+y^2*z^2-x^4-2*x^2*z^2-z^4"
+
+[goursat]
+name = "Goursat"
+thumbnail = "textures/thumbs/quartic/goursat.png"
+bounds_radius = 1.5
+raymarch_steps = 65
+camera_distance = 9
+colormap_scale = 2.5
+expression = "x^4+y^4+z^4-1"
+
+[miter]
+name = "Miter"
+thumbnail = "textures/thumbs/quartic/miter.png"
+bounds_radius = 2.5
+raymarch_steps = 180
+camera_distance = 6
+colormap_scale = 7
+expression = "4*x^2*(x^2+y^2+z^2)-y^2*(1-y^2-z^2)"
+
+[nordstrand]
+name = "Nordstrand"
+thumbnail = "textures/thumbs/quartic/nordstrand.png"
+bounds_radius = 1.2
+raymarch_steps = 120
+camera_distance = 6
+colormap_scale = 1
+expression = '''
+25*[x^3*(y+z)+y^3*(x+z)+z^3*(x+y)]+50*(x^2*y^2+x^2*z^2+y^2*x^2)-
+125*(x^2*y*z+y^2*x*z+z^2*x*y)-4*(x*y+x*z+y*z)+60*x*y*z'''
+
+[pillow_tooth]
+name  = "Pillow Tooth"
+thumbnail = "textures/thumbs/quartic/pillow_tooth.png"
+bounds_radius = 2
+raymarch_steps = 60
+camera_distance = 9
+colormap_scale = 3
+expression = "x^4+y^4+z^4-x^2-y^2-z^2"
+
+[piriform]
+name = "Piriform"
+thumbnail = "textures/thumbs/quartic/piriform.png"
+bounds_radius = 2
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 12
+parameters = [{name = "a", value = 1}]
+expression = "(x^4-a*x^3)+a^2*(y^2+z^2)"
+
+[steiner]
+name = "Steiner"
+thumbnail = "textures/thumbs/quartic/steiner.png"
+bounds_radius = 3
+raymarch_steps = 150
+camera_distance = 10
+colormap_scale = 12
+expression = "x^2*y^2+x^2*z^2+y^2*z^2-2*x*y*z"
+
+[tetrahedroid]
+name = "Tetrahedroid"
+thumbnail = "textures/thumbs/quartic/tetrahedroid.png"
+bounds_radius = 3
+raymarch_steps = 75
+camera_distance = 13
+colormap_scale = 1.5
+expression = "x^4+y^4+z^4-x^2-y^2-z^2-x^2*y^2-y^2*z^2-z^2*x^2+1"
+
+[torus]
+name = "Torus"
+thumbnail = "textures/thumbs/quartic/torus.png"
+bounds_radius = 2.5
+raymarch_steps = 80
+camera_distance = 9
+colormap_scale = 3
+parameters = [{name = "r", value = 0.5}, {name = "R", value = 1}]
+expression = "(x^2+y^2+z^2+R^2-r^2)^2-4*R^2*(x^2+y^2)"

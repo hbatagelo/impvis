@@ -7,10 +7,8 @@
  * This project is released under the MIT license.
  */
 
-#include <fmt/core.h>
-
-#include "abcgApplication.hpp"
 #include "background.hpp"
+#include "abcgApplication.hpp"
 
 void Background::onCreate() {
   abcg::glGenFramebuffers(1, &m_FBO);

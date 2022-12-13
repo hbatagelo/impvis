@@ -7,10 +7,8 @@
  * This project is released under the MIT license.
  */
 
-#include <fmt/core.h>
-
-#include "abcgOpenGL.hpp"
 #include "textureblit.hpp"
+#include "abcgOpenGL.hpp"
 
 void TextureBlit::onCreate() {
   auto const *const vertexShaderPath{"shaders/textureblit.vert"};
@@ -66,11 +64,6 @@ void TextureBlit::onPaint(GLuint texture) const {
   abcg::glBindVertexArray(m_VAO);
   abcg::glActiveTexture(GL_TEXTURE0);
   abcg::glBindTexture(GL_TEXTURE_2D, texture);
-
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   abcg::glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

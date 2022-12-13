@@ -62,6 +62,9 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # re2
   set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} re2/20220601)
 
+  # tomlplusplus
+  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} tomlplusplus/3.2.0)
+
   # SDL2
   set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl/2.0.20)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:alsa=False)
@@ -97,6 +100,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   find_package(Microsoft.GSL)
   find_package(GLEW)
   find_package(re2)
+  find_package(tomlplusplus)
   find_package(SDL2)
   find_package(SDL2_image)
 
@@ -114,7 +118,8 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
               Microsoft.GSL::GSL
               re2::re2
               SDL2::SDL2
-              SDL2_image::SDL2_image)
+              SDL2_image::SDL2_image
+              tomlplusplus::tomlplusplus)
 
 endif()
 

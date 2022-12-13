@@ -1,0 +1,22 @@
+title = "Other"
+
+[superquadric]
+name = "Superquadric"
+thumbnail = "textures/thumbs/other/superquadric.png"
+bounds_radius = 1.7
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 5
+parameters = [{name = "r", value = 1.5},
+              {name = "s", value = 0.75},
+              {name = "t", value = 4}]
+expression = "abs(x)^r+abs(y)^s+abs(z)^t-1"
+
+[tetrahedon]
+name = "Tetrahedron"
+thumbnail = "textures/thumbs/other/tetrahedron.png"
+bounds_radius = 6.1
+raymarch_steps = 300
+camera_distance = 27
+colormap_scale = 1.5
+expression = "abs(abs(abs(x)+2*y)+abs(x)+2*z)+abs(abs(x)+2*y)+abs(x)-5"

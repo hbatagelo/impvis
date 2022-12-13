@@ -8,6 +8,12 @@
  * This project is released under the MIT license.
  */
 
+#include <filesystem>
+#include <optional>
+#include <set>
+
+#include <toml.hpp>
+
 #include "abcgOpenGL.hpp"
 
 #include "equation.hpp"
@@ -16,7 +22,7 @@
 #include "util.hpp"
 #include "window.hpp"
 
-static char const *const kAppVersion{"v2.0.1"};
+static char const *const kAppVersion{"v2.1.0"};
 
 #if defined(__EMSCRIPTEN__)
 EM_JS(void, jsUpdateEquation,
@@ -42,6 +48,72 @@ bool updateEquationName(std::string name) {
 }
 #endif
 
+std::vector<Equation> loadCatalog(toml::table const &table) {
+  std::vector<Equation> equations;
+
+  Equation::LoadedData data;
+
+  // Iterate over an array of tables of parameters and load the parameters into
+  // data
+  auto loadParameters{[&data](toml::array const *paramArray) {
+    for (auto const &paramTable : *paramArray) {
+      if (!paramTable.is_table())
+        continue;
+
+      Equation::Parameter parameter;
+
+      // Read parameter name and value
+      for (auto &&[tableKey, tableValue] : *paramTable.as_table()) {
+        if (tableKey.str() == "name") {
+          parameter.name = tableValue.value_or("");
+        } else if (tableKey.str() == "value") {
+          parameter.value = tableValue.value_or(0.0f);
+        }
+      }
+
+      if (!parameter.name.empty()) {
+        data.parameters.push_back(std::move(parameter));
+      }
+    }
+  }};
+
+  for (auto &&[rootKey, rootValue] : table) {
+    // Ignore top-level keys with values, such as the 'title' key
+    if (rootValue.is_value())
+      continue;
+
+    // Load data
+    data = {};
+    auto const &subTable{table[rootKey]};
+    data.name = subTable["name"].value_or(data.name);
+    data.thumbnail = subTable["thumbnail"].value_or(data.thumbnail);
+    data.expression = subTable["expression"].value_or(data.expression);
+    data.codeLocal = subTable["code_local"].value_or(data.codeLocal);
+    data.codeGlobal = subTable["code_global"].value_or(data.codeGlobal);
+    data.comment = subTable["comment"].value_or(data.comment);
+    data.boundShape = subTable["bounds_shape"].value_or(data.boundShape);
+    data.boundRadius = subTable["bounds_radius"].value_or(data.boundRadius);
+    data.rayMarchMethod =
+        subTable["raymarch_method"].value_or(data.rayMarchMethod);
+    data.rayMarchSteps =
+        subTable["raymarch_steps"].value_or(data.rayMarchSteps);
+    data.rayMarchRootTest =
+        subTable["raymarch_root_test"].value_or(data.rayMarchRootTest);
+    data.camDist = subTable["camera_distance"].value_or(data.camDist);
+    data.colormapScale =
+        subTable["colormap_scale"].value_or(data.colormapScale);
+    if (subTable["parameters"].is_array_of_tables()) {
+      loadParameters(subTable["parameters"].as_array());
+    }
+
+    if (!data.expression.empty()) {
+      equations.emplace_back(data);
+    }
+  }
+
+  return equations;
+}
+
 void Window::onEvent(SDL_Event const &event) {
   if (!m_settings.drawUI) {
     if (event.type == SDL_KEYUP) {
@@ -55,23 +127,29 @@ void Window::onEvent(SDL_Event const &event) {
 void Window::onCreate() {
   auto const assetsPath{abcg::Application::getAssetsPath()};
 
-  // Load equations from catalogue file
-  auto loadEqn{[&](std::string_view filename) {
-    return Equation::loadCatalogue(assetsPath + "equations/" +
-                                   std::string{filename});
-  }};
-  m_equationGroups.push_back(EquationGroup{"Cubic", loadEqn("cubic.txt")});
-  m_equationGroups.push_back(EquationGroup{"Quartic", loadEqn("quartic.txt")});
-  m_equationGroups.push_back(EquationGroup{"Quintic", loadEqn("quintic.txt")});
-  m_equationGroups.push_back(EquationGroup{"Sextic", loadEqn("sextic.txt")});
-  m_equationGroups.push_back(EquationGroup{"Septic", loadEqn("septic.txt")});
-  m_equationGroups.push_back(EquationGroup{"Octic", loadEqn("octic.txt")});
-  m_equationGroups.push_back(EquationGroup{"Nonic", loadEqn("nonic.txt")});
-  m_equationGroups.push_back(
-      EquationGroup{"Decic and higher", loadEqn("decp.txt")});
-  m_equationGroups.push_back(
-      EquationGroup{"Non-algebraic", loadEqn("nonalg.txt")});
-  m_equationGroups.push_back(EquationGroup{"Other", loadEqn("other.txt")});
+  // Get list of TOML files describing the equation groups
+  std::set<std::string> equationFilenames;
+  for (auto const &entry :
+       std::filesystem::directory_iterator{assetsPath + "equations/"}) {
+    if (entry.is_regular_file() && entry.path().extension() == ".toml") {
+      equationFilenames.insert(entry.path().string());
+    }
+  }
+
+  // Load equations
+  for (auto const &filename : equationFilenames) {
+    toml::table table;
+    try {
+      table = toml::parse_file(filename);
+      m_equationGroups.push_back(EquationGroup{
+          table["title"].value_or("Undefined"), loadCatalog(table)});
+    } catch (toml::parse_error const &exception) {
+      fmt::print(stderr, "Error parsing file '{}'\n{} (line {}, column {})\n",
+                 exception.source().path->c_str(), exception.description(),
+                 exception.source().begin.line,
+                 exception.source().begin.column);
+    }
+  }
 
   for (auto &equationGroup : m_equationGroups) {
     for (auto &equation : equationGroup.equations) {
@@ -80,9 +158,13 @@ void Window::onCreate() {
   }
 
   // Update selected equation
-  auto const equation{m_equationGroups.at(m_settings.selectedUIGroupIndex)
-                          .equations.at(m_settings.selectedUIEquationIndex)};
-  m_settings.equation = equation;
+  if (m_settings.selectedUIGroupIndex < m_equationGroups.size() &&
+      m_settings.selectedUIEquationIndex <
+          m_equationGroups[m_settings.selectedUIGroupIndex].equations.size()) {
+    auto const equation{m_equationGroups[m_settings.selectedUIGroupIndex]
+                            .equations[m_settings.selectedUIEquationIndex]};
+    m_settings.equation = equation;
+  }
 
   auto const &loadedData{m_settings.equation.getLoadedData()};
 
@@ -92,7 +174,7 @@ void Window::onCreate() {
 
 #if defined(__EMSCRIPTEN__)
   updateEquationName(loadedData.name);
-  updateEquation(equation.getMathJaxExpression(m_settings.isoValue),
+  updateEquation(m_settings.equation.getMathJaxExpression(m_settings.isoValue),
                  m_settings.overlayMathJaxComment ? loadedData.comment : "");
 #endif
 
@@ -221,18 +303,19 @@ void Window::onPaintUI() {
 
   ImGui::PushFont(m_proportionalFont);
 
-  paintMainWindow();
+  paintUIMainWindow();
 
   if (m_settings.showEquationEditor) {
-    paintEquationEditor();
+    paintUIEquationEditor();
   }
 
-  paintIsoValueWindow();
+  paintUIIsoValueWindow();
 
   // Refresh equation rendering using MathJax
   static auto lastElapsedTime{0.0};
-  if (auto const timeOut{0.125}; getElapsedTime() - lastElapsedTime > timeOut) {
-    lastElapsedTime = getElapsedTime();
+  if (auto const timeOut{0.125};
+      abcg::Window::getElapsedTime() - lastElapsedTime > timeOut) {
+    lastElapsedTime = abcg::Window::getElapsedTime();
     static auto lastIsoValue{0.0f};
     if (lastIsoValue != m_settings.isoValue) {
 #if defined(__EMSCRIPTEN__)
@@ -248,21 +331,14 @@ void Window::onPaintUI() {
   ImGui::PopFont();
 }
 
-void Window::paintMainWindow() {
+void Window::paintUIMainWindow() {
   // Create main window widget
   auto const minWindowSize{ImVec2(248, 534)};
   auto const maxWindowSize{minWindowSize};
-  auto parametersExtraHeight{0UL};
+  std::size_t parametersExtraHeight{};
   auto const &parameters{m_settings.equation.getParameters()};
   if (!parameters.empty()) {
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4267) // Safe conversion from size_t to unsigned long
-#endif
     parametersExtraHeight = 34 + parameters.size() * 26;
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
   }
 
   ImVec2 const windowSize{
@@ -278,19 +354,19 @@ void Window::paintMainWindow() {
                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
                    ImGuiWindowFlags_NoMove);
 
-  paintTopButtonBar();
+  paintUITopButtonBar();
 
   if (ImGui::BeginTabBar("##main_tab_bar", ImGuiTabBarFlags_None)) {
     if (ImGui::BeginTabItem("Equations")) {
-      paintEquationsTab(windowSize.y - 63);
+      paintUIEquationsTab(windowSize.y - 63);
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Settings")) {
-      paintSettingsTab();
+      paintUISettingsTab();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("About")) {
-      paintAboutTab();
+      paintUIAboutTab();
       ImGui::EndTabItem();
     }
 
@@ -350,11 +426,11 @@ void Window::paintMainWindow() {
   }
 
   if (m_settings.showParserDebugInfo) {
-    paintParserDebugInfo();
+    paintUIParserDebugInfo();
   }
 }
 
-void Window::paintTopButtonBar() {
+void Window::paintUITopButtonBar() {
   auto isSelected{[this](std::size_t buttonIndex) {
     auto const &renderSettings{m_settings.renderSettings};
     switch (buttonIndex) {
@@ -468,7 +544,7 @@ void Window::paintTopButtonBar() {
   ImGui::Spacing();
 }
 
-void Window::paintEquationsTab(float parentWindowHeight) {
+void Window::paintUIEquationsTab(float parentWindowHeight) {
   ImGui::BeginChild("##fn_child_window", ImVec2(0, parentWindowHeight - 93),
                     true, ImGuiWindowFlags_None);
 
@@ -481,14 +557,7 @@ void Window::paintEquationsTab(float parentWindowHeight) {
       firstTime = false;
     }
     if (ImGui::CollapsingHeader(group.name.c_str(), headerFlags)) {
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4244) // From unsigned __int64 to unsigned long
-#endif
-      paintEquationHeader(groupIndex, group);
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
+      paintUIEquationHeader(groupIndex, group);
     }
   }
 
@@ -509,8 +578,8 @@ void Window::paintEquationsTab(float parentWindowHeight) {
   }
 }
 
-void Window::paintEquationHeader(unsigned long groupIndex,
-                                 EquationGroup &group) {
+void Window::paintUIEquationHeader(std::size_t groupIndex,
+                                   EquationGroup &group) {
   if (ImGui::BeginTable(fmt::format("##tbl{}", groupIndex).c_str(), 2,
                         ImGuiTableFlags_SizingFixedFit)) {
     ImVec2 const thumbSize{32, 32};
@@ -559,7 +628,7 @@ void Window::paintEquationHeader(unsigned long groupIndex,
   }
 }
 
-void Window::paintSettingsTab() {
+void Window::paintUISettingsTab() {
   ImGui::Spacing();
   ImGui::Checkbox("Use recommended settings",
                   &m_settings.usePredefinedSettings);
@@ -575,7 +644,7 @@ void Window::paintSettingsTab() {
   }
 
   // Bounding geometry combo box
-  paintGeometryComboBox();
+  paintUIGeometryComboBox();
 
   // Bounding radius
   ImGui::SliderFloat("Radius", &m_settings.renderSettings.boundRadius, 1, 20,
@@ -594,8 +663,8 @@ void Window::paintSettingsTab() {
 
   ImGui::PushItemWidth(156);
 
-  // Disable ray marching options when using predefined settings or scalar field
-  // shader
+  // Disable ray marching options when using predefined settings or scalar
+  // field shader
   if (m_settings.usePredefinedSettings ||
       m_settings.renderSettings.shaderIndex == 2) {
     ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -603,7 +672,7 @@ void Window::paintSettingsTab() {
   }
 
   // Method
-  paintMethodComboBox();
+  paintUIMethodComboBox();
 
   // Ray marching steps
   auto const minSteps{5};
@@ -612,7 +681,7 @@ void Window::paintSettingsTab() {
                    maxSteps);
 
   // Root test
-  paintRootTestComboBox();
+  paintUIRootTestComboBox();
 
   ImGui::PopItemWidth();
 
@@ -630,7 +699,7 @@ void Window::paintSettingsTab() {
   ImGui::PushItemWidth(168);
 
   // Shader combo box
-  paintShaderComboBox();
+  paintUIShaderComboBox();
 
   if (m_settings.renderSettings.shaderIndex != 2) // Scalar field
   {
@@ -675,9 +744,9 @@ void Window::paintSettingsTab() {
     ImGui::SetTooltip("Press any key\nto unhide");
 }
 
-void Window::paintGeometryComboBox() {
-  std::size_t currentIndex{m_settings.renderSettings.useBoundingBox ? 0UL
-                                                                    : 1UL};
+void Window::paintUIGeometryComboBox() {
+  std::size_t currentIndex{m_settings.renderSettings.useBoundingBox ? 0ul
+                                                                    : 1ul};
   std::vector<std::string> const comboItems{"Box", "Sphere"};
   if (ImGui::BeginCombo("Shape", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
@@ -692,9 +761,9 @@ void Window::paintGeometryComboBox() {
   m_settings.renderSettings.useBoundingBox = currentIndex == 0;
 }
 
-void Window::paintMethodComboBox() {
-  std::size_t currentIndex{m_settings.renderSettings.rayMarchAdaptive ? 0UL
-                                                                      : 1UL};
+void Window::paintUIMethodComboBox() {
+  std::size_t currentIndex{m_settings.renderSettings.rayMarchAdaptive ? 0ul
+                                                                      : 1ul};
   std::vector<std::string> const comboItems{"Adaptive", "Fixed-step"};
   if (ImGui::BeginCombo("Method", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
@@ -709,9 +778,9 @@ void Window::paintMethodComboBox() {
   m_settings.renderSettings.rayMarchAdaptive = currentIndex == 0;
 }
 
-void Window::paintRootTestComboBox() {
-  std::size_t currentIndex{m_settings.renderSettings.rayMarchSignTest ? 0UL
-                                                                      : 1UL};
+void Window::paintUIRootTestComboBox() {
+  std::size_t currentIndex{m_settings.renderSettings.rayMarchSignTest ? 0ul
+                                                                      : 1ul};
   std::vector<std::string> const comboItems{"Sign change", "Taylor 1st-order"};
   if (ImGui::BeginCombo("Root test", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
@@ -726,7 +795,7 @@ void Window::paintRootTestComboBox() {
   m_settings.renderSettings.rayMarchSignTest = currentIndex == 0;
 }
 
-void Window::paintShaderComboBox() {
+void Window::paintUIShaderComboBox() {
   std::size_t currentIndex{m_settings.renderSettings.shaderIndex};
   std::vector<std::string> const comboItems{
       "Shaded isosurface", "Unlit isosurface", "Scalar field (DVR)"};
@@ -743,7 +812,7 @@ void Window::paintShaderComboBox() {
   m_settings.renderSettings.shaderIndex = currentIndex;
 }
 
-void Window::paintAboutTab() {
+void Window::paintUIAboutTab() {
   ImGui::Text("%s", fmt::format("ImpVis {}", kAppVersion).c_str());
   ImGui::Text("3D Implicit Function Viewer");
   ImGui::Text("Copyright (c) 2022 Harlen Batagelo");
@@ -757,7 +826,7 @@ void Window::paintAboutTab() {
   {
     auto const fps{ImGui::GetIO().Framerate};
 
-    static auto offset{0UL};
+    static std::size_t offset{};
     static auto refreshTime{ImGui::GetTime()};
     static std::array<float, 218> frames{};
 
@@ -788,7 +857,7 @@ void Window::paintAboutTab() {
 #endif
 }
 
-void Window::paintEquationEditor() {
+void Window::paintUIEquationEditor() {
   ImVec2 windowSize{};
   ImVec2 const minWindowSize{250, 240};
   auto const inputTextHeight{ImGui::GetTextLineHeight() + 8};
@@ -812,7 +881,7 @@ void Window::paintEquationEditor() {
                    ImGuiWindowFlags_NoBringToFrontOnFocus);
   windowSize = ImGui::GetWindowSize();
 
-  static const std::size_t maxTextSize{80UL * 16};
+  static const std::size_t maxTextSize{80ul * 16};
 
   ImGui::Text("Injected code (GLSL ES 3.00):");
   if (m_rayCast.buildFailed()) {
@@ -905,12 +974,12 @@ void Window::paintEquationEditor() {
                             .equations.at(m_settings.selectedUIEquationIndex)};
 
       // Create a user-defined equation from the current selected equation
-      Equation::LoadedData oldLoadedData{oldEquation.getLoadedData()};
-      oldLoadedData.name = "User-defined";
-      oldLoadedData.expression = newExpression;
-      oldLoadedData.codeGlobal = newInjectedCodeGlobal;
-      oldLoadedData.codeLocal = newInjectedCodeLocal;
-      oldLoadedData.comment = "";
+      Equation::LoadedData userDefinedData{oldEquation.getLoadedData()};
+      userDefinedData.name = "User-defined";
+      userDefinedData.expression = newExpression;
+      userDefinedData.codeGlobal = newInjectedCodeGlobal;
+      userDefinedData.codeLocal = newInjectedCodeLocal;
+      userDefinedData.comment = "";
 
       // Change selection to the last equation of the last equation group
       static auto const originalNumberOfEquationsInLastGroup{
@@ -921,7 +990,7 @@ void Window::paintEquationEditor() {
       m_settings.selectedUIEquationIndex = originalNumberOfEquationsInLastGroup;
       m_settings.rebuildProgram = true;
 
-      Equation userDefinedEquation{oldLoadedData};
+      Equation userDefinedEquation{userDefinedData};
       auto &equations{m_equationGroups.at(indexOfLastGroup).equations};
       if (equations.size() == originalNumberOfEquationsInLastGroup) {
         equations.push_back(userDefinedEquation);
@@ -929,19 +998,19 @@ void Window::paintEquationEditor() {
         equations.back() = userDefinedEquation;
       }
 
-      m_settings.equation = userDefinedEquation;
-
 #if defined(__EMSCRIPTEN__)
-      updateEquationName(oldLoadedData.name);
+      updateEquationName(userDefinedData.name);
       updateEquation(
           userDefinedEquation.getMathJaxExpression(m_settings.isoValue),
-          m_settings.overlayMathJaxComment ? oldLoadedData.comment : "");
+          m_settings.overlayMathJaxComment ? userDefinedData.comment : "");
 #endif
+
+      m_settings.equation = userDefinedEquation;
     }
   }
 }
 
-void Window::paintIsoValueWindow() {
+void Window::paintUIIsoValueWindow() {
   ImGui::SetNextWindowPos(ImVec2(5, m_settings.viewportSize.y - 44));
   ImGui::SetNextWindowSize(ImVec2(m_settings.viewportSize.x - 10, -1));
   ImGui::Begin("Isovalue Bar", nullptr, ImGuiWindowFlags_NoDecoration);
@@ -991,7 +1060,7 @@ void Window::paintIsoValueWindow() {
   ImGui::End();
 }
 
-void Window::paintParserDebugInfo() {
+void Window::paintUIParserDebugInfo() {
   if (m_settings.updateLogWindowLayout) {
     ImGui::SetNextWindowPos({5.0f, m_settings.viewportSize.y - 425});
     ImGui::SetNextWindowSize({m_settings.viewportSize.x / 2, 130});
@@ -1033,36 +1102,40 @@ void Window::onResize(glm::ivec2 const &size) {
   m_settings.updateEquationEditorLayout = true;
   m_settings.updateLogWindowLayout = true;
 
-  if (m_backgroundRenderTex != 0U) {
+  if (m_backgroundRenderTex != 0u) {
     abcg::glDeleteTextures(1, &m_backgroundRenderTex);
   }
-  if (m_implicitSurfaceRenderTex != 0U) {
+  if (m_implicitSurfaceRenderTex != 0u) {
     abcg::glDeleteTextures(1, &m_implicitSurfaceRenderTex);
   }
 
   // Initialize textures with an array of zeros to prevent WebGL warnings
   auto const zeroBufferSize{gsl::narrow<unsigned long>(size.x * size.y * 4)};
   auto const zeroBuffer{std::vector<std::byte>(zeroBufferSize, std::byte{})};
+  auto fillTextureWithZeros{[&size, &zeroBuffer] {
+    abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA,
+                       GL_UNSIGNED_BYTE, zeroBuffer.data());
+  }};
+
+  auto setTextureParameters{[] {
+    abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }};
 
   abcg::glGenTextures(1, &m_backgroundRenderTex);
   abcg::glBindTexture(GL_TEXTURE_2D, m_backgroundRenderTex);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA,
-                     GL_UNSIGNED_BYTE, zeroBuffer.data());
-  abcg::glBindTexture(GL_TEXTURE_2D, 0);
+  setTextureParameters();
+  fillTextureWithZeros();
+
   m_settings.redrawBackgroundRenderTex = true;
 
   abcg::glGenTextures(1, &m_implicitSurfaceRenderTex);
   abcg::glBindTexture(GL_TEXTURE_2D, m_implicitSurfaceRenderTex);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  abcg::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  abcg::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA,
-                     GL_UNSIGNED_BYTE, zeroBuffer.data());
+  setTextureParameters();
+  fillTextureWithZeros();
+
   abcg::glBindTexture(GL_TEXTURE_2D, 0);
 
   m_background.onResize(size);

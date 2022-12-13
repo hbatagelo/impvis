@@ -7,8 +7,6 @@
  * This project is released under the MIT license.
  */
 
-#include <fmt/core.h>
-
 #include "abcg.hpp"
 #include "window.hpp"
 

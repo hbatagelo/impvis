@@ -40,7 +40,7 @@ private:
   };
 
   struct Camera {
-    glm::vec3 eye{0.0f};
+    glm::vec3 eye{};
     float focalLength{4.0f};
 
     glm::vec2 scale{1.0f};

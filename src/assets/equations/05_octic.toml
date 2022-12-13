@@ -1,0 +1,94 @@
+title = "Octic"
+
+[chmutov_octic]
+name = "Chmutov Octic"
+thumbnail = "textures/thumbs/octic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.2
+raymarch_steps = 250
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_8(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  float x6=x4*x2;
+  float x8=x4*x4;
+  return 128.*x8-256.*x6+160.*x4-32.*x2+1.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\;T_8(x)=128x^8-256x^6+160x^4-32x^2+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;8.}'''
+expression = "T_8(x)+T_8(y)+T_8(z)"
+
+[endrass_x_positive]
+name = "Endrass X Positive"
+thumbnail = "textures/thumbs/octic/endrass_pos.png"
+bounds_radius = 4.5
+raymarch_steps = 1200
+camera_distance = 20
+colormap_scale = 1e-4
+code_local = '''
+const float sqrt2=sqrt(2.);
+const float k1=1.+sqrt2;
+const float k2=2.+sqrt2;
+const float k3=2.+7.*sqrt2;
+const float k4=1.-2.*sqrt2;
+const float k5=1.+12.*sqrt2;
+float x2py2=p2.x+p2.y;
+float a=mpow2(p.x+p.y)-2.;
+float b=mpow2(p.x-p.y)-2.;
+float c=-4.*k1*mpow2(x2py2);
+float d=(8.*k2*p2.z+2.*k3)*x2py2;
+float e=-16.*p4.z+8.*k4*p2.z-k5;
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\quad a=(x+y)^2-2,\\
+&\quad b=(x-y)^2-2,\\
+&\quad c=-4(1+\sqrt{2})(x^2+y^2)^2,\\
+&\quad d=\left[8(2+\sqrt{2})z^2+2(2+7\sqrt{2})\right](x^2+y^2),\\
+&\quad e=-16z^4+8(1-2\sqrt{2})z^2-(1+12\sqrt{2}).'''
+expression = "64*(x^2-1)*(y^2-1)*(a*b)-(c+d+e)^2"
+
+[endrass_x_negative]
+name = "Endrass X Negative"
+thumbnail = "textures/thumbs/octic/endrass_neg.png"
+bounds_radius = 4.5
+raymarch_steps = 1200
+camera_distance = 20
+colormap_scale = 1e-3
+code_local = '''
+const float nsqrt2=-sqrt(2.);
+const float k1=1.+nsqrt2;
+const float k2=2.+nsqrt2;
+const float k3=2.+7.*nsqrt2;
+const float k4=1.-2.*nsqrt2;
+const float k5=1.+12.*nsqrt2;
+float x2py2=p2.x+p2.y;
+float a=mpow2(p.x+p.y)-2.;
+float b=mpow2(p.x-p.y)-2.;
+float c=-4.*k1*mpow2(x2py2);
+float d=(8.*k2*p2.z+2.*k3)*x2py2;
+float e=-16.*p4.z+8.*k4*p2.z-k5;
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\quad a=(x+y)^2-2,\\
+&\quad b=(x-y)^2-2,\\
+&\quad c=-4(1-\sqrt{2})(x^2+y^2)^2,\\
+&\quad d=\left[8(2-\sqrt{2})z^2+2(2-7\sqrt{2})\right](x^2+y^2),\\
+&\quad e=-16z^4+8(1+2\sqrt{2})z^2-(1-12\sqrt{2}).'''
+expression = "64*(x^2-1)*(y^2-1)*(a*b)-(c+d+e)^2"
+
+[nonisol]
+name = "Nonisol"
+thumbnail = "textures/thumbs/octic/nonisol.png"
+bounds_shape = 1
+bounds_radius = 2
+raymarch_steps = 350
+raymarch_root_test = 1
+camera_distance = 14
+colormap_scale = 20
+expression = "x^8-y^8-2*x^4*y+y^2"

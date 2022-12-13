@@ -34,22 +34,19 @@ private:
     std::vector<Equation> equations;
   };
 
-  void paintMainWindow();
-  void paintTopButtonBar();
-  void paintEquationsTab(float parentWindowHeight);
-  void paintEquationHeader(unsigned long groupIndex, EquationGroup &group);
-
-  void paintSettingsTab();
-  void paintGeometryComboBox();
-  void paintMethodComboBox();
-  void paintRootTestComboBox();
-  void paintShaderComboBox();
-
-  void paintAboutTab();
-
-  void paintEquationEditor();
-  void paintIsoValueWindow();
-  void paintParserDebugInfo();
+  void paintUIMainWindow();
+  void paintUITopButtonBar();
+  void paintUIEquationsTab(float parentWindowHeight);
+  void paintUIEquationHeader(std::size_t groupIndex, EquationGroup &group);
+  void paintUISettingsTab();
+  void paintUIGeometryComboBox();
+  void paintUIMethodComboBox();
+  void paintUIRootTestComboBox();
+  void paintUIShaderComboBox();
+  void paintUIAboutTab();
+  void paintUIEquationEditor();
+  void paintUIIsoValueWindow();
+  void paintUIParserDebugInfo();
 
   Settings m_settings{};
 

@@ -7,11 +7,13 @@
  * This project is released under the MIT license.
  */
 
+#include <filesystem>
 #include <fstream>
 #include <set>
 #include <sstream>
 
 #include <re2/re2.h>
+#include <string_view>
 
 #include "equation.hpp"
 #include "util.hpp"
@@ -136,7 +138,7 @@ std::pair<std::size_t, std::size_t> getOperandSizes(std::string str,
                             str.end(), notWhitespace)};
       itr != str.end()) {
     if (*itr == '(') {
-      // Open brace
+      // Opening brace
       auto const startPos{std::distance(str.begin(), itr)};
       auto const bracePos{
           getBracesPos(str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
@@ -162,7 +164,7 @@ std::pair<std::size_t, std::size_t> getOperandSizes(std::string str,
                             str.rend(), notWhitespace)};
       itr != str.rend()) {
     if (*itr == ')') {
-      // Close brace
+      // Closing brace
       auto const startPos{std::distance(itr, str.rend()) - 1};
       auto const bracePos{getBracesPosReverse(
           str, gsl::narrow<std::size_t>(startPos), {'(', ')'})};
@@ -510,7 +512,7 @@ void parenthesizeFunctionCalls(std::string &str) {
   }
 }
 
-void reformatIntegralsAsFloats(std::string &str) {
+void reformatStringNumbersAsFloats(std::string &str) {
   // Match integers (e.g. 42) or floats (e.g. .42 or 4.2)
   static RE2 const regex(R"del(((\.\d+\.?\d*)|\b(\d+\.?\d*)))del");
   assert(regex.ok()); // NOLINT
@@ -586,7 +588,7 @@ void Equation::convertToGLSL() {
   }
 
   // Reformat integrals as floats (e.g. 42 as 42.0)
-  reformatIntegralsAsFloats(result);
+  reformatStringNumbersAsFloats(result);
 
   m_exprGLSL = result;
 }
@@ -595,186 +597,3 @@ void Equation::convertToGLSL() {
   // Append "= isoValue"
   return fmt::format("{}={:.3g}", m_exprMathJax, isoValue);
 };
-
-std::vector<Equation> Equation::loadCatalogue(std::string_view filename) {
-  std::vector<Equation> result;
-
-  std::stringstream sstream;
-  if (std::ifstream stream(filename.data()); stream) {
-    sstream << stream.rdbuf();
-    stream.close();
-  } else {
-    throw abcg::RuntimeError(fmt::format("Failed to load {}", filename));
-  }
-
-  auto trimLeftWhitespaces{[](std::string str) {
-    static auto notWhitespace{[](auto chr) { return std::isspace(chr) == 0; }};
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), notWhitespace));
-    return str;
-  }};
-
-  // Each data entry is composed of a sequence of attributes and values.
-  // The expected file layout is as follows ($ denotes an attribute's value):
-  //
-  // name $name              // Equation name (string)
-  // thumb $thumb            // Thumbnail filename (string)
-  // [bound_shape $type]     // Bounding shape (0 or 1)
-  // [bound_radius $radius]  // Bounding radius (positive float)
-  // [raymarch_method $type] // Ray marching method (0 or 1)
-  // [raymarch_steps $steps] // Ray marching steps (positive integer)
-  // [raymarch_root_test $t] // Ray marching root test (0 or 1)
-  // [cam_dist $dist]        // Distance from camera (positive float)
-  // [colormap_scale $value] // Colormap scaling factor (positive float)
-  // [param $name $value]    // Parameter name (string) and value (number)
-  // [param ...   ...   ]
-  // [code_local $code]      // Local scope code (string; can span many lines)
-  // [...             ]
-  // [code_global $code]     // Global scope code (string; can span many lines)
-  // [...              ]
-  // [comment $comment]      // Comment (string; can span many lines)
-  // [...             ]
-  // expr $expr              // Expression (string; can span many lines)
-  // ...
-  //                         // Blank line or EOF indicates end of entry
-  //
-  // 'name', 'thumb' and 'expr' are required attributes.
-  // The values of 'code_local', 'code_global', 'comment' and 'expr' can span
-  // multiple lines.
-  // 'param' can appear multiple times as long as the names are unique.
-
-  LoadedData loadedData{};
-
-  enum class Attribute {
-    Name,
-    Thumb,
-    Param,
-    Expr,
-    CodeLocal,
-    CodeGlobal,
-    Comment,
-    BoundShape,
-    BoundRadius,
-    RayMarchMethod,
-    RayMarchSteps,
-    RayMarchRootTest,
-    CamDist,
-    ColormapScale,
-    None,
-    Count
-  };
-
-  auto const attributeCount{gsl::narrow<std::size_t>(Attribute::Count) - 1};
-  using ParserFunction = void(std::string const &, LoadedData &);
-  std::array<std::tuple<Attribute, std::string, ParserFunction *>,
-             attributeCount> const attribParsers{
-      std::tuple{Attribute::Name, "name",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.name = attribValue;
-                 }},
-      std::tuple{Attribute::Thumb, "thumb",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.thumbnail = attribValue;
-                 }},
-      std::tuple{
-          Attribute::Param, "param",
-          [](std::string const &attribValue, LoadedData &data) {
-            static RE2 const regex{R"del(\s*([A-Za-z_])\w*)del"};
-            assert(regex.ok()); // NOLINT
-
-            re2::StringPiece str{attribValue};
-            std::string match;
-            if (RE2::FindAndConsume(&str, regex, &match)) {
-              data.parameters.push_back({match, std::stof(str.as_string())});
-            }
-          }},
-      std::tuple{Attribute::Expr, "expr",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.expression = attribValue;
-                 }},
-      std::tuple{Attribute::CodeLocal, "code_local",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.codeLocal = attribValue;
-                 }},
-      std::tuple{Attribute::CodeGlobal, "code_global",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.codeGlobal = attribValue;
-                 }},
-      std::tuple{Attribute::Comment, "comment",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.comment = attribValue;
-                 }},
-      std::tuple{Attribute::BoundShape, "bound_shape",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.boundShape = std::stoi(attribValue);
-                 }},
-      std::tuple{Attribute::BoundRadius, "bound_radius",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.boundRadius = std::stof(attribValue);
-                 }},
-      std::tuple{Attribute::RayMarchMethod, "raymarch_method",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.rayMarchMethod = std::stoi(attribValue);
-                 }},
-      std::tuple{Attribute::RayMarchSteps, "raymarch_steps",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.rayMarchSteps = std::stoi(attribValue);
-                 }},
-      std::tuple{Attribute::RayMarchRootTest, "raymarch_root_test",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.rayMarchRootTest = std::stoi(attribValue);
-                 }},
-      std::tuple{Attribute::CamDist, "cam_dist",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.camDist = std::stof(attribValue);
-                 }},
-      std::tuple{Attribute::ColormapScale, "colormap_scale",
-                 [](std::string const &attribValue, LoadedData &data) {
-                   data.colormapScale = std::stof(attribValue);
-                 }}};
-
-  Attribute currentAttribute{Attribute::None};
-
-  for (std::string line{}; std::getline(sstream, line);) {
-    if (line.empty()) {
-      result.emplace_back(loadedData);
-      loadedData = {};
-      continue;
-    }
-
-    auto newAttributeFound{false};
-    for (auto &&[attrib, attribName, parserFunction] : attribParsers) {
-      if (line.starts_with(attribName)) {
-        currentAttribute = attrib;
-        auto attribValue{trimLeftWhitespaces(line.substr(attribName.length()))};
-        parserFunction(attribValue, loadedData);
-        newAttributeFound = true;
-        break;
-      }
-    }
-    if (newAttributeFound)
-      continue;
-
-    switch (currentAttribute) {
-    case Attribute::CodeLocal:
-      loadedData.codeLocal += '\n' + line;
-      break;
-    case Attribute::CodeGlobal:
-      loadedData.codeGlobal += '\n' + line;
-      break;
-    case Attribute::Comment:
-      loadedData.comment += "\\\\" + line;
-      break;
-    case Attribute::Expr:
-      loadedData.expression += line;
-      break;
-    default:
-      break;
-    }
-  }
-
-  if (!loadedData.expression.empty()) {
-    result.emplace_back(loadedData);
-  }
-
-  return result;
-}

@@ -27,7 +27,7 @@ private:
 
   GLint m_resolutionLocation{};
 
-  glm::vec2 m_resolution{0.0f};
+  glm::vec2 m_resolution{};
 };
 
 #endif

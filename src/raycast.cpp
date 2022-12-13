@@ -11,10 +11,6 @@
 #include <span>
 #include <sstream>
 
-#include <cppitertools/itertools.hpp>
-#include <fmt/core.h>
-
-#include "abcgOpenGLFunction.hpp"
 #include "raycast.hpp"
 #include "settings.hpp"
 #include "util.hpp"
@@ -213,14 +209,14 @@ void RayCast::onDestroy() {
 void RayCast::createUBOs() {
   destroyUBOs();
 
-  auto createUBO{[this](GLsizeiptr size, void const *data, GLuint bindingPoint,
-                        GLchar const *uniformBlockName) {
+  auto createUBO{[this]<typename T>(T const &data, GLuint bindingPoint,
+                                    GLchar const *uniformBlockName) {
     GLuint buffer{};
     abcg::glGenBuffers(1, &buffer);
 
     // Set the data
     abcg::glBindBuffer(GL_UNIFORM_BUFFER, buffer);
-    abcg::glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
+    abcg::glBufferData(GL_UNIFORM_BUFFER, sizeof(data), &data, GL_DYNAMIC_DRAW);
     abcg::glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Link the buffer to a binding point
@@ -240,11 +236,10 @@ void RayCast::createUBOs() {
   }};
 
   // Create UBOs
-  m_UBOCamera = createUBO(sizeof(m_camera), &m_camera, 0, "CameraBlock");
-  m_UBOShading = createUBO(sizeof(m_shading), &m_shading, 1, "ShadingBlock");
-  m_UBOTransform =
-      createUBO(sizeof(m_transform), &m_transform, 2, "TransformBlock");
-  m_UBOParams = createUBO(sizeof(m_params), &m_params, 3, "ParamsBlock");
+  m_UBOCamera = createUBO(m_camera, 0, "CameraBlock");
+  m_UBOShading = createUBO(m_shading, 1, "ShadingBlock");
+  m_UBOTransform = createUBO(m_transform, 2, "TransformBlock");
+  m_UBOParams = createUBO(m_params, 3, "ParamsBlock");
 
   // Get location of other uniform variables
   m_isoValueLocation = abcg::glGetUniformLocation(m_program, "uIsoValue");

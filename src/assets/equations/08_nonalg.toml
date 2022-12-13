@@ -1,0 +1,60 @@
+title = "Non-algebraic"
+
+[blobby]
+name = "Blobby"
+thumbnail = "textures/thumbs/nonalg/blobby.png"
+bounds_radius = 2.5
+raymarch_steps = 65
+camera_distance = 10
+colormap_scale = 1
+expression = "x^2+y^2+z^2+sin(4*x)-cos(4*y)+sin(4*z)-1"
+
+[chladni_pattern]
+name = "Chladni Pattern"
+thumbnail = "textures/thumbs/nonalg/chladni.png"
+bounds_shape = 1
+bounds_radius = 3
+raymarch_steps = 120
+camera_distance = 21
+colormap_scale = 0.75
+parameters = [{name = "k", value = 1},
+              {name = "l", value = 2},
+              {name = "m", value = 1},
+              {name = "s", value = 1}]
+code_global = "const float pi=3.14259265;"
+comment = '''
+,\\&\mathrm{written\;by\;Roman\;Chijner\;(GeoGebra).}'''
+expression = '''
+cos(k*x*pi)*[cos(l*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(l*z*pi)]+
+cos(l*x*pi)*[cos(k*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(k*z*pi)]+
+cos(m*x*pi)*[cos(k*y*pi)*cos(l*z*pi)+s*cos(l*y*pi)*cos(k*z*pi)]'''
+
+[borg]
+name = "Borg"
+thumbnail = "textures/thumbs/nonalg/borg.png"
+bounds_shape = 1
+bounds_radius = 5
+raymarch_steps = 150
+camera_distance = 35
+colormap_scale = 1
+expression = "sin(x*y)+sin(y*z)+sin(z*x)"
+
+[diamond]
+name = "Diamond"
+thumbnail = "textures/thumbs/nonalg/diamond.png"
+bounds_radius = 10
+raymarch_steps = 25
+camera_distance = 50
+colormap_scale = 1.5
+expression = '''
+sin(x)*sin(y)*sin(z)+sin(x)*cos(y)*cos(z)+cos(x)*sin(y)*cos(z)+
+cos(x)*cos(y)*sin(z)'''
+
+[scherk_minimal]
+name = "Scherk Minimal"
+thumbnail = "textures/thumbs/nonalg/scherk_minimal.png"
+bounds_radius = 10
+raymarch_steps = 360
+camera_distance = 50
+colormap_scale = 1
+expression = "exp(z)*cos(y)-cos(x)"

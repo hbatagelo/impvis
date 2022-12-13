@@ -12,19 +12,6 @@
 
 #include "abcgOpenGL.hpp"
 
-/*
-  static RE2 const regexName{R"del(([A-Za-z_]\w*))del"};
-  assert(regexName.ok()); // NOLINT
-
-void insertMatches(RE2 const &regex, re2::StringPiece str,
-                   std::set<std::string> &output) {
-
-  for (std::string match; RE2::FindAndConsume(&str, regex, &match);) {
-    output.insert(match);
-  }
-
-*/
-
 #include <string>
 #include <vector>
 
@@ -36,7 +23,7 @@ public:
   };
 
   struct LoadedData {
-    std::string name;
+    std::string name{"Default"};
     std::string thumbnail;
     std::string expression;
     std::string codeLocal;
@@ -67,9 +54,6 @@ public:
   };
   bool setParameter(std::string_view name, float value);
 
-  [[nodiscard]] static std::vector<Equation>
-  loadCatalogue(std::string_view filename);
-
 private:
   void extractParameters();
   void convertToGLSL();
@@ -77,8 +61,8 @@ private:
 
   LoadedData m_loadedData{};
 
-  std::string m_exprGLSL;
-  std::string m_exprMathJax;
+  std::string m_exprGLSL{"p.x+p.y+p.z"};
+  std::string m_exprMathJax{"x+y+z"};
   std::vector<Parameter> m_parameters;
   GLuint m_thumbnailId{};
 };

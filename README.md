@@ -1,10 +1,10 @@
 ![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hbatagelo/impvis&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com&utm_medium=referral&utm_content=hbatagelo/impvis&utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
 
 # ImpVis - 3D Implicit Function Viewer
 
-ImpVis is a real-time visualization tool for displaying isosurfaces and scalar fields of algebraic and non-algebraic 3D implicit functions. It is focused on interactivity, allowing the user to change the function parameters and expressions on the fly.
+ImpVis is a real-time visualization tool for displaying isosurfaces and scalar fields of algebraic and non-algebraic 3D implicit functions. The application focuses on interactivity, allowing users to change the function parameters and expressions on the fly.
 
 ## [Live Demo](https://hbatagelo.github.io/impvis/public/)
 
@@ -26,22 +26,22 @@ ImpVis can also render scalar fields using direct volume rendering, as shown bel
 
 ## Equation editor
 
-ImpVis features an equation editor that allows creating new expressions by modifying the existing ones from a catalog of predefined implicit equations.
+ImpVis features an equation editor that allows users to write new expressions by modifying existing ones from a catalog of predefined implicit equations.
 
 In the equation editor, the expression for the left-hand side of the equation is written in a modified GLSL ES syntax in which the caret symbol `^` is used as an **exponentiation operator** instead of **bit-wise exclusive or** operator. For example, for the Torus implicit equation
 
 $$
-(c-\sqrt{x^2+y^2})^2+z^2-a^2=0,
+(c-\\sqrt{x^2+y^2})^2+z^2-a^2=0,
 $$
 
 the left-hand side expression can be written as `(c-sqrt(x^2+y^2))^2+z^2-a^2` instead of `pow(c-sqrt(x*x+y*y),2.0)+z*z-a*a`, which is also supported.
 
 Under the hood, exponentiation expressions of the form `b^n`, where `n` is a positive integer between 2 and 16 (inclusive), are converted to the product of multiplying `n` bases: `b*b*...*b`. This is often more efficient than using the native `pow` function. ImpVis also has custom built-in functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, that can be used in place of `b^2`, `b^3`, up to `b^16`, where `b` is an expression that evaluates to `float`.
 
-Another syntax difference from GLSL is the use of square brackets as parentheses instead of array indexing. For example, for the Cassini quartic surface equation
+Another syntax difference from GLSL is the use of square brackets for grouping (as parentheses) instead of array indexing. For example, for the Cassini quartic surface equation
 
 $$
-\left[(x+r)^2+y^2\right]\left[(x-r)^2+y^2\right]-z^2=0,
+\\left[(x+r)^2+y^2\right]\\left[(x-r)^2+y^2\right]-z^2=0,
 $$
 
 the left-hand side expression can be written as `[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2`.
@@ -51,13 +51,13 @@ The editor also allows injecting GLSL ES code both in the global scope of the sh
 -   Use the global scope to define GLSL functions and constants to be used either in the local scope or directly in the implicit function.
 -   Use the local scope to define GLSL variables to be used in the implicit function expression.
 
-Any changes to the currently selected equation (expression, local scope or global scope) will be saved as a user-defined equation located at that end of the catalog.
+Any changes to the currently selected equation (expression, local scope, or global scope) will be saved as a user-defined equation at the end of the group of equations called "Other".
 
 ### Remarks
 
 The following apply for code injected in the local scope:
 
--   `p` is the name of a `vec3` variable containing the values of the `x`, `y` and `z` variables of the 3D implicit function. Thus, in the local scope, use `p.x`, `p.y` and `p.z` instead of `x`, `y`, `z`.  
+-   `p` is the name of a `vec3` variable containing the values of the `x`, `y`, and `z` variables of the 3D implicit function. Thus, in the local scope, use `p.x`, `p.y`, and `p.z` instead of `x`, `y`, and `z`.  
 -   `p2` is a shortcut for `p*p`, `p3` is a shortcut for `p*p*p`, and so on up to `p16`. Again, these are often more efficient than `pow(p,n)`. The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available in the local scope.
 
 ## How it works
@@ -66,14 +66,16 @@ The isosurfaces are rendered using an adaptive raymarching algorithm. The scalar
 
 The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the _adaptive marching points_ algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader (`raycast.frag`).
 
-## Building
+## How to build
 
-ImpVis can be built for desktop (Windows, Linux, macOS) and for the web (WebAssembly).
+ImpVis can be built for the desktop (Windows, Linux, macOS) and the web (WebAssembly).
 
 First clone the repo:
 
-    git clone https://github.com/hbatagelo/impvis.git
-    cd impvis
+```sh
+git clone https://github.com/hbatagelo/impvis.git
+cd impvis
+```
 
 Make sure the following tools are installed and are reachable from the path:
 
@@ -85,33 +87,37 @@ Make sure the following tools are installed and are reachable from the path:
 
 Run `build-vs.bat` for building with Visual Studio 2022. The script will execute the following commands:
 
-    # Create the build directory
-    mkdir build && cd build
+```bat
+:: Create the build directory
+mkdir build && cd build
 
-    # Set the build type
-    set BUILD_TYPE=Release
+:: Set the build type
+set BUILD_TYPE=Release
 
-    # Configure (VS 2022 generator for a 64-bit target architecture)
-    cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ..
+:: Configure (VS 2022 generator for a 64-bit target architecture)
+cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ..
 
-    # Build
-    cmake --build . --config %BUILD_TYPE%
+:: Build
+cmake --build . --config %BUILD_TYPE%
+```
 
 ### On macOS and Linux (including WSL2)
 
 Run `./build.sh`. It will execute the following commands:
 
-    # Create the build directory
-    mkdir build && cd build
+```sh
+# Create the build directory
+mkdir build && cd build
 
-    # Set the build type
-    BUILD_TYPE=Release
+# Set the build type
+BUILD_TYPE=Release
 
-    # Configure (Makefile generator)
-    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+# Configure (Makefile generator)
+cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
 
-    # Build
-    cmake --build . --config $BUILD_TYPE
+# Build
+cmake --build . --config $BUILD_TYPE
+```
 
 ### Building for WebAssembly
 
@@ -122,10 +128,98 @@ The WASM binaries will be written to `impvis/public`.
 
 * * *
 
+## File format of the catalog of equations
+
+The equations are described as [TOML](https://toml.io) files located in `src\assets\equations`.
+
+Each TOML file must have a `title` key in root level with a value that is the name of the equation group. Each equation is then described by a table with the following key/value pairs, from which only the `expression` key/value pair is required:
+
+| Key                  | Value type             | Description                                                      |
+| :------------------- | :--------------------- | :--------------------------------------------------------------- |
+| `name`               | string                 | Equation name                                                    |
+| `expression`         | string                 | Left-hand side of the equation expression                        |
+| `thumbnail`          | string                 | Path to the thumbnail file, relative to `/src/assets`            |
+| `bounds_shape`       | integer (`0` or `1`)   | Bounding shape (`0`: sphere, `1`: box)                           |
+| `bounds_radius`      | positive float         | Bounding radius                                                  |
+| `raymarch_method`    | integer (`0` or `1`)   | Ray marching method (`0`: adaptive, `1`: fixed-step)             |
+| `raymarch_steps`     | positive integer       | Maximum number of ray marching steps                             |
+| `raymarch_root_test` | integer (`0` or `1`)   | Ray marching root test (`0`: sign change, `1`: Taylor 1st-order) |
+| `camera_distance`    | positive float         | Initial distance from camera                                     |
+| `colormap_scale`     | positive float         | Colormap scaling factor for direct volume rendering              |
+| `parameters`         | array of inline tables | Expression parameters (_see details below_)                      |
+| `code_local`         | string                 | GLSL code to be injected in the local scope                      |
+| `code_global`        | string                 | GLSL code to be injected in the global scope                     |
+| `comment`            | string                 | Comments in LaTeX math mode                                      |
+
+Each inline table of the `parameters`' array is expected to have two key/value pairs:
+
+| Key     | Value type | Description     |
+| :------ | :--------- | :-------------- |
+| `name`  | string     | Parameter name  |
+| `value` | number     | Parameter value |
+
+Below is an excerpt from `01_quartic.toml`. Browse `src\assets\equations` for more examples.
+
+```toml
+title = "Quartic"
+
+[bifolia]
+name = "Bifolia"
+thumbnail = "textures/thumbs/quartic/bifolia.png"
+bounds_radius = 2
+raymarch_steps = 80
+camera_distance = 7
+colormap_scale = 7
+expression = "(x^2+y^2+z^2)^2-3*y*(x^2+z^2)"
+
+[cassini]
+name = "Cassini"
+thumbnail = "textures/thumbs/quartic/cassini.png"
+bounds_radius = 3
+raymarch_steps = 75
+camera_distance = 13
+colormap_scale = 0.75
+parameters = [{name = "r", value = 1}]
+expression = "[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2"
+
+[chair]
+name = "Chair"
+thumbnail = "textures/thumbs/quartic/chair.png"
+bounds_radius = 2
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 8
+parameters = [{name = "a", value = 0.95},
+              {name = "b", value = 0.8},
+              {name = "k", value = 1}]
+expression = "(x^2+y^2+z^2-a*k^2)^2-b*[(z-k)^2-2*x^2]*[(z+k)^2-2*y^2]"
+
+[chmutov_quartic]
+name = "Chmutov Quartic"
+thumbnail = "textures/thumbs/quartic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.2
+raymarch_steps = 70
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_4(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return 8.*x4-8.*x2+1.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\; T_4(x)=8x^4-8x^2+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;4.}
+'''
+expression = "T_4(x)+T_4(y)+T_4(z)"
+```
+
 ## License
 
 MIT License.
 
 ## Development history
 
-ImpVis was originally designed in 2014, based on Qt and licensed under GPLv3. The current version is a complete rewrite of that [first version](http://professor.ufabc.edu.br/~harlen.batagelo/impvis/). It is now available under the MIT license and is based on the [ABCg](https://github.com/hbatagelo/abcg)  framework.
+ImpVis was originally designed in 2014, based on Qt, and licensed under GPLv3. The current version is a complete rewrite of the [first version](http://professor.ufabc.edu.br/~harlen.batagelo/impvis/). It is now available under the MIT license and is based on the [ABCg](https://github.com/hbatagelo/abcg)  framework.

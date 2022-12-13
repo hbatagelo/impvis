@@ -30,9 +30,9 @@ struct Settings {
     bool rayMarchSignTest{true};
 
     std::size_t shaderIndex{};
-    bool useShadows{false};
-    bool useFog{false};
-    bool useNormalsAsColors{false};
+    bool useShadows{true};
+    bool useFog{true};
+    bool useNormalsAsColors{};
 
     friend bool operator==(RenderSettings const &,
                            RenderSettings const &) = default;
@@ -45,7 +45,7 @@ struct Settings {
   bool drawUI{true};
   bool overlayMathJaxComment{true};
 
-  glm::vec2 viewportSize{0.0f};
+  glm::vec2 viewportSize{};
   bool redrawBackgroundRenderTex{true};
   bool updateEquationEditorLayout{true};
   bool updateLogWindowLayout{true};

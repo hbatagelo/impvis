@@ -1,84 +1,597 @@
-name Cayley
-thumb textures/thumbs/cubic/cayley.png
-bound_shape 0
-bound_radius 1.5
-raymarch_method 0
-raymarch_steps 120
-cam_dist 7
-colormap_scale 1.5
-expr -5*[x^2*(y+z)+y^2*(x+z)+z^2*(x+y)]+2*(x*y+x*z+y*z)
+title = "Cubic"
 
-name Chmutov Cubic
-thumb textures/thumbs/cubic/chmutov.png
-bound_shape 1
-bound_radius 1.4
-raymarch_method 0
-raymarch_steps 60
-cam_dist 10
-colormap_scale 0.75
-code_global float T_3(float x) {
+[cayley]
+name = "Cayley"
+thumbnail = "textures/thumbs/cubic/cayley.png"
+bounds_radius = 1.5
+raymarch_steps = 120
+camera_distance = 7
+colormap_scale = 1.5
+expression = "-5*[x^2*(y+z)+y^2*(x+z)+z^2*(x+y)]+2*(x*y+x*z+y*z)"
+
+[chmutov_cubic]
+name = "Chmutov Cubic"
+thumbnail = "textures/thumbs/cubic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.4
+raymarch_steps = 60
+camera_distance = 10
+colormap_scale = 0.75
+code_global = '''
+float T_3(float x) {
   float x2=x*x;
   return x*(4.*x2-3.);
 }
-comment ,\\&\mathrm{where}\; T_3(x)=4x^3-3x+1
+'''
+comment = '''
+,\\&\mathrm{where}\; T_3(x)=4x^3-3x+1\\
 &\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;3.}
-expr T_3(x)+T_3(y)+T_3(z)+1
+'''
+expression = "T_3(x)+T_3(y)+T_3(z)+1"
 
-name Clebsch
-thumb textures/thumbs/cubic/clebsch.png
-bound_shape 0
-bound_radius 1.5
-raymarch_method 0
-raymarch_steps 230
-cam_dist 7
-colormap_scale 0.03
-expr 81*(x^3+y^3+z^3)-189*(x^2*y+x^2*z+x*y^2+x*z^2+y^2*z+y*z^2)+\n
-54*x*y*z+126*(x*y+x*z+y*z)-9*(x^2+y^2+z^2)-\n9*(x+y+z)+1
+[clebsch]
+name = "Clebsch"
+thumbnail = "textures/thumbs/cubic/clebsch.png"
+bounds_radius = 1.5
+raymarch_steps = 230
+camera_distance = 7
+colormap_scale = 0.03
+expression = '''
+81*(x^3+y^3+z^3)-189*(x^2*y+x^2*z+x*y^2+x*z^2+y^2*z+y*z^2)+
+54*x*y*z+126*(x*y+x*z+y*z)-9*(x^2+y^2+z^2)-\n9*(x+y+z)+1'''
 
-name Ding-Dong
-thumb textures/thumbs/cubic/ding-dong.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 50
-cam_dist 9
-colormap_scale 5
-expr x^2+y^2-(1-z)*z^2
+[ding_dong]
+name = "Ding-Dong"
+thumbnail = "textures/thumbs/cubic/ding-dong.png"
+bounds_radius = 2
+raymarch_steps = 50
+camera_distance = 9
+colormap_scale = 5
+expression = "x^2+y^2-(1-z)*z^2"
 
-name Strophoid
-thumb textures/thumbs/cubic/strophoid.png
-bound_shape 0
-bound_radius 1.5
-raymarch_method 0
-raymarch_steps 50
-cam_dist 7
-colormap_scale 10
-param a 1
-param b -0.1
-param c 1.5
-expr (b-x)*(y^2+z^2)-c^2*a*x^2-c^2*x^3name Barth Decic
-thumb textures/thumbs/decp/barth.png
-bound_shape 0
-bound_radius 2.2
-raymarch_method 0
-raymarch_steps 500
-cam_dist 10
-colormap_scale 0.5
-code_global const float phi=1.618033988;
-comment ,\\&\mathrm{where}\; \phi=(1+\sqrt{5})/2\;\mathrm{\;is\;the\;golden\;ratio.}
-expr 8*(x^2-phi^4*y^2)*(y^2-phi^4*z^2)*(z^2-phi^4*x^2)*\n
-[x^4+y^4+z^4-2*(x^2*y^2+x^2*z^2+y^2*z^2)]+\n
-(3+5*phi)*(x^2+y^2+z^2-1)^2*(x^2+y^2+z^2-2+phi)^2
+[strophoid]
+name = "Strophoid"
+thumbnail = "textures/thumbs/cubic/strophoid.png"
+bounds_radius = 1.5
+raymarch_steps = 50
+camera_distance = 7
+colormap_scale = 10
+parameters = [{name = "a", value = 1},
+              {name = "b", value = -0.1},
+              {name = "c", value = 1.5}]
+expression = "(b-x)*(y^2+z^2)-c^2*a*x^2-c^2*x^3"title = "Quartic"
 
-name Chmutov
-thumb textures/thumbs/decp/chmutov.png
-bound_shape 1
-bound_radius 1.1
-raymarch_method 1
-raymarch_steps 1000
-cam_dist 8
-colormap_scale 0.75
-code_global const int n=18; // <- Order
+[bifolia]
+name = "Bifolia"
+thumbnail = "textures/thumbs/quartic/bifolia.png"
+bounds_radius = 2
+raymarch_steps = 80
+camera_distance = 7
+colormap_scale = 7
+expression = "(x^2+y^2+z^2)^2-3*y*(x^2+z^2)"
+
+[cassini]
+name = "Cassini"
+thumbnail = "textures/thumbs/quartic/cassini.png"
+bounds_radius = 3
+raymarch_steps = 75
+camera_distance = 13
+colormap_scale = 0.75
+parameters = [{name = "r", value = 1}]
+expression = "[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2"
+
+[chair]
+name = "Chair"
+thumbnail = "textures/thumbs/quartic/chair.png"
+bounds_radius = 2
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 8
+parameters = [{name = "a", value = 0.95},
+              {name = "b", value = 0.8},
+              {name = "k", value = 1}]
+expression = "(x^2+y^2+z^2-a*k^2)^2-b*[(z-k)^2-2*x^2]*[(z+k)^2-2*y^2]"
+
+[chmutov_quartic]
+name = "Chmutov Quartic"
+thumbnail = "textures/thumbs/quartic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.2
+raymarch_steps = 70
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_4(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return 8.*x4-8.*x2+1.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\; T_4(x)=8x^4-8x^2+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;4.}
+'''
+expression = "T_4(x)+T_4(y)+T_4(z)"
+
+[cross_cap]
+name = "Cross-Cap"
+thumbnail = "textures/thumbs/quartic/cross-cap.png"
+bounds_radius = 2.5
+raymarch_steps = 250
+camera_distance = 8
+colormap_scale = 5
+parameters = [{name = "a", value = 1}]
+expression = "4*x^2*(x^2+y^2+z^2+a*z)+y^2*(y^2+z^2-a^2)"
+
+[cushion]
+name = "Cushion"
+thumbnail = "textures/thumbs/quartic/cushion.png"
+bounds_radius = 2
+raymarch_steps = 150
+camera_distance = 9
+colormap_scale = 8
+expression = '''
+z^2*x^2-z^4+2*z^3+x^2-2*z^2-x^4-y^4-
+2*x^2*y^2-y^2*z^2+2*y^2*z+y^2'''
+
+[devil]
+name = "Devil"
+thumbnail = "textures/thumbs/quartic/devil.png"
+bounds_radius = 3
+raymarch_steps = 100
+camera_distance = 14
+colormap_scale = 1
+parameters = [{name = "a", value = -0.25}, 
+              {name = "b", value = 0.25}]
+expression = "x^4+2*x^2*z^2+a*x^2-y^4+b*y^2+z^4"
+
+[double_cone]
+name = "Double Cone"
+thumbnail = "textures/thumbs/quartic/double-cone.png"
+bounds_radius = 3
+raymarch_steps = 100
+camera_distance = 14
+colormap_scale = 2
+parameters = [{name = "r", value = 1}]
+expression = "y^2*x^2+y^2*z^2-x^4-2*x^2*z^2-z^4"
+
+[goursat]
+name = "Goursat"
+thumbnail = "textures/thumbs/quartic/goursat.png"
+bounds_radius = 1.5
+raymarch_steps = 65
+camera_distance = 9
+colormap_scale = 2.5
+expression = "x^4+y^4+z^4-1"
+
+[miter]
+name = "Miter"
+thumbnail = "textures/thumbs/quartic/miter.png"
+bounds_radius = 2.5
+raymarch_steps = 180
+camera_distance = 6
+colormap_scale = 7
+expression = "4*x^2*(x^2+y^2+z^2)-y^2*(1-y^2-z^2)"
+
+[nordstrand]
+name = "Nordstrand"
+thumbnail = "textures/thumbs/quartic/nordstrand.png"
+bounds_radius = 1.2
+raymarch_steps = 120
+camera_distance = 6
+colormap_scale = 1
+expression = '''
+25*[x^3*(y+z)+y^3*(x+z)+z^3*(x+y)]+50*(x^2*y^2+x^2*z^2+y^2*x^2)-
+125*(x^2*y*z+y^2*x*z+z^2*x*y)-4*(x*y+x*z+y*z)+60*x*y*z'''
+
+[pillow_tooth]
+name  = "Pillow Tooth"
+thumbnail = "textures/thumbs/quartic/pillow_tooth.png"
+bounds_radius = 2
+raymarch_steps = 60
+camera_distance = 9
+colormap_scale = 3
+expression = "x^4+y^4+z^4-x^2-y^2-z^2"
+
+[piriform]
+name = "Piriform"
+thumbnail = "textures/thumbs/quartic/piriform.png"
+bounds_radius = 2
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 12
+parameters = [{name = "a", value = 1}]
+expression = "(x^4-a*x^3)+a^2*(y^2+z^2)"
+
+[steiner]
+name = "Steiner"
+thumbnail = "textures/thumbs/quartic/steiner.png"
+bounds_radius = 3
+raymarch_steps = 150
+camera_distance = 10
+colormap_scale = 12
+expression = "x^2*y^2+x^2*z^2+y^2*z^2-2*x*y*z"
+
+[tetrahedroid]
+name = "Tetrahedroid"
+thumbnail = "textures/thumbs/quartic/tetrahedroid.png"
+bounds_radius = 3
+raymarch_steps = 75
+camera_distance = 13
+colormap_scale = 1.5
+expression = "x^4+y^4+z^4-x^2-y^2-z^2-x^2*y^2-y^2*z^2-z^2*x^2+1"
+
+[torus]
+name = "Torus"
+thumbnail = "textures/thumbs/quartic/torus.png"
+bounds_radius = 2.5
+raymarch_steps = 80
+camera_distance = 9
+colormap_scale = 3
+parameters = [{name = "r", value = 0.5}, {name = "R", value = 1}]
+expression = "(x^2+y^2+z^2+R^2-r^2)^2-4*R^2*(x^2+y^2)"title = "Quintic"
+
+[chmutov_quintic]
+name = "Chmutov Quintic"
+thumbnail = "textures/thumbs/quintic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.1
+raymarch_steps = 100
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_5(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return x*(16.*x4-20.*x2+5.);
+}
+'''
+comment = '''
+,\\&\mathrm{where}\; T_5(x)=16x^5-20x^3+5x+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;5.}
+'''
+expression = "T_5(x)+T_5(y)+T_5(z)+1"
+
+[labs_15_cusp_quintic]
+name = "Labs 15-Cusp Quintic"
+thumbnail = "textures/thumbs/quintic/labs_15-cusp.png"
+bounds_radius = 4
+raymarch_steps = 400
+camera_distance = 18
+colormap_scale = 0.1
+code_global = '''
+float S_5(float x, float y) {
+  vec2 xy=vec2(x,y);
+  vec2 xy2=xy*xy;
+  vec2 xy3=xy2*xy;
+  vec2 xy4=xy2*xy2;
+  vec2 xy5=xy2*xy3;
+  return xy5.x+xy2.y*(-10.*xy3.x+5.*x*xy2.y-10.*xy2.x-5.*xy2.y+20.)-5.*xy4.x 
+         +20.*xy2.x-16.;
+}
+float t(float z) {
+  float z2=z*z;
+  float z3=z2*z;
+  float z5=z3*z2;
+  return -3.*z5+10.*z3-15.*z-8.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\begin{aligned}S_5(x,y)=&x^5-10x^3y^2+5xy^4-5x^4-10x^2y^2-5y^4+20x^2+&\\
+&20y^2-16,\end{aligned}\\
+&t(z)=-3z^5+10z^3-15z-8.
+'''
+expression = "S_5(x,y)+t(z)"
+
+[kiss]
+name = "Kiss"
+thumbnail = "textures/thumbs/quintic/kiss.png"
+bounds_radius = 3
+raymarch_steps = 110
+camera_distance = 13
+colormap_scale = 1
+expression = "x^2+y^2-z*(1-z^4)"
+
+[peninsula]
+name = "Peninsula"
+thumbnail = "textures/thumbs/quintic/peninsula.png"
+bounds_shape = 1
+bounds_radius = 2
+raymarch_steps = 75
+camera_distance = 14
+expression = "x^2+y^3+z^5-1"
+
+[togliatti]
+name = "Togliatti"
+thumbnail = "textures/thumbs/quintic/togliatti.png"
+bounds_radius = 6
+raymarch_method = 1
+raymarch_steps = 500
+camera_distance = 28
+colormap_scale = 0.0001
+parameters = [{name = "a", value = 1.66250775111}]
+expression = '''
+64*(x-1)*(x^4-4*x^3-10*x^2*y^2-4*x^2+16*x-20*x*y^2+5*y^4+16-
+20*y^2)-5*a*(2*z-a)*[4*(x^2+y^2-z^2)+(1+3*sqrt(5))]^2'''title = "Sextic"
+
+[barth_sextic]
+name = "Barth Sextic"
+thumbnail = "textures/thumbs/sextic/barth.png"
+bounds_radius = 3
+raymarch_steps = 200
+camera_distance = 14
+colormap_scale = 0.45
+code_global = "const float phi=1.618033988;"
+comment = '''
+,\\&\mathrm{where}\; \phi=(1+\sqrt{5})/2\;\mathrm{\;is\;the\;golden\;ratio.}'''
+expression = '''
+4*(phi^2*x^2-y^2)*(phi^2*y^2-z^2)*(phi^2*z^2-x^2)-
+(1+2*phi)*(x^2+y^2+z^2-1)^2'''
+
+[chmutov_sextic]
+name = "Chmutov Sextic"
+thumbnail = "textures/thumbs/sextic/chmutov.png"
+bounds_radius = 2
+raymarch_steps = 200
+camera_distance = 8
+colormap_scale = 1.2
+code_global = '''
+float T_6(float x) {
+  float x2=x*x;
+  float a=3.-4.*x2;
+  return 2.*x2*a*a-1.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\; T_6(x)=32x^6-48x^4+18x^2-1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;6.}'''
+expression = "T_6(x)+T_6(y)+T_6(z)"
+
+[heart]
+name = "Heart"
+thumbnail = "textures/thumbs/sextic/heart.png"
+bounds_radius = 1.6
+raymarch_steps = 200
+camera_distance = 7
+colormap_scale = 10
+expression = "(x^2+(9/4)*y^2+z^2-1)^3-x^2*z^3-(9/80)*y^2*z^3"
+
+[high_silhouette]
+name = "High Silhouette"
+thumbnail = "textures/thumbs/sextic/high_silhouette.png"
+bounds_radius = 2
+raymarch_steps = 140
+raymarch_root_test = 1
+camera_distance = 10
+colormap_scale = 20
+expression = "x^6-y^5-2*x^3*y+y^2"
+
+[hunt]
+name = "Hunt"
+thumbnail = "textures/thumbs/sextic/hunt.png"
+bounds_radius = 4
+raymarch_steps = 700
+camera_distance = 18
+colormap_scale = 0.001
+expression = "4*(x^2+y^2+z^2-13)^3+27*(3*x^2+y^2-4*z^2-12)^2"
+
+[kleine]
+name = "Kleine"
+thumbnail = "textures/thumbs/sextic/kleine.png"
+bounds_radius = 3.3
+raymarch_steps = 500
+camera_distance = 15
+colormap_scale = 0.25
+expression = '''
+(x^2+y^2+z^2+2*y-1)*(x^2+y^2+z^2-2*y-1)^2-8*z^2+
+16*x*z*(x^2+y^2+z^2-2*y-1)'''title = "Septic"
+
+[chmutov_septic]
+name = "Chmutov Septic"
+thumbnail = "textures/thumbs/septic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.1
+raymarch_steps = 150
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_7(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  float x6=x4*x2;
+  return x*(64.*x6-112.*x4+56.*x2-7.);
+}
+'''
+comment = '''
+,\\&\mathrm{where}\;T_7(x)=64x^7-112x^5+56x^3-7x\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;7.}'''
+expression = "T_7(x)+T_7(y)+T_7(z)+1"
+
+[labs]
+name = "Labs"
+thumbnail = "textures/thumbs/septic/labs.png"
+bounds_radius = 4
+raymarch_steps = 700
+camera_distance = 19
+colormap_scale = 0.002
+code_local = '''
+const float alpha=-0.14010685;
+const float alpha2=alpha*alpha;
+const float a_1=-12./7.*alpha2 - 384./49.*alpha - 8./7.;
+const float a_2=-32./7.*alpha2 + 24./49.*alpha - 4.;
+const float a_3=-4.*alpha2 + 24./49.*alpha - 4.;
+const float a_4=-8./7.*alpha2 + 8./49.*alpha - 8./7.;
+const float a_5=49.*alpha2 - 7.*alpha + 50.;
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\quad a_1=-{\textstyle\frac{12}{7}}\alpha^2-{\textstyle\frac{384}{49}}\alpha-{\textstyle\frac{8}{7}},\\
+&\quad a_2=-{\textstyle\frac{32}{7}}\alpha^2+{\textstyle\frac{24}{49}}\alpha-4,\\
+&\quad a_3=-4\alpha^2+{\textstyle\frac{24}{49}}\alpha-4,\\
+&\quad a_4=-{\textstyle\frac{8}{7}}\alpha^2+{\textstyle\frac{8}{49}}\alpha-{\textstyle\frac{8}{7}},\\
+&\quad a_5=49\alpha^2-7\alpha+50,\;\mathrm{and}\\
+&\quad \alpha=-0.14010685.
+'''
+expression = '''
+x*(x^6-21*x^4*y^2+35*x^2*y^4-7*y^6)+
+7*z*[(x^2+y^2)^3-8*z^2*(x^2+y^2)^2+16*z^4*(x^2+y^2)]-64*z^7-
+(z+a_5)*[(z+1)*(x^2+y^2)+a_1*z^3+a_2*z^2+a_3*z+a_4]^2'''title = "Octic"
+
+[chmutov_octic]
+name = "Chmutov Octic"
+thumbnail = "textures/thumbs/octic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.2
+raymarch_steps = 250
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_8(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  float x6=x4*x2;
+  float x8=x4*x4;
+  return 128.*x8-256.*x6+160.*x4-32.*x2+1.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\;T_8(x)=128x^8-256x^6+160x^4-32x^2+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;8.}'''
+expression = "T_8(x)+T_8(y)+T_8(z)"
+
+[endrass_x_positive]
+name = "Endrass X Positive"
+thumbnail = "textures/thumbs/octic/endrass_pos.png"
+bounds_radius = 4.5
+raymarch_steps = 1200
+camera_distance = 20
+colormap_scale = 1e-4
+code_local = '''
+const float sqrt2=sqrt(2.);
+const float k1=1.+sqrt2;
+const float k2=2.+sqrt2;
+const float k3=2.+7.*sqrt2;
+const float k4=1.-2.*sqrt2;
+const float k5=1.+12.*sqrt2;
+float x2py2=p2.x+p2.y;
+float a=mpow2(p.x+p.y)-2.;
+float b=mpow2(p.x-p.y)-2.;
+float c=-4.*k1*mpow2(x2py2);
+float d=(8.*k2*p2.z+2.*k3)*x2py2;
+float e=-16.*p4.z+8.*k4*p2.z-k5;
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\quad a=(x+y)^2-2,\\
+&\quad b=(x-y)^2-2,\\
+&\quad c=-4(1+\sqrt{2})(x^2+y^2)^2,\\
+&\quad d=\left[8(2+\sqrt{2})z^2+2(2+7\sqrt{2})\right](x^2+y^2),\\
+&\quad e=-16z^4+8(1-2\sqrt{2})z^2-(1+12\sqrt{2}).'''
+expression = "64*(x^2-1)*(y^2-1)*(a*b)-(c+d+e)^2"
+
+[endrass_x_negative]
+name = "Endrass X Negative"
+thumbnail = "textures/thumbs/octic/endrass_neg.png"
+bounds_radius = 4.5
+raymarch_steps = 1200
+camera_distance = 20
+colormap_scale = 1e-3
+code_local = '''
+const float nsqrt2=-sqrt(2.);
+const float k1=1.+nsqrt2;
+const float k2=2.+nsqrt2;
+const float k3=2.+7.*nsqrt2;
+const float k4=1.-2.*nsqrt2;
+const float k5=1.+12.*nsqrt2;
+float x2py2=p2.x+p2.y;
+float a=mpow2(p.x+p.y)-2.;
+float b=mpow2(p.x-p.y)-2.;
+float c=-4.*k1*mpow2(x2py2);
+float d=(8.*k2*p2.z+2.*k3)*x2py2;
+float e=-16.*p4.z+8.*k4*p2.z-k5;
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\quad a=(x+y)^2-2,\\
+&\quad b=(x-y)^2-2,\\
+&\quad c=-4(1-\sqrt{2})(x^2+y^2)^2,\\
+&\quad d=\left[8(2-\sqrt{2})z^2+2(2-7\sqrt{2})\right](x^2+y^2),\\
+&\quad e=-16z^4+8(1+2\sqrt{2})z^2-(1-12\sqrt{2}).'''
+expression = "64*(x^2-1)*(y^2-1)*(a*b)-(c+d+e)^2"
+
+[nonisol]
+name = "Nonisol"
+thumbnail = "textures/thumbs/octic/nonisol.png"
+bounds_shape = 1
+bounds_radius = 2
+raymarch_steps = 350
+raymarch_root_test = 1
+camera_distance = 14
+colormap_scale = 20
+expression = "x^8-y^8-2*x^4*y+y^2"title = "Nonic"
+
+[chmutov_nonic]
+name = "Chmutov Nonic"
+thumbnail = "textures/thumbs/nonic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.1
+raymarch_steps = 300
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_9(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  float x6=x4*x2;
+  float x8=x4*x4;
+  return x*(256.*x8-576.*x6+432.*x4-120.*x2+9.);
+}
+'''
+comment = '''
+,\\&\mathrm{where}\;T_9(x)=256x^9-576x^7+432x^5-120x^3+9x\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;9.}'''
+expression = "T_9(x)+T_9(y)+T_9(z)+1"
+
+[enneper_minimal]
+name = "Enneper Minimal"
+thumbnail = "textures/thumbs/nonic/enneper_minimal.png"
+bounds_radius = 2
+raymarch_steps = 350
+camera_distance = 10
+colormap_scale = 0.25
+expression = '''
+64*z^9-128*z^7+64*z^5-702*x^2*y^2*z^3-18*x^2*y^2*z+144*(y^2*z^6-x^2*z^6)+
+162*(y^4*z^2-x^4*z^2)+27*(y^6-x^6)+9*(x^4*z+y^4*z)+48*(x^2*z^3+y^2*z^3)-
+432*(x^2*z^5+y^2*z^5)+81*(x^4*y^2-x^2*y^4)+240*(y^2*z^4-x^2*z^4)-
+135*(x^4*z^3+y^4*z^3)'''title = "Decic and higher"
+
+[barth_decic]
+name = "Barth Decic"
+thumbnail = "textures/thumbs/decp/barth.png"
+bounds_radius = 2.2
+raymarch_steps = 500
+camera_distance = 10
+colormap_scale = 0.5
+code_global = "const float phi=1.618033988;"
+comment = '''
+,\\&\mathrm{where}\; \phi=(1+\sqrt{5})/2\;\mathrm{\;is\;the\;golden\;ratio.}'''
+expression = '''
+8*(x^2-phi^4*y^2)*(y^2-phi^4*z^2)*(z^2-phi^4*x^2)*
+[x^4+y^4+z^4-2*(x^2*y^2+x^2*z^2+y^2*z^2)]+
+(3+5*phi)*(x^2+y^2+z^2-1)^2*(x^2+y^2+z^2-2+phi)^2'''
+
+[chmutov]
+name = "Chmutov"
+thumbnail = "textures/thumbs/decp/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.1
+raymarch_method = 1
+raymarch_steps = 1000
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+const int n=18; // <- Order
 const float sgn_n=n%2>0?-1.:1.;
 float T_n(float x) {
   if (abs(x) <= 1.) {
@@ -90,19 +603,21 @@ float T_n(float x) {
     return sgn_x>0?r:sgn_n*r;
   }
 }
-comment ,\\&\mathrm{where}\;T_n\mathrm{\;is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;}n.
-&n\;\mathrm{is\;defined\;in\;the\;injected\;code\;(default\;is\;18).}
-expr T_n(x)+T_n(y)+T_n(z)
+'''
+comment = '''
+,\\&\mathrm{where}\;T_n\mathrm{\;is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;}n.\\
+&n\;\mathrm{is\;defined\;in\;the\;injected\;code\;(default\;is\;18).}'''
+expression = "T_n(x)+T_n(y)+T_n(z)"
 
-name Sarti Dodecic
-thumb textures/thumbs/decp/sarti_dodecic.png
-bound_shape 0
-bound_radius 3.8
-raymarch_method 0
-raymarch_steps 480
-cam_dist 18
-colormap_scale 0.00001
-code_local float l_1=p4.x+p4.y+p4.z+1.;
+[sarti_dodecic]
+name = "Sarti Dodecic"
+thumbnail = "textures/thumbs/decp/sarti_dodecic.png"
+bounds_radius = 3.8
+raymarch_steps = 480
+camera_distance = 18
+colormap_scale = 0.00001
+code_local = '''
+float l_1=p4.x+p4.y+p4.z+1.;
 float l_2=p2.x*p2.y+p2.z;
 float l_3=p2.x*p2.z+p2.y;
 float l_4=p2.x+p2.y*p2.z;
@@ -137,584 +652,107 @@ float S=kS*(s_2_3_minus+s_3_4_minus+s_4_2_minus)+
         336.*l_5p2*l_1+
         48.*l_2*l_3*l_4;
 float Q=mpow6(p2.x+p2.y+p2.z+1.);
-comment ,\\&\mathrm{where}
-&\quad S=33\sqrt{5}(s_{2,3}^{-}+s_{3,4}^{-}+s_{4,2}^{-})+19(s_{2,3}^{+}+s_{3,4}^{+}+s_{4,2}^{+})+10s_{2,3,4}-
-&\quad \;\phantom{S=}14s_{1,0}+2s_{1,1}-6s_{1,2}-352s_{5,1}+336l_5^2l_1+48l_2l_3l_4,
-&\quad Q=(x^2+y^2+z^2)^6,
-&\mathrm{with}
-&\quad l_{1\phantom{,,3,4}}=x^4+y^4+z^4+1,
-&\quad l_{2\phantom{,,3,4}}=x^2y^2+z^2,
-&\quad l_{3\phantom{,,3,4}}=x^2z^2+y^2,
-&\quad l_{4\phantom{,,3,4}}=x^2+y^2z^2,
-&\quad l_{5\phantom{,,3,4}}=xyz,
-&\quad s_{1,0\phantom{,4}}=l_1(l_2l_3+l_2l_4+l_3l_4),
-&\quad s_{1,1\phantom{,4}}=l_1^2(l_2+l_3+l_4),
-&\quad s_{1,2\phantom{,4}}=l_1(l_2^2+l_3^2+l_4^2),
-&\quad s_{5,1\phantom{,4}}=l_5^2(l_2+l_3+l_4),
-&\quad s_{2,3,4}=l_2^3+l_3^3+l_4^3,
-&\quad s_{2,3\phantom{,4}}^{\pm}=l_2^2l_3\pm l_2l_3^2,
-&\quad s_{3,4\phantom{,4}}^{\pm}=l_3^2l_4\pm l_3l_4^2,
-&\quad s_{4,2\phantom{,4}}^{\pm}=l_4^2l_2\pm l_4l_2^2.
-expr 243*S-22*Qname Blobby
-thumb textures/thumbs/nonalg/blobby.png
-bound_shape 0
-bound_radius 2.5
-raymarch_method 0
-raymarch_steps 65
-cam_dist 10
-colormap_scale 1
-expr x^2+y^2+z^2+sin(4*x)-cos(4*y)+sin(4*z)-1
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\quad S=33\sqrt{5}(s_{2,3}^{-}+s_{3,4}^{-}+s_{4,2}^{-})+19(s_{2,3}^{+}+s_{3,4}^{+}+s_{4,2}^{+})+10s_{2,3,4}-\\
+&\quad \;\phantom{S=}14s_{1,0}+2s_{1,1}-6s_{1,2}-352s_{5,1}+336l_5^2l_1+48l_2l_3l_4,\\
+&\quad Q=(x^2+y^2+z^2)^6,\\
+&\mathrm{with}\\
+&\quad l_{1\phantom{,,3,4}}=x^4+y^4+z^4+1,\\
+&\quad l_{2\phantom{,,3,4}}=x^2y^2+z^2,\\
+&\quad l_{3\phantom{,,3,4}}=x^2z^2+y^2,\\
+&\quad l_{4\phantom{,,3,4}}=x^2+y^2z^2,\\
+&\quad l_{5\phantom{,,3,4}}=xyz,\\
+&\quad s_{1,0\phantom{,4}}=l_1(l_2l_3+l_2l_4+l_3l_4),\\
+&\quad s_{1,1\phantom{,4}}=l_1^2(l_2+l_3+l_4),\\
+&\quad s_{1,2\phantom{,4}}=l_1(l_2^2+l_3^2+l_4^2),\\
+&\quad s_{5,1\phantom{,4}}=l_5^2(l_2+l_3+l_4),\\
+&\quad s_{2,3,4}=l_2^3+l_3^3+l_4^3,\\
+&\quad s_{2,3\phantom{,4}}^{\pm}=l_2^2l_3\pm l_2l_3^2,\\
+&\quad s_{3,4\phantom{,4}}^{\pm}=l_3^2l_4\pm l_3l_4^2,\\
+&\quad s_{4,2\phantom{,4}}^{\pm}=l_4^2l_2\pm l_4l_2^2.'''
+expression = "243*S-22*Q"title = "Non-algebraic"
 
-name Chladni Pattern
-thumb textures/thumbs/nonalg/chladni.png
-bound_shape 1
-bound_radius 3
-raymarch_method 0
-raymarch_steps 120
-cam_dist 21
-colormap_scale 0.75
-param k 1
-param l 2
-param m 1
-param s 1
-code_global const float pi=3.14259265;
-comment ,\\&\mathrm{written\;by\;Roman\;Chijner\;(GeoGebra).}
-expr cos(k*x*pi)*[cos(l*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(l*z*pi)]+\n
-cos(l*x*pi)*[cos(k*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(k*z*pi)]+\n
-cos(m*x*pi)*[cos(k*y*pi)*cos(l*z*pi)+s*cos(l*y*pi)*cos(k*z*pi)]
+[blobby]
+name = "Blobby"
+thumbnail = "textures/thumbs/nonalg/blobby.png"
+bounds_radius = 2.5
+raymarch_steps = 65
+camera_distance = 10
+colormap_scale = 1
+expression = "x^2+y^2+z^2+sin(4*x)-cos(4*y)+sin(4*z)-1"
 
-name Borg
-thumb textures/thumbs/nonalg/borg.png
-bound_shape 1
-bound_radius 5
-raymarch_method 0
-raymarch_steps 150
-cam_dist 35
-colormap_scale 1
-expr sin(x*y)+sin(y*z)+sin(z*x)
+[chladni_pattern]
+name = "Chladni Pattern"
+thumbnail = "textures/thumbs/nonalg/chladni.png"
+bounds_shape = 1
+bounds_radius = 3
+raymarch_steps = 120
+camera_distance = 21
+colormap_scale = 0.75
+parameters = [{name = "k", value = 1},
+              {name = "l", value = 2},
+              {name = "m", value = 1},
+              {name = "s", value = 1}]
+code_global = "const float pi=3.14259265;"
+comment = '''
+,\\&\mathrm{written\;by\;Roman\;Chijner\;(GeoGebra).}'''
+expression = '''
+cos(k*x*pi)*[cos(l*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(l*z*pi)]+
+cos(l*x*pi)*[cos(k*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(k*z*pi)]+
+cos(m*x*pi)*[cos(k*y*pi)*cos(l*z*pi)+s*cos(l*y*pi)*cos(k*z*pi)]'''
 
-name Diamond
-thumb textures/thumbs/nonalg/diamond.png
-bound_shape 0
-bound_radius 10
-raymarch_method 0
-raymarch_steps 25
-cam_dist 50
-colormap_scale 1.5
-expr sin(x)*sin(y)*sin(z)+sin(x)*cos(y)*cos(z)+cos(x)*sin(y)*cos(z)+\n
-cos(x)*cos(y)*sin(z)
+[borg]
+name = "Borg"
+thumbnail = "textures/thumbs/nonalg/borg.png"
+bounds_shape = 1
+bounds_radius = 5
+raymarch_steps = 150
+camera_distance = 35
+colormap_scale = 1
+expression = "sin(x*y)+sin(y*z)+sin(z*x)"
 
-name Scherk Minimal
-thumb textures/thumbs/nonalg/scherk_minimal.png
-bound_shape 0
-bound_radius 10
-raymarch_method 0
-raymarch_steps 360
-cam_dist 50
-colormap_scale 1
-expr exp(z)*cos(y)-cos(x)name Chmutov Nonic
-thumb textures/thumbs/nonic/chmutov.png
-bound_shape 1
-bound_radius 1.1
-raymarch_method 0
-raymarch_steps 300
-cam_dist 8
-colormap_scale 0.75
-code_global float T_9(float x) {
-  float x2=x*x;
-  float x4=x2*x2;
-  float x6=x4*x2;
-  float x8=x4*x4;
-  return x*(256.*x8-576.*x6+432.*x4-120.*x2+9.);
-}
-comment ,\\&\mathrm{where}\;T_9(x)=256x^9-576x^7+432x^5-120x^3+9x
-&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;9.}
-expr T_9(x)+T_9(y)+T_9(z)+1
+[diamond]
+name = "Diamond"
+thumbnail = "textures/thumbs/nonalg/diamond.png"
+bounds_radius = 10
+raymarch_steps = 25
+camera_distance = 50
+colormap_scale = 1.5
+expression = '''
+sin(x)*sin(y)*sin(z)+sin(x)*cos(y)*cos(z)+cos(x)*sin(y)*cos(z)+
+cos(x)*cos(y)*sin(z)'''
 
-name Enneper Minimal
-thumb textures/thumbs/nonic/enneper_minimal.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 350
-cam_dist 10
-colormap_scale 0.25
-expr 64*z^9-128*z^7+64*z^5-702*x^2*y^2*z^3-18*x^2*y^2*z+144*(y^2*z^6-x^2*z^6)+\n
-162*(y^4*z^2-x^4*z^2)+27*(y^6-x^6)+9*(x^4*z+y^4*z)+48*(x^2*z^3+y^2*z^3)-\n
-432*(x^2*z^5+y^2*z^5)+81*(x^4*y^2-x^2*y^4)+240*(y^2*z^4-x^2*z^4)-\n
-135*(x^4*z^3+y^4*z^3)name Chmutov Octic
-thumb textures/thumbs/octic/chmutov.png
-bound_shape 1
-bound_radius 1.2
-raymarch_method 0
-raymarch_steps 200
-cam_dist 8
-colormap_scale 0.75
-code_global float T_8(float x) {
-  float x2=x*x;
-  float x4=x2*x2;
-  float x6=x4*x2;
-  float x8=x4*x4;
-  return 128.*x8-256.*x6+160.*x4-32.*x2+1.;
-}
-comment ,\\&\mathrm{where}\;T_8(x)=128x^8-256x^6+160x^4-32x^2+1
-&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;8.}
-expr T_8(x)+T_8(y)+T_8(z)
+[scherk_minimal]
+name = "Scherk Minimal"
+thumbnail = "textures/thumbs/nonalg/scherk_minimal.png"
+bounds_radius = 10
+raymarch_steps = 360
+camera_distance = 50
+colormap_scale = 1
+expression = "exp(z)*cos(y)-cos(x)"title = "Other"
 
-name Endrass X Positive
-thumb textures/thumbs/octic/endrass_pos.png
-bound_shape 0
-bound_radius 4.5
-raymarch_method 0
-raymarch_steps 1200
-cam_dist 20
-colormap_scale 1e-4
-code_local const float sqrt2=sqrt(2.);
-const float k1=1.+sqrt2;
-const float k2=2.+sqrt2;
-const float k3=2.+7.*sqrt2;
-const float k4=1.-2.*sqrt2;
-const float k5=1.+12.*sqrt2;
-float x2py2=p2.x+p2.y;
-float a=mpow2(p.x+p.y)-2.;
-float b=mpow2(p.x-p.y)-2.;
-float c=-4.*k1*mpow2(x2py2);
-float d=(8.*k2*p2.z+2.*k3)*x2py2;
-float e=-16.*p4.z+8.*k4*p2.z-k5;
-comment ,\\&\mathrm{where}
-&\quad a=(x+y)^2-2,
-&\quad b=(x-y)^2-2,
-&\quad c=-4(1+\sqrt{2})(x^2+y^2)^2,
-&\quad d=\left[8(2+\sqrt{2})z^2+2(2+7\sqrt{2})\right](x^2+y^2),
-&\quad e=-16z^4+8(1-2\sqrt{2})z^2-(1+12\sqrt{2}).
-expr 64*(x^2-1)*(y^2-1)*(a*b)-(c+d+e)^2
+[superquadric]
+name = "Superquadric"
+thumbnail = "textures/thumbs/other/superquadric.png"
+bounds_radius = 1.7
+raymarch_steps = 100
+camera_distance = 7
+colormap_scale = 5
+parameters = [{name = "r", value = 1.5},
+              {name = "s", value = 0.75},
+              {name = "t", value = 4}]
+expression = "abs(x)^r+abs(y)^s+abs(z)^t-1"
 
-name Endrass X Negative
-thumb textures/thumbs/octic/endrass_neg.png
-bound_shape 0
-bound_radius 4.5
-raymarch_method 0
-raymarch_steps 1200
-cam_dist 20
-colormap_scale 1e-3
-code_local const float nsqrt2=-sqrt(2.);
-const float k1=1.+nsqrt2;
-const float k2=2.+nsqrt2;
-const float k3=2.+7.*nsqrt2;
-const float k4=1.-2.*nsqrt2;
-const float k5=1.+12.*nsqrt2;
-float x2py2=p2.x+p2.y;
-float a=mpow2(p.x+p.y)-2.;
-float b=mpow2(p.x-p.y)-2.;
-float c=-4.*k1*mpow2(x2py2);
-float d=(8.*k2*p2.z+2.*k3)*x2py2;
-float e=-16.*p4.z+8.*k4*p2.z-k5;
-comment ,\\&\mathrm{where}
-&\quad a=(x+y)^2-2,
-&\quad b=(x-y)^2-2,
-&\quad c=-4(1-\sqrt{2})(x^2+y^2)^2,
-&\quad d=\left[8(2-\sqrt{2})z^2+2(2-7\sqrt{2})\right](x^2+y^2),
-&\quad e=-16z^4+8(1+2\sqrt{2})z^2-(1-12\sqrt{2}).
-expr 64*(x^2-1)*(y^2-1)*(a*b)-(c+d+e)^2
-
-name Nonisol
-thumb textures/thumbs/octic/nonisol.png
-bound_shape 1
-bound_radius 2
-raymarch_method 0
-raymarch_steps 350
-raymarch_root_test 1
-cam_dist 14
-colormap_scale 20
-expr x^8-y^8-2*x^4*y+y^2name Superquadric
-thumb textures/thumbs/other/superquadric.png
-bound_shape 0
-bound_radius 1.7
-raymarch_method 0
-raymarch_steps 100
-cam_dist 7
-colormap_scale 5
-param r 1.5
-param s 0.75
-param t 4
-expr abs(x)^r+abs(y)^s+abs(z)^t-1
-
-name Tetrahedron
-thumb textures/thumbs/other/tetrahedron.png
-bound_shape 0
-bound_radius 6.1
-raymarch_method 0
-raymarch_steps 300
-cam_dist 27
-colormap_scale 1.5
-expr abs(abs(abs(x)+2*y)+abs(x)+2*z)+abs(abs(x)+2*y)+abs(x)-5name Bifolia
-thumb textures/thumbs/quartic/bifolia.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 80
-cam_dist 7
-colormap_scale 7
-expr (x^2+y^2+z^2)^2-3*y*(x^2+z^2)
-
-name Cassini
-thumb textures/thumbs/quartic/cassini.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 75
-cam_dist 13
-colormap_scale 0.75
-param r 1
-expr [(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2
-
-name Chair
-thumb textures/thumbs/quartic/chair.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 100
-cam_dist 7
-colormap_scale 8
-param a 0.95
-param b 0.8
-param k 1
-expr (x^2+y^2+z^2-a*k^2)^2-b*[(z-k)^2-2*x^2]*[(z+k)^2-2*y^2]
-
-name Chmutov Quartic
-thumb textures/thumbs/quartic/chmutov.png
-bound_shape 1
-bound_radius 1.2
-raymarch_method 0
-raymarch_steps 70
-cam_dist 8
-colormap_scale 0.75
-code_global float T_4(float x) {
-  float x2=x*x;
-  float x4=x2*x2;
-  return 8.*x4-8.*x2+1.;
-}
-comment ,\\&\mathrm{where}\; T_4(x)=8x^4-8x^2+1
-&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;4.}
-expr T_4(x)+T_4(y)+T_4(z)
-
-name Cross-Cap
-thumb textures/thumbs/quartic/cross-cap.png
-bound_shape 0
-bound_radius 2.5
-raymarch_method 0
-raymarch_steps 250
-cam_dist 8
-colormap_scale 5
-param a 1
-expr 4*x^2*(x^2+y^2+z^2+a*z)+y^2*(y^2+z^2-a^2)
-
-name Cushion
-thumb textures/thumbs/quartic/cushion.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 150
-cam_dist 9
-colormap_scale 8
-expr z^2*x^2-z^4+2*z^3+x^2-2*z^2-x^4-y^4-\n
-2*x^2*y^2-y^2*z^2+2*y^2*z+y^2
-
-name Devil
-thumb textures/thumbs/quartic/devil.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 100
-cam_dist 14
-colormap_scale 1
-param a -0.25
-param b 0.25
-exprx^4+2*x^2*z^2+a*x^2-y^4+b*y^2+z^4
-
-name Double Cone
-thumb textures/thumbs/quartic/double-cone.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 100
-cam_dist 14
-colormap_scale 2
-param r 1
-expr y^2*x^2+y^2*z^2-x^4-2*x^2*z^2-z^4
-
-name Goursat
-thumb textures/thumbs/quartic/goursat.png
-bound_shape 0
-bound_radius 1.5
-raymarch_method 0
-raymarch_steps 65
-cam_dist 9
-colormap_scale 2.5
-expr x^4+y^4+z^4-1
-
-name Miter
-thumb textures/thumbs/quartic/miter.png
-bound_shape 0
-bound_radius 2.5
-raymarch_method 0
-raymarch_steps 180
-cam_dist 6
-colormap_scale 7
-expr 4*x^2*(x^2+y^2+z^2)-y^2*(1-y^2-z^2)
-
-name Nordstrand
-thumb textures/thumbs/quartic/nordstrand.png
-bound_shape 0
-bound_radius 1.2
-raymarch_method 0
-raymarch_steps 120
-cam_dist 6
-colormap_scale 1
-expr 25*[x^3*(y+z)+y^3*(x+z)+z^3*(x+y)]+50*(x^2*y^2+x^2*z^2+y^2*x^2)-\n
-125*(x^2*y*z+y^2*x*z+z^2*x*y)-4*(x*y+x*z+y*z)+60*x*y*z
-
-name Pillow Tooth
-thumb textures/thumbs/quartic/pillow_tooth.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 60
-cam_dist 9
-colormap_scale 3
-expr x^4+y^4+z^4-x^2-y^2-z^2
-
-name Piriform
-thumb textures/thumbs/quartic/piriform.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 100
-cam_dist 7
-colormap_scale 12
-param a 1
-expr (x^4-a*x^3)+a^2*(y^2+z^2)
-
-name Steiner
-thumb textures/thumbs/quartic/steiner.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 150
-cam_dist 10
-colormap_scale 12
-expr x^2*y^2+x^2*z^2+y^2*z^2-2*x*y*z
-
-name Tetrahedroid
-thumb textures/thumbs/quartic/tetrahedroid.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 75
-cam_dist 13
-colormap_scale 1.5
-expr x^4+y^4+z^4-x^2-y^2-z^2-x^2*y^2-y^2*z^2-z^2*x^2+1
-
-name Torus
-thumb textures/thumbs/quartic/torus.png
-bound_shape 0
-bound_radius 2.5
-raymarch_method 0
-raymarch_steps 80
-cam_dist 9
-colormap_scale 3
-param r 0.5
-param R 1
-expr (x^2+y^2+z^2+R^2-r^2)^2-4*R^2*(x^2+y^2)name Chmutov Quintic
-thumb textures/thumbs/quintic/chmutov.png
-bound_shape 1
-bound_radius 1.1
-raymarch_method 0
-raymarch_steps 100
-cam_dist 8
-colormap_scale 0.75
-code_global float T_5(float x) {
-  float x2=x*x;
-  float x4=x2*x2;
-  return x*(16.*x4-20.*x2+5.);
-}
-comment ,\\&\mathrm{where}\; T_5(x)=16x^5-20x^3+5x+1
-&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;5.}
-expr T_5(x)+T_5(y)+T_5(z)+1
-
-name Labs 15-Cusp Quintic
-thumb textures/thumbs/quintic/labs_15-cusp.png
-bound_shape 0
-bound_radius 4
-raymarch_method 0
-raymarch_steps 400
-cam_dist 18
-colormap_scale 0.1
-code_global float S_5(float x, float y) {
-  vec2 xy=vec2(x,y);
-  vec2 xy2=xy*xy;
-  vec2 xy3=xy2*xy;
-  vec2 xy4=xy2*xy2;
-  vec2 xy5=xy2*xy3;
-  return xy5.x+xy2.y*(-10.*xy3.x+5.*x*xy2.y-10.*xy2.x-5.*xy2.y+20.)-5.*xy4.x 
-         +20.*xy2.x-16.;
-}
-float t(float z) {
-  float z2=z*z;
-  float z3=z2*z;
-  float z5=z3*z2;
-  return -3.*z5+10.*z3-15.*z-8.;
-}
-comment ,\\&\mathrm{where}
-&\begin{aligned}S_5(x,y)=&x^5-10x^3y^2+5xy^4-5x^4-10x^2y^2-5y^4+20x^2+&
-&20y^2-16,\end{aligned}
-&t(z)=-3z^5+10z^3-15z-8.
-expr S_5(x,y)+t(z)
-
-name Kiss
-thumb textures/thumbs/quintic/kiss.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 110
-cam_dist 13
-colormap_scale 1
-expr x^2+y^2-z*(1-z^4)
-
-name Peninsula
-thumb textures/thumbs/quintic/peninsula.png
-bound_shape 1
-bound_radius 2
-raymarch_method 0
-raymarch_steps 75
-cam_dist 14
-expr x^2+y^3+z^5-1
-
-name Togliatti
-thumb textures/thumbs/quintic/togliatti.png
-bound_shape 0
-bound_radius 6
-raymarch_method 1
-raymarch_steps 500
-cam_dist 28
-colormap_scale 0.0001
-param a 1.66250775111
-expr 64*(x-1)*(x^4-4*x^3-10*x^2*y^2-4*x^2+16*x-20*x*y^2+5*y^4+16-\n
-20*y^2)-5*a*(2*z-a)*[4*(x^2+y^2-z^2)+(1+3*sqrt(5))]^2name Chmutov Septic
-thumb textures/thumbs/septic/chmutov.png
-bound_shape 1
-bound_radius 1.1
-raymarch_method 0
-raymarch_steps 150
-cam_dist 8
-colormap_scale 0.75
-code_global float T_7(float x) {
-  float x2=x*x;
-  float x4=x2*x2;
-  float x6=x4*x2;
-  return x*(64.*x6-112.*x4+56.*x2-7.);
-}
-comment ,\\&\mathrm{where}\;T_7(x)=64x^7-112x^5+56x^3-7x
-&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;7.}
-expr T_7(x)+T_7(y)+T_7(z)+1
-
-name Labs
-thumb textures/thumbs/septic/labs.png
-bound_shape 0
-bound_radius 4
-raymarch_method 0
-raymarch_steps 700
-cam_dist 19
-colormap_scale 0.002
-code_local const float alpha=-0.14010685;
-const float alpha2=alpha*alpha;
-const float a_1=-12./7.*alpha2 - 384./49.*alpha - 8./7.;
-const float a_2=-32./7.*alpha2 + 24./49.*alpha - 4.;
-const float a_3=-4.*alpha2 + 24./49.*alpha - 4.;
-const float a_4=-8./7.*alpha2 + 8./49.*alpha - 8./7.;
-const float a_5=49.*alpha2 - 7.*alpha + 50.;
-comment ,\\&\mathrm{where}
-&\quad a_1=-{\textstyle\frac{12}{7}}\alpha^2-{\textstyle\frac{384}{49}}\alpha-{\textstyle\frac{8}{7}},
-&\quad a_2=-{\textstyle\frac{32}{7}}\alpha^2+{\textstyle\frac{24}{49}}\alpha-4,
-&\quad a_3=-4\alpha^2+{\textstyle\frac{24}{49}}\alpha-4,
-&\quad a_4=-{\textstyle\frac{8}{7}}\alpha^2+{\textstyle\frac{8}{49}}\alpha-{\textstyle\frac{8}{7}},
-&\quad a_5=49\alpha^2-7\alpha+50,\;\mathrm{and}
-&\quad \alpha=-0.14010685.
-expr x*(x^6-21*x^4*y^2+35*x^2*y^4-7*y^6)+\n
-7*z*[(x^2+y^2)^3-8*z^2*(x^2+y^2)^2+16*z^4*(x^2+y^2)]-64*z^7-\n
-(z+a_5)*[(z+1)*(x^2+y^2)+a_1*z^3+a_2*z^2+a_3*z+a_4]^2
-name Barth Sextic
-thumb textures/thumbs/sextic/barth.png
-bound_shape 0
-bound_radius 3
-raymarch_method 0
-raymarch_steps 200
-cam_dist 14
-colormap_scale 0.45
-code_global const float phi=1.618033988;
-comment ,\\&\mathrm{where}\; \phi=(1+\sqrt{5})/2\;\mathrm{\;is\;the\;golden\;ratio.}
-expr 4*(phi^2*x^2-y^2)*(phi^2*y^2-z^2)*(phi^2*z^2-x^2)-\n
-(1+2*phi)*(x^2+y^2+z^2-1)^2
-
-name Chmutov Sextic
-thumb textures/thumbs/sextic/chmutov.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 200
-cam_dist 8
-colormap_scale 1.2
-code_global float T_6(float x) {
-  float x2=x*x;
-  float a=3.-4.*x2;
-  return 2.*x2*a*a-1.;
-}
-comment ,\\&\mathrm{where}\; T_6(x)=32x^6-48x^4+18x^2-1
-&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;6.}
-expr T_6(x)+T_6(y)+T_6(z)
-
-name Heart
-thumb textures/thumbs/sextic/heart.png
-bound_shape 0
-bound_radius 1.6
-raymarch_method 0
-raymarch_steps 200
-raymarch_root_test 0
-cam_dist 7
-colormap_scale 10
-expr (x^2+(9/4)*y^2+z^2-1)^3-x^2*z^3-(9/80)*y^2*z^3
-
-name High Silhouette
-thumb textures/thumbs/sextic/high_silhouette.png
-bound_shape 0
-bound_radius 2
-raymarch_method 0
-raymarch_steps 140
-raymarch_root_test 1
-cam_dist 10
-colormap_scale 20
-expr x^6-y^5-2*x^3*y+y^2
-
-name Hunt
-thumb textures/thumbs/sextic/hunt.png
-bound_shape 0
-bound_radius 4
-raymarch_method 0
-raymarch_steps 700
-cam_dist 18
-colormap_scale 0.001
-expr 4*(x^2+y^2+z^2-13)^3+27*(3*x^2+y^2-4*z^2-12)^2
-
-name Kleine
-thumb textures/thumbs/sextic/kleine.png
-bound_shape 0
-bound_radius 3.3
-raymarch_method 0
-raymarch_steps 500
-cam_dist 15
-colormap_scale 0.25
-expr (x^2+y^2+z^2+2*y-1)*(x^2+y^2+z^2-2*y-1)^2-8*z^2+\n
-16*x*z*(x^2+y^2+z^2-2*y-1)
+[tetrahedon]
+name = "Tetrahedron"
+thumbnail = "textures/thumbs/other/tetrahedron.png"
+bounds_radius = 6.1
+raymarch_steps = 300
+camera_distance = 27
+colormap_scale = 1.5
+expression = "abs(abs(abs(x)+2*y)+abs(x)+2*z)+abs(abs(x)+2*y)+abs(x)-5"
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/

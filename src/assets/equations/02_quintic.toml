@@ -1,0 +1,85 @@
+title = "Quintic"
+
+[chmutov_quintic]
+name = "Chmutov Quintic"
+thumbnail = "textures/thumbs/quintic/chmutov.png"
+bounds_shape = 1
+bounds_radius = 1.1
+raymarch_steps = 100
+camera_distance = 8
+colormap_scale = 0.75
+code_global = '''
+float T_5(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return x*(16.*x4-20.*x2+5.);
+}
+'''
+comment = '''
+,\\&\mathrm{where}\; T_5(x)=16x^5-20x^3+5x+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;5.}
+'''
+expression = "T_5(x)+T_5(y)+T_5(z)+1"
+
+[labs_15_cusp_quintic]
+name = "Labs 15-Cusp Quintic"
+thumbnail = "textures/thumbs/quintic/labs_15-cusp.png"
+bounds_radius = 4
+raymarch_steps = 400
+camera_distance = 18
+colormap_scale = 0.1
+code_global = '''
+float S_5(float x, float y) {
+  vec2 xy=vec2(x,y);
+  vec2 xy2=xy*xy;
+  vec2 xy3=xy2*xy;
+  vec2 xy4=xy2*xy2;
+  vec2 xy5=xy2*xy3;
+  return xy5.x+xy2.y*(-10.*xy3.x+5.*x*xy2.y-10.*xy2.x-5.*xy2.y+20.)-5.*xy4.x 
+         +20.*xy2.x-16.;
+}
+float t(float z) {
+  float z2=z*z;
+  float z3=z2*z;
+  float z5=z3*z2;
+  return -3.*z5+10.*z3-15.*z-8.;
+}
+'''
+comment = '''
+,\\&\mathrm{where}\\
+&\begin{aligned}S_5(x,y)=&x^5-10x^3y^2+5xy^4-5x^4-10x^2y^2-5y^4+20x^2+&\\
+&20y^2-16,\end{aligned}\\
+&t(z)=-3z^5+10z^3-15z-8.
+'''
+expression = "S_5(x,y)+t(z)"
+
+[kiss]
+name = "Kiss"
+thumbnail = "textures/thumbs/quintic/kiss.png"
+bounds_radius = 3
+raymarch_steps = 110
+camera_distance = 13
+colormap_scale = 1
+expression = "x^2+y^2-z*(1-z^4)"
+
+[peninsula]
+name = "Peninsula"
+thumbnail = "textures/thumbs/quintic/peninsula.png"
+bounds_shape = 1
+bounds_radius = 2
+raymarch_steps = 75
+camera_distance = 14
+expression = "x^2+y^3+z^5-1"
+
+[togliatti]
+name = "Togliatti"
+thumbnail = "textures/thumbs/quintic/togliatti.png"
+bounds_radius = 6
+raymarch_method = 1
+raymarch_steps = 500
+camera_distance = 28
+colormap_scale = 0.0001
+parameters = [{name = "a", value = 1.66250775111}]
+expression = '''
+64*(x-1)*(x^4-4*x^3-10*x^2*y^2-4*x^2+16*x-20*x*y^2+5*y^4+16-
+20*y^2)-5*a*(2*z-a)*[4*(x^2+y^2-z^2)+(1+3*sqrt(5))]^2'''
