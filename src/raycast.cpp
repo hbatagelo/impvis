@@ -328,7 +328,8 @@ void RayCast::createProgram(Settings const &settings) {
   auto const &loadedData{settings.equation.getLoadedData()};
   std::string const codeLocal{loadedData.codeLocal};
   std::string const codeGlobal{loadedData.codeGlobal};
-  std::string equation = settings.equation.getGLSLExpression();
+
+  std::string equation{settings.equation.getGLSLExpression()};
 
   // Replace parameter names with uParams.data[index]
   for (auto &&[index, param] :
@@ -342,6 +343,11 @@ void RayCast::createProgram(Settings const &settings) {
                fmt::format("uParams.data[{}].{}", vecIndex, var).c_str(), true);
   }
 
+  // This replacement must be performed AFTER the replacement of parameter names
+  // with uParams.data[index]. Otherwise, "p" can be wrongly interpreted as a
+  // parameter.
+  replaceAll(equation, "@P.@", "p.");
+
   replaceAll(fragmentShader.source, "@CODE_LOCAL@", codeLocal);
   replaceAll(fragmentShader.source, "@CODE_GLOBAL@", codeGlobal);
   replaceAll(fragmentShader.source, "@EQUATION@", equation);
@@ -350,8 +356,9 @@ void RayCast::createProgram(Settings const &settings) {
   if (m_programBuildPhase != ProgramBuildPhase::Done) {
     // Delete shaders
     for (auto const &shaderID : m_shaderIDs) {
-      if (shaderID.shader == 0)
+      if (shaderID.shader == 0) {
         continue;
+      }
       abcg::glDeleteShader(shaderID.shader);
     }
   }

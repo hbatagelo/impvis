@@ -1,9 +1,9 @@
 # Enable sanitizers for target project_target
 function(enable_sanitizers project_target)
 
-  # Code coverage
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES
                                             "Clang")
+    # Code coverage
     if(ENABLE_COVERAGE)
       target_compile_options(${project_target} INTERFACE --coverage -O0 -g)
       if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
@@ -17,7 +17,7 @@ function(enable_sanitizers project_target)
     set(_SANITIZERS "")
 
     # Address sanitizer
-    option(ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" OFF)
+    option(ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" ON)
     if(ENABLE_SANITIZER_ADDRESS)
       if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(APPEND _SANITIZERS "address")
@@ -25,7 +25,7 @@ function(enable_sanitizers project_target)
     endif()
 
     # Leak sanitizer
-    option(ENABLE_SANITIZER_LEAK "Enable leak sanitizer" OFF)
+    option(ENABLE_SANITIZER_LEAK "Enable leak sanitizer" ON)
     if(ENABLE_SANITIZER_LEAK)
       if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT APPLE)
         list(APPEND _SANITIZERS "leak")
@@ -46,7 +46,7 @@ function(enable_sanitizers project_target)
 
     # UB sanitizer
     option(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR
-           "Enable undefined behavior sanitizer" OFF)
+           "Enable undefined behavior sanitizer" ON)
     if(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR)
       if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(APPEND _SANITIZERS "undefined")

@@ -64,9 +64,9 @@ The following apply for code injected in the local scope:
 
 The isosurfaces are rendered using an adaptive raymarching algorithm. The scalar fields are rendered using direct volume rendering. Both are implemented as [GLSL ES 3.00]((https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf)) shaders. The equation names and the expressions shown in the top-left corner of the screen are rendered using [MathJax](https://www.mathjax.org/) (WebAssembly only).
 
-The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the _adaptive marching points_ algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader (`raycast.frag`).
+The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the _adaptive marching points_ algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader at `src/assets/shaders/raycast.frag`.
 
-## How to build
+## Building
 
 ImpVis can be built for the desktop (Windows, Linux, macOS) and the web (WebAssembly).
 
@@ -85,7 +85,7 @@ Make sure the following tools are installed and are reachable from the path:
 
 ### On Windows
 
-Run `build-vs.bat` for building with Visual Studio 2022. The script will execute the following commands:
+Run `build-vs.bat` for building with Visual Studio 2022, using x64 as target platform. The script will execute the following commands:
 
 ```bat
 :: Create the build directory
@@ -103,7 +103,7 @@ cmake --build . --config %BUILD_TYPE%
 
 ### On macOS and Linux (including WSL2)
 
-Run `./build.sh`. It will execute the following commands:
+Run `./build.sh` to execute the following commands:
 
 ```sh
 # Create the build directory
@@ -126,13 +126,37 @@ cmake --build . --config $BUILD_TYPE
 
 The WASM binaries will be written to `impvis/public`.
 
-* * *
+## Running tests
+
+### Unit tests
+
+1.  Configure CMake with `-DENABLE_UNIT_TESTING=ON` (default is `OFF`).
+2.  Build the project. The executable `tests` will be written to the build directory.
+3.  Run `tests`.
+
+### Fuzzing tests
+
+1.  Install [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
+
+2.  Configure CMake with Clang as compiler, and `-DENABLE_FUZZ_TESTING=ON` (default is `OFF`).
+
+3.  Build the project. The executable `fuzzer` will be written to the build directory.
+
+4.  Copy `fuzzer` to `tests/fuzzer` and run:
+
+    ```sh
+    ./fuzzer corpus -dict=dictionary.txt -max_len=1280 -timeout=5
+    ```
+
+    This will use the corpus of sample inputs contained in `tests/fuzzer/corpus`, and the dictionary of keywords in `tests/fuzzer/dictionary.txt`. During the fuzzing process, test cases that trigger coverage of new paths through the code will be added to the corpus directory.
+
+    By default, the fuzzer runs indefinitely, or until a bug is found. Use the parameter `-max_total_time` to set a time limit. For example, `-max_total_time=60` forces the test to stop after one minute.
 
 ## File format of the catalog of equations
 
 The equations are described as [TOML](https://toml.io) files located in `src\assets\equations`.
 
-Each TOML file must have a `title` key in root level with a value that is the name of the equation group. Each equation is then described by a table with the following key/value pairs, from which only the `expression` key/value pair is required:
+Each TOML file must have a `title` key in root level with a value that is the name of the equation group (e.g., `title="Cubic"` for the file that contains cubic equations). Each equation is then described by a table with the following key/value pairs, from which only the `expression` key/value pair is required:
 
 | Key                  | Value type             | Description                                                      |
 | :------------------- | :--------------------- | :--------------------------------------------------------------- |
@@ -151,7 +175,7 @@ Each TOML file must have a `title` key in root level with a value that is the na
 | `code_global`        | string                 | GLSL code to be injected in the global scope                     |
 | `comment`            | string                 | Comments in LaTeX math mode                                      |
 
-Each inline table of the `parameters`' array is expected to have two key/value pairs:
+Each inline table of the `parameters`' array must have two key/value pairs:
 
 | Key     | Value type | Description     |
 | :------ | :--------- | :-------------- |

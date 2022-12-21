@@ -1,21 +1,19 @@
 ---
 Checks: '*,
-         -abseil*,         
+         -abseil*,
          -altera*,
-         -android*,         
-         -fuchsia*,         
+         -android*,
+         -fuchsia*,
          -google*,
-         -llvm*,         
+         -llvm*,
          -zircon*,
-         -*braces-around-statements,         
-         -*magic-numbers,         
          -*use-trailing-return-type,
-         -*reinterpret-cast,
-         -*signed-bitwise,
-         -*type-union-access,
-         -*vararg,
-         -*uppercase-literal-suffix'
-WarningsAsErrors: '*'
-HeaderFilterRegex: '.*'
+         -*signed-bitwise,         
+         -*magic-numbers,
+         -*vararg,         
+         -*uppercase-literal-suffix,
+         -*type-union-access'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
 FormatStyle: llvm

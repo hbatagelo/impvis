@@ -3,12 +3,31 @@
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  set(OPTIONS_TARGET options)
   set(SANITIZERS_TARGET sanitizers)
   set(WARNINGS_TARGET warnings)
+  set(OPTIONS_TARGET options)
   add_library(${SANITIZERS_TARGET} INTERFACE)
   add_library(${WARNINGS_TARGET} INTERFACE)
   add_library(${OPTIONS_TARGET} INTERFACE)
+
+  option(ENABLE_UNIT_TESTING "Enable unit testing" OFF)
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    option(ENABLE_FUZZ_TESTING "Enable fuzz testing" OFF)
+  endif()
+
+  if(ENABLE_UNIT_TESTING)
+    set(OPTIONS_UNIT_TESTING_TARGET options_unit_testing)
+    add_library(${OPTIONS_UNIT_TESTING_TARGET} INTERFACE)
+  endif()
+
+  if(ENABLE_FUZZ_TESTING)
+    set(OPTIONS_FUZZ_TESTING_TARGET options_fuzz_testing)
+    add_library(${OPTIONS_FUZZ_TESTING_TARGET} INTERFACE)
+
+    include(${CMAKE_CURRENT_LIST_DIR}/Fuzzer.cmake)
+    enable_fuzzer(${OPTIONS_FUZZ_TESTING_TARGET})
+  endif()
 
   # Standard compiler warnings
   include(${CMAKE_CURRENT_LIST_DIR}/Warnings.cmake)
@@ -90,6 +109,11 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # Fix conflict between different versions of zlib
   set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} zlib/1.2.12)
 
+  # Use Google's test framework for unit testing
+  if(ENABLE_UNIT_TESTING)
+    set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} gtest/1.12.1)
+  endif()
+
   include(${CMAKE_CURRENT_LIST_DIR}/Conan.cmake)
   run_conan()
 
@@ -120,6 +144,14 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
               SDL2::SDL2
               SDL2_image::SDL2_image
               tomlplusplus::tomlplusplus)
+
+  if(ENABLE_UNIT_TESTING)
+    find_package(GTest)
+    target_link_libraries(
+      ${OPTIONS_UNIT_TESTING_TARGET}
+      INTERFACE GTest::gtest GTest::gtest_main ${OPTIONS_TARGET}
+                ${SANITIZERS_TARGET})
+  endif()
 
 endif()
 

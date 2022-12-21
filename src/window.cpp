@@ -22,7 +22,7 @@
 #include "util.hpp"
 #include "window.hpp"
 
-static char const *const kAppVersion{"v2.1.0"};
+static char const *const kAppVersion{"v2.2.0"};
 
 #if defined(__EMSCRIPTEN__)
 EM_JS(void, jsUpdateEquation,
@@ -57,8 +57,9 @@ std::vector<Equation> loadCatalog(toml::table const &table) {
   // data
   auto loadParameters{[&data](toml::array const *paramArray) {
     for (auto const &paramTable : *paramArray) {
-      if (!paramTable.is_table())
+      if (!paramTable.is_table()) {
         continue;
+      }
 
       Equation::Parameter parameter;
 
@@ -79,8 +80,9 @@ std::vector<Equation> loadCatalog(toml::table const &table) {
 
   for (auto &&[rootKey, rootValue] : table) {
     // Ignore top-level keys with values, such as the 'title' key
-    if (rootValue.is_value())
+    if (rootValue.is_value()) {
       continue;
+    }
 
     // Load data
     data = {};
@@ -298,8 +300,9 @@ void Window::onPaintUI() {
   abcg::OpenGLWindow::onPaintUI();
 
   // Disable UI when taking screenshots
-  if (m_settings.takeScreenshot || !m_settings.drawUI)
+  if (m_settings.takeScreenshot || !m_settings.drawUI) {
     return;
+  }
 
   ImGui::PushFont(m_proportionalFont);
 
@@ -406,8 +409,9 @@ void Window::paintUIMainWindow() {
           fmt::format("{}: {:.2f}", parameter.name, parameter.value)};
       ImGui::DragFloat(label.c_str(), &value, 0.01f, 0.f, 0.f, format.c_str(),
                        ImGuiSliderFlags_NoRoundToFormat);
-      if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown())
+      if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown()) {
         ImGui::SetTooltip("Drag to\nchange");
+      }
       ImGui::PopItemWidth();
 
       // Right arrow button
@@ -740,8 +744,9 @@ void Window::paintUISettingsTab() {
   if (ImGui::Button("Hide UI windows", ImVec2(-1, 0))) {
     m_settings.drawUI = false;
   }
-  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown())
+  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown()) {
     ImGui::SetTooltip("Press any key\nto unhide");
+  }
 }
 
 void Window::paintUIGeometryComboBox() {
@@ -751,10 +756,12 @@ void Window::paintUIGeometryComboBox() {
   if (ImGui::BeginCombo("Shape", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
       auto const isSelected{currentIndex == index};
-      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected))
+      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected)) {
         currentIndex = index;
-      if (isSelected)
+      }
+      if (isSelected) {
         ImGui::SetItemDefaultFocus();
+      }
     }
     ImGui::EndCombo();
   }
@@ -768,10 +775,12 @@ void Window::paintUIMethodComboBox() {
   if (ImGui::BeginCombo("Method", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
       auto const isSelected{currentIndex == index};
-      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected))
+      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected)) {
         currentIndex = index;
-      if (isSelected)
+      }
+      if (isSelected) {
         ImGui::SetItemDefaultFocus();
+      }
     }
     ImGui::EndCombo();
   }
@@ -785,10 +794,12 @@ void Window::paintUIRootTestComboBox() {
   if (ImGui::BeginCombo("Root test", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
       auto const isSelected{currentIndex == index};
-      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected))
+      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected)) {
         currentIndex = index;
-      if (isSelected)
+      }
+      if (isSelected) {
         ImGui::SetItemDefaultFocus();
+      }
     }
     ImGui::EndCombo();
   }
@@ -802,10 +813,12 @@ void Window::paintUIShaderComboBox() {
   if (ImGui::BeginCombo("Shader", comboItems.at(currentIndex).c_str())) {
     for (auto const index : iter::range(comboItems.size())) {
       auto const isSelected{currentIndex == index};
-      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected))
+      if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected)) {
         currentIndex = index;
-      if (isSelected)
+      }
+      if (isSelected) {
         ImGui::SetItemDefaultFocus();
+      }
     }
     ImGui::EndCombo();
   }
@@ -1024,8 +1037,9 @@ void Window::paintUIIsoValueWindow() {
   // Minimum iso value
   ImGui::PushItemWidth(50);
   ImGui::DragFloat("##iso_min", &isoMin, 0.1f, -1e5f, -0.1f, "%.1g");
-  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown())
+  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown()) {
     ImGui::SetTooltip("Drag to change\nminimum value");
+  }
   ImGui::PopItemWidth();
 
   // Slider will fill the horizontal span of the window
@@ -1034,16 +1048,18 @@ void Window::paintUIIsoValueWindow() {
   ImGui::PushItemWidth(m_settings.viewportSize.x - (widgetWidth + 22));
   ImGui::SliderFloat("##iso_slider", &m_settings.isoValue, isoMin, isoMax,
                      "Isovalue: %.3g", ImGuiSliderFlags_NoRoundToFormat);
-  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown())
+  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown()) {
     ImGui::SetTooltip("Ctrl+click to\ninput value");
+  }
   ImGui::PopItemWidth();
   ImGui::SameLine();
 
   // Maximum iso value
   ImGui::PushItemWidth(50);
   ImGui::DragFloat("##iso_max", &isoMax, 0.1f, 0.1f, 1e5f, "%.1g");
-  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown())
+  if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown()) {
     ImGui::SetTooltip("Drag to change\nmaximum value");
+  }
   ImGui::PopItemWidth();
 
   // Reset button

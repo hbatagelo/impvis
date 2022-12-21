@@ -56,11 +56,6 @@ else()
   set_source_files_properties(${ABCG_FILES} PROPERTIES COMPILE_OPTIONS
                                                        "${PROJECT_WARNINGS}")
 
-  # Use sanitizers in debug mode
-  if(CMAKE_BUILD_TYPE MATCHES "DEBUG|Debug")
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${SANITIZERS_TARGET})
-  endif()
-
   target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
   if(MSVC)
