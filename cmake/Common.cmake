@@ -10,6 +10,8 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   add_library(${WARNINGS_TARGET} INTERFACE)
   add_library(${OPTIONS_TARGET} INTERFACE)
 
+  option(ENABLE_MOLD "Enable mold (Modern Linker)" ON)
+
   option(ENABLE_UNIT_TESTING "Enable unit testing" OFF)
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -153,6 +155,19 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
                 ${SANITIZERS_TARGET})
   endif()
 
+endif()
+
+# mold
+if(ENABLE_MOLD)
+  if(NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    find_program(MOLD mold)
+    if(MOLD)
+      message("Using mold")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=mold")
+    else()
+      message("Not using mold - not found")
+    endif()
+  endif()
 endif()
 
 # ccache
