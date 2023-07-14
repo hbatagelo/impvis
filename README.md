@@ -1,5 +1,5 @@
-![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com&utm_medium=referral&utm_content=hbatagelo/impvis&utm_campaign=Badge_Grade)
+![build workflow](https://github.com/hbatagelo/impvis2/actions/workflows/build.yml/badge.svg)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=hbatagelo/impvis\&utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
 
 # ImpVis - 3D Implicit Function Viewer
@@ -10,19 +10,19 @@ ImpVis is a real-time visualization tool for displaying isosurfaces and scalar f
 
 Below is a screenshot of ImpVis displaying a quintic surface known as [Togliatti surface](https://en.wikipedia.org/wiki/Togliatti_surface). The positive and negative sides of the surface are shown in red and magenta, respectively.
 
-![Togliatti snapshot](./art/snapshot_togliatti.jpg "Togliatti quintic surface") 
+![Togliatti snapshot](./art/snapshot_togliatti.jpg "Togliatti quintic surface")
 
 ImpVis can also render scalar fields using direct volume rendering, as shown below. The color transfer function maps positive values to red/orange hues, negative values to magenta/purple, and values near zero to white. The mapping can be adjusted using an exponential scaling factor.
 
-![Chmutov snapshot](./art/snapshot_chmutov.jpg "Chmutov Cubic volume rendering") 
+![Chmutov snapshot](./art/snapshot_chmutov.jpg "Chmutov Cubic volume rendering")
 
 ## Basic usage
 
--   Drag to rotate the surface (left mouse button) or light source (right mouse button).
--   Use the mouse wheel to zoom in/out.
--   Press F11 to toggle fullscreen.
--   Drag the bottom slider to set the isovalue.
--   Use the top-right window to select an equation, change the function parameters and adjust the render settings.
+*   Drag to rotate the surface (left mouse button) or light source (right mouse button).
+*   Use the mouse wheel to zoom in/out.
+*   Press F11 to toggle fullscreen.
+*   Drag the bottom slider to set the isovalue.
+*   Use the top-right window to select an equation, change the function parameters and adjust the render settings.
 
 ## Equation editor
 
@@ -31,7 +31,7 @@ ImpVis features an equation editor that allows users to write new expressions by
 In the equation editor, the expression for the left-hand side of the equation is written in a modified GLSL ES syntax in which the caret symbol `^` is used as an **exponentiation operator** instead of **bit-wise exclusive or** operator. For example, for the Torus implicit equation
 
 $$
-(c-\\sqrt{x^2+y^2})^2+z^2-a^2=0,
+(c-\sqrt{x^2+y^2})^2+z^2-a^2=0,
 $$
 
 the left-hand side expression can be written as `(c-sqrt(x^2+y^2))^2+z^2-a^2` instead of `pow(c-sqrt(x*x+y*y),2.0)+z*z-a*a`, which is also supported.
@@ -41,15 +41,15 @@ Under the hood, exponentiation expressions of the form `b^n`, where `n` is a pos
 Another syntax difference from GLSL is the use of square brackets for grouping (as parentheses) instead of array indexing. For example, for the Cassini quartic surface equation
 
 $$
-\\left[(x+r)^2+y^2\right]\\left[(x-r)^2+y^2\right]-z^2=0,
+\left\[(x+r)^2+y^2\right]\left\[(x-r)^2+y^2\right]-z^2=0,
 $$
 
 the left-hand side expression can be written as `[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2`.
 
 The editor also allows injecting GLSL ES code both in the global scope of the shader and in the local scope of the shader function that evaluates the implicit function. Try selecting different equations from the catalog to see how their scopes are implemented in the equation editor. As a rule of thumb:
 
--   Use the global scope to define GLSL functions and constants to be used either in the local scope or directly in the implicit function.
--   Use the local scope to define GLSL variables to be used in the implicit function expression.
+*   Use the global scope to define GLSL functions and constants to be used either in the local scope or directly in the implicit function.
+*   Use the local scope to define GLSL variables to be used in the implicit function expression.
 
 Any changes to the currently selected equation (expression, local scope, or global scope) will be saved as a user-defined equation at the end of the group of equations called "Other".
 
@@ -57,14 +57,14 @@ Any changes to the currently selected equation (expression, local scope, or glob
 
 The following apply for code injected in the local scope:
 
--   `p` is the name of a `vec3` variable containing the values of the `x`, `y`, and `z` variables of the 3D implicit function. Thus, in the local scope, use `p.x`, `p.y`, and `p.z` instead of `x`, `y`, and `z`.  
--   `p2` is a shortcut for `p*p`, `p3` is a shortcut for `p*p*p`, and so on up to `p16`. Again, these are often more efficient than `pow(p,n)`. The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available in the local scope.
+*   `p` is the name of a `vec3` variable containing the values of the `x`, `y`, and `z` variables of the 3D implicit function. Thus, in the local scope, use `p.x`, `p.y`, and `p.z` instead of `x`, `y`, and `z`.
+*   `p2` is a shortcut for `p*p`, `p3` is a shortcut for `p*p*p`, and so on up to `p16`. Again, these are often more efficient than `pow(p,n)`. The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available in the local scope.
 
 ## How it works
 
-The isosurfaces are rendered using an adaptive raymarching algorithm. The scalar fields are rendered using direct volume rendering. Both are implemented as [GLSL ES 3.00]((https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf)) shaders. The equation names and the expressions shown in the top-left corner of the screen are rendered using [MathJax](https://www.mathjax.org/) (WebAssembly only).
+The isosurfaces are rendered using an adaptive raymarching algorithm. The scalar fields are rendered using direct volume rendering. Both are implemented as [GLSL ES 3.00](\(https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf\)) shaders. The equation names and the expressions shown in the top-left corner of the screen are rendered using [MathJax](https://www.mathjax.org/) (WebAssembly only).
 
-The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the _adaptive marching points_ algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader at `src/assets/shaders/raycast.frag`.
+The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the *adaptive marching points* algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader at `src/assets/shaders/raycast.frag`.
 
 ## Building
 
@@ -79,9 +79,9 @@ cd impvis
 
 Make sure the following tools are installed and are reachable from the path:
 
--   [Conan](https://conan.io/) 1.44 or later (not required for WebAssembly).
--   [CMake](https://cmake.org/) 3.18 or later.
--   A C++ compiler with at least partial support to C++20 (tested with GCC 11, Clang 13, MSVC 17, and emcc 3.1).
+*   [Conan](https://conan.io/) 1.44 or later (not required for WebAssembly).
+*   [CMake](https://cmake.org/) 3.18 or later.
+*   A C++ compiler with at least partial support to C++20 (tested with GCC 11, Clang 13, MSVC 17, and emcc 3.1).
 
 ### On Windows
 
@@ -170,7 +170,7 @@ Each TOML file must have a `title` key in root level with a value that is the na
 | `raymarch_root_test` | integer (`0` or `1`)   | Ray marching root test (`0`: sign change, `1`: Taylor 1st-order) |
 | `camera_distance`    | positive float         | Initial distance from camera                                     |
 | `colormap_scale`     | positive float         | Colormap scaling factor for direct volume rendering              |
-| `parameters`         | array of inline tables | Expression parameters (_see details below_)                      |
+| `parameters`         | array of inline tables | Expression parameters (*see details below*)                      |
 | `code_local`         | string                 | GLSL code to be injected in the local scope                      |
 | `code_global`        | string                 | GLSL code to be injected in the global scope                     |
 | `comment`            | string                 | Comments in LaTeX math mode                                      |

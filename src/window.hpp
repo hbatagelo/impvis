@@ -15,7 +15,6 @@
 #include "raycast.hpp"
 #include "settings.hpp"
 #include "textureblit.hpp"
-#include "util.hpp"
 
 #include <imgui.h>
 

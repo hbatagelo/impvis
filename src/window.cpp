@@ -14,15 +14,12 @@
 
 #include <toml.hpp>
 
-#include "abcgOpenGL.hpp"
-
 #include "equation.hpp"
 #include "imgui_internal.h"
 #include "settings.hpp"
-#include "util.hpp"
 #include "window.hpp"
 
-static char const *const kAppVersion{"v2.2.0"};
+static char const *const kAppVersion{"v2.2.1"};
 
 #if defined(__EMSCRIPTEN__)
 EM_JS(void, jsUpdateEquation,
@@ -200,7 +197,7 @@ void Window::onCreate() {
   guiIO.ConfigInputTextCursorBlink = true;
 
   // Load fonts
-  ImFontConfig fontConfig;
+  ImFontConfig const fontConfig;
   auto const fontSize{16.0f};
 
   auto const *const proportionalFontFile{"fonts/Roboto-Medium.ttf"};
@@ -529,7 +526,9 @@ void Window::paintUITopButtonBar() {
     }
 
     auto const texture{gsl::narrow<intptr_t>(m_buttonTexture.at(index))};
-    auto *const texID{reinterpret_cast<ImTextureID>(texture)}; // NOLINT
+    // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
+    auto *const texID{reinterpret_cast<ImTextureID>(texture)};
+    // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
     if (ImGui::ImageButton(texID, buttonSize)) {
       onClicked(index);
     }
@@ -555,7 +554,7 @@ void Window::paintUIEquationsTab(float parentWindowHeight) {
   static auto firstTime{true};
 
   for (auto &&[groupIndex, group] : iter::enumerate(m_equationGroups)) {
-    ImGuiTreeNodeFlags headerFlags{ImGuiTreeNodeFlags_CollapsingHeader};
+    ImGuiTreeNodeFlags const headerFlags{ImGuiTreeNodeFlags_CollapsingHeader};
     if (firstTime && m_settings.selectedUIGroupIndex == groupIndex) {
       ImGui::SetNextItemOpen(true);
       firstTime = false;
@@ -599,8 +598,9 @@ void Window::paintUIEquationHeader(std::size_t groupIndex,
       if (auto const thumbnailID{
               gsl::narrow<intptr_t>(equation.getThumbnailId())};
           thumbnailID > 0) {
-        auto *const texture{
-            reinterpret_cast<ImTextureID>(thumbnailID)}; // NOLINT
+        // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
+        auto *const texture{reinterpret_cast<ImTextureID>(thumbnailID)};
+        // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
         ImGui::Image(texture, thumbSize);
       }
       ImGui::TableNextColumn();
@@ -1003,7 +1003,7 @@ void Window::paintUIEquationEditor() {
       m_settings.selectedUIEquationIndex = originalNumberOfEquationsInLastGroup;
       m_settings.rebuildProgram = true;
 
-      Equation userDefinedEquation{userDefinedData};
+      Equation const userDefinedEquation{userDefinedData};
       auto &equations{m_equationGroups.at(indexOfLastGroup).equations};
       if (equations.size() == originalNumberOfEquationsInLastGroup) {
         equations.push_back(userDefinedEquation);

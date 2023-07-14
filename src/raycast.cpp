@@ -340,7 +340,7 @@ void RayCast::createProgram(Settings const &settings) {
     auto const var{variables.at(index % 4)};
 
     replaceAll(equation, param.name,
-               fmt::format("uParams.data[{}].{}", vecIndex, var).c_str(), true);
+               fmt::format("uParams.data[{}].{}", vecIndex, var), true);
   }
 
   // This replacement must be performed AFTER the replacement of parameter names
@@ -382,10 +382,11 @@ void RayCast::setupVAO() {
     auto const location{abcg::glGetAttribLocation(m_program, name)};
     if (location >= 0) {
       abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
-
+      // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
       abcg::glVertexAttribPointer(gsl::narrow<GLuint>(location), size, GL_FLOAT,
                                   GL_FALSE, sizeof(Vertex),
-                                  reinterpret_cast<void *>(offset)); // NOLINT
+                                  reinterpret_cast<void *>(offset));
+      // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
     } else {
       abcg::glDeleteVertexArrays(1, &m_VAO);
       throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",

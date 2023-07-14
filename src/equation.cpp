@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <fstream>
 #include <set>
-#include <sstream>
 #include <string_view>
 
 #include "equation.hpp"

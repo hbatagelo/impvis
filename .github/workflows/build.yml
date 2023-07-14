@@ -22,20 +22,20 @@ jobs:
       run: |
         sudo apt-get install cmake pkg-config
         sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev
-        sudo apt-get install libx11-xcb-dev libfontenc-dev libice-dev libsm-dev libxau-dev libxaw7-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxdmcp-dev libxext-dev libxfixes-dev libxft-dev libxi-dev libxinerama-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev xtrans-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev xkb-data libxcb-dri3-dev uuid-dev libxcb-util-dev
+        sudo apt-get install libx11-xcb-dev libfontenc-dev libice-dev libsm-dev libxau-dev libxaw7-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxdmcp-dev libxext-dev libxfixes-dev libxft-dev libxi-dev libxinerama-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev xtrans-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev xkb-data libxcb-dri3-dev uuid-dev libxcb-util-dev libxcb-cursor-dev
         sudo apt-get install python3 pip
-        pip install conan
+        pip install "conan<2.0"
      
     - name: Install GCC
       run: |
-        echo "CC=/usr/bin/gcc-11" >> $GITHUB_ENV
-        echo "CXX=/usr/bin/g++-11" >> $GITHUB_ENV
+        echo "CC=/usr/bin/gcc-12" >> $GITHUB_ENV
+        echo "CXX=/usr/bin/g++-12" >> $GITHUB_ENV
         sudo update-alternatives --remove-all cc
         sudo update-alternatives --remove-all c++
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        sudo apt-get install -y gcc-11 g++-11
-        sudo update-alternatives --install /usr/bin/cc  gcc /usr/bin/gcc-11 1000 \
-                                 --slave   /usr/bin/c++ g++ /usr/bin/g++-11
+        sudo apt-get install -y gcc-12 g++-12
+        sudo update-alternatives --install /usr/bin/cc  gcc /usr/bin/gcc-12 1000 \
+                                 --slave   /usr/bin/c++ g++ /usr/bin/g++-12
           
     - name: Configure CMake
       run: |
@@ -50,31 +50,40 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
 
-  # macOS-build:
-  #   runs-on: macos-latest
-  #   env:
-  #     BUILD_TYPE: Release
+  macOS-build:
+    runs-on: macos-latest
+    env:
+      BUILD_TYPE: Release
 
-  #   steps:
-  #   - uses: actions/checkout@v3
-           
-  #   - name: Install dependencies
-  #     run: |
-  #       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  #       brew update
-  #       brew install conan
-  #       conan profile new default --detect --force
+    steps:
+    - uses: actions/checkout@v3
 
-  #   - name: Configure CMake
-  #     run: |
-  #       cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_UNIT_TESTING=ON
+    - name: Install dependencies
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        brew update
+        brew install glew sdl2 sdl2_image
 
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j $(sysctl -n hw.ncpu)
+    - name: Install Conan
+      id: conan
+      uses: turtlebrowser/get-conan@main
+      with:
+        version: 1.60.1
 
-  #   - name: Test
-  #     working-directory: ${{github.workspace}}/build
-  #     run: ctest -C ${{env.BUILD_TYPE}}
+    - name: Create default Conan profile
+      run: conan profile new default --detect
+     
+    - name: Configure CMake with GCC
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+        -DENABLE_UNIT_TESTING=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j $(sysctl -n hw.ncpu)
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}}
 
   windows-build:
     runs-on: windows-latest
@@ -94,7 +103,7 @@ jobs:
         pip install wheel
 
     - name: Install Conan
-      run: pip install conan
+      run: pip install "conan<2.0"
       
     - name: Configure CMake
       run: |

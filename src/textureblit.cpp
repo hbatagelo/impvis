@@ -8,7 +8,6 @@
  */
 
 #include "textureblit.hpp"
-#include "abcgOpenGL.hpp"
 
 void TextureBlit::onCreate() {
   auto const *const vertexShaderPath{"shaders/textureblit.vert"};
@@ -32,19 +31,22 @@ void TextureBlit::onCreate() {
   abcg::glGenVertexArrays(1, &m_VAO);
   abcg::glBindVertexArray(m_VAO);
 
-  auto const setUpVertexAttribute{[&](auto name, auto size, intptr_t offset) {
-    if (auto const location{abcg::glGetAttribLocation(m_program, name)};
-        location >= 0) {
-      abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
-      abcg::glVertexAttribPointer(gsl::narrow<GLuint>(location), size, GL_FLOAT,
-                                  GL_FALSE, sizeof(glm::vec2),
-                                  reinterpret_cast<void *>(offset)); // NOLINT
-    } else {
-      onDestroy();
-      throw abcg::RuntimeError(fmt::format("Failed to find attribute {} in {}",
-                                           name, vertexShaderPath));
-    }
-  }};
+  auto const setUpVertexAttribute{
+      [this, &vertexShaderPath](auto name, auto size, intptr_t offset) {
+        if (auto const location{abcg::glGetAttribLocation(m_program, name)};
+            location >= 0) {
+          abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
+          // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
+          abcg::glVertexAttribPointer(gsl::narrow<GLuint>(location), size,
+                                      GL_FLOAT, GL_FALSE, sizeof(glm::vec2),
+                                      reinterpret_cast<void *>(offset));
+          // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
+        } else {
+          onDestroy();
+          throw abcg::RuntimeError(fmt::format(
+              "Failed to find attribute {} in {}", name, vertexShaderPath));
+        }
+      }};
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   setUpVertexAttribute("inPosition", 2, 0);
 

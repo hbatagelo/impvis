@@ -10,7 +10,13 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   add_library(${WARNINGS_TARGET} INTERFACE)
   add_library(${OPTIONS_TARGET} INTERFACE)
 
-  option(ENABLE_MOLD "Enable mold (Modern Linker)" ON)
+  if(NOT MSVC)
+    option(ENABLE_MOLD "Enable mold (Modern Linker)" ON)
+  endif()
+
+  if(NOT ENABLE_MOLD)
+    option(ENABLE_IPO "Enable Interprocedural Optimization" ON)
+  endif()
 
   option(ENABLE_UNIT_TESTING "Enable unit testing" OFF)
 
@@ -87,10 +93,11 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} tomlplusplus/3.2.0)
 
   # SDL2
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl/2.0.20)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:alsa=False)
+  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl/2.26.5)
+  # set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:alsa=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:pulse=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:nas=False)
+  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:wayland=False)
 
   # SDL2_image
   set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl_image/2.0.5)
@@ -107,9 +114,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:with_libjpeg=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:with_libtiff=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:with_libwebp=False)
-
-  # Fix conflict between different versions of zlib
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} zlib/1.2.12)
 
   # Use Google's test framework for unit testing
   if(ENABLE_UNIT_TESTING)
@@ -159,14 +163,12 @@ endif()
 
 # mold
 if(ENABLE_MOLD)
-  if(NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-    find_program(MOLD mold)
-    if(MOLD)
-      message("Using mold")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=mold")
-    else()
-      message("Not using mold - not found")
-    endif()
+  find_program(MOLD mold)
+  if(MOLD)
+    message("Using mold")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=mold")
+  else()
+    message("Not using mold - not found")
   endif()
 endif()
 
@@ -191,7 +193,6 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 endif()
 
 # IPO
-option(ENABLE_IPO "Enable Interprocedural Optimization" ON)
 if(ENABLE_IPO)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
     cmake_policy(SET CMP0069 NEW)
