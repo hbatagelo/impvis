@@ -33,13 +33,13 @@ EM_JS(void, jsUpdateEquation,
 EM_JS(void, jsUpdateEquationName, (char const *name, int length),
       { updateEquationName(UTF8ToString(name, length)); });
 
-bool updateEquation(std::string equation, std::string comment) {
+bool updateEquation(std::string const &equation, std::string const &comment) {
   jsUpdateEquation(equation.c_str(), equation.length(), comment.c_str(),
                    comment.length());
   return true;
 }
 
-bool updateEquationName(std::string name) {
+bool updateEquationName(std::string const &name) {
   jsUpdateEquationName(name.c_str(), name.length());
   return true;
 }

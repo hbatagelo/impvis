@@ -78,8 +78,8 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
   }
 
   // Look for corresponding closing bracket
-  auto numNestedParens{0};
   if (!str.empty()) {
+    auto numNestedParens{0};
     for (auto endPos{startPos}; endPos < str.length() - 1; ++endPos) {
       auto const chr{str.at(endPos + 1)};
       if (chr == brackets.first) {
