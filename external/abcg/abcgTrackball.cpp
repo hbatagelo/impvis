@@ -4,7 +4,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2022 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -24,7 +24,8 @@ void abcg::TrackBall::mouseMove(glm::ivec2 const &position) {
   if (!m_mouseTracking)
     return;
 
-  m_durationSinceLastEvent = static_cast<float>(m_lastTime.restart()) * 1000.0f;
+  m_durationSinceLastEvent =
+      gsl::narrow_cast<float>(m_lastTime.restart()) * 1000.0f;
 
   // Return if mouse cursor hasn't moved wrt last position
   auto const currentPosition{project(position)};
@@ -98,17 +99,37 @@ glm::quat abcg::TrackBall::getRotation() const {
   if (m_mouseTracking)
     return m_rotation;
 
-  auto const angle{m_velocity * static_cast<float>(m_lastTime.elapsed()) *
+  auto const angle{m_velocity * gsl::narrow_cast<float>(m_lastTime.elapsed()) *
                    1000.0f};
 
   return glm::angleAxis(angle, m_axis) * m_rotation;
 }
 
+/**
+ * @brief Sets the trackball's axis of rotation.
+ *
+ * @param axis Axis of rotation.
+ *
+ * The axis is expected to be a normalized vector.
+ */
+void abcg::TrackBall::setAxis(glm::vec3 axis) noexcept { m_axis = axis; }
+
+/**
+ * @brief Sets the trackball's rotation velocity.
+ *
+ * @param velocity Velocity in radians per second.
+ *
+ * The velocity is not bound checked.
+ */
+void abcg::TrackBall::setVelocity(float velocity) noexcept {
+  m_velocity = velocity;
+}
+
 glm::vec3 abcg::TrackBall::project(const glm::vec2 &position) const {
   // Convert from window coordinates to NDC
   auto projected{glm::vec3(
-      2.0f * position.x / static_cast<float>(m_viewportSize.x) - 1.0f,
-      1.0f - 2.0f * position.y / static_cast<float>(m_viewportSize.y), 0.0f)};
+      2.0f * position.x / gsl::narrow<float>(m_viewportSize.x) - 1.0f,
+      1.0f - 2.0f * position.y / gsl::narrow<float>(m_viewportSize.y), 0.0f)};
 
   // Project to centered unit hemisphere
   if (auto const squaredLength{glm::length2(projected)};

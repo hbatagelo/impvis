@@ -1,4 +1,4 @@
-![build workflow](https://github.com/hbatagelo/impvis2/actions/workflows/build.yml/badge.svg)
+![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=hbatagelo/impvis\&utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
 
@@ -79,7 +79,7 @@ cd impvis
 
 Make sure the following tools are installed and are reachable from the path:
 
-*   [Conan](https://conan.io/) 1.44 or later (not required for WebAssembly).
+*   [Conan](https://conan.io/) >=1.44, <2.0 (not required for WebAssembly). Conan 2.* is not supported yet.
 *   [CMake](https://cmake.org/) 3.18 or later.
 *   A C++ compiler with at least partial support to C++20 (tested with GCC 11, Clang 13, MSVC 17, and emcc 3.1).
 
@@ -118,6 +118,8 @@ cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
 # Build
 cmake --build . --config $BUILD_TYPE
 ```
+
+**Note:** on macOS, if you encounter errors building with AppleClang, try Clang installed via HomeBrew.
 
 ### Building for WebAssembly
 

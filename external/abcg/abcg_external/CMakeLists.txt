@@ -8,6 +8,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM
                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+
   add_subdirectory(imgui)
   add_subdirectory(cppitertools)
   add_subdirectory(fmt)

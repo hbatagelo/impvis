@@ -25,7 +25,9 @@ void Equation::onCreate() {
   auto const path{abcg::Application::getAssetsPath()};
   if (!m_loadedData.thumbnail.empty()) {
     m_thumbnailId =
-        abcg::loadOpenGLTexture(path + m_loadedData.thumbnail, false, false);
+        abcg::loadOpenGLTexture({.path = path + m_loadedData.thumbnail,
+                                 .generateMipmaps = false,
+                                 .flipUpsideDown = false});
   }
 }
 

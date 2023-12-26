@@ -8,6 +8,7 @@ set(ABCG_FILES
     abcgException.cpp
     abcgImage.cpp
     abcgTrackball.cpp
+    abcgUtil.cpp
     abcgWindow.cpp
     abcgOpenGLError.cpp
     abcgOpenGLFunction.cpp
@@ -40,13 +41,12 @@ else()
   set(IMGUI_BINDINGS_DIR "${CMAKE_SOURCE_DIR}/bindings")
 
   add_library(
-    ${PROJECT_NAME} ${ABCG_FILES} ${IMGUI_BINDINGS_DIR}/imgui_impl_sdl.cpp
+    ${PROJECT_NAME} ${ABCG_FILES} ${IMGUI_BINDINGS_DIR}/imgui_impl_sdl2.cpp
                     ${IMGUI_BINDINGS_DIR}/imgui_impl_opengl3.cpp)
 
   target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
   target_include_directories(${PROJECT_NAME} SYSTEM
                              PUBLIC ${IMGUI_BINDINGS_DIR})
-
   target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC abcg_external

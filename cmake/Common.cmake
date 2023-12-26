@@ -66,10 +66,10 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   set(CONAN_IMPORTS "")
 
   # fmt
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} fmt/8.1.1)
+  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} fmt/10.0.0)
 
   # imGUI
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} imgui/1.87)
+  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} imgui/1.89.4)
   set(CONAN_IMPORTS
       ${CONAN_IMPORTS} "./res/bindings, *.cpp -> ${CMAKE_SOURCE_DIR}/bindings"
       "./res/bindings, *.h -> ${CMAKE_SOURCE_DIR}/bindings")
@@ -94,7 +94,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 
   # SDL2
   set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl/2.26.5)
-  # set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:alsa=False)
+  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:alsa=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:pulse=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:nas=False)
   set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:wayland=False)
@@ -172,26 +172,6 @@ if(ENABLE_MOLD)
   endif()
 endif()
 
-# ccache
-if(NOT MSVC)
-  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" OR NOT ${CMAKE_GENERATOR}
-                                                      MATCHES "Ninja")
-    find_program(CCACHE ccache)
-    if(CCACHE)
-      message("Using ccache")
-      set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
-    else()
-      message("Not using ccache - not found")
-    endif()
-  else()
-    message("Not using ccache - disabled for Ninja builds with Emscripten")
-  endif()
-elseif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  # Silence warnings about linking the release DLL version of the CRT
-  # Third-party libraries are always compiled in release mode
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
-endif()
-
 # IPO
 if(ENABLE_IPO)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
@@ -211,6 +191,26 @@ if(ENABLE_IPO)
   else()
     message("IPO is not supported: ${output}")
   endif()
+endif()
+
+# ccache
+if(NOT MSVC)
+  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" OR NOT ${CMAKE_GENERATOR}
+                                                      MATCHES "Ninja")
+    find_program(CCACHE ccache)
+    if(CCACHE)
+      message("Using ccache")
+      set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+    else()
+      message("Not using ccache - not found")
+    endif()
+  else()
+    message("Not using ccache - disabled for Ninja builds with Emscripten")
+  endif()
+elseif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  # Silence warnings about linking the release DLL version of the CRT
+  # Third-party libraries are always compiled in release mode
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT")
 endif()
 
 # ABCg

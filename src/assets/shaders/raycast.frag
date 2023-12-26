@@ -35,11 +35,11 @@ layout (std140) uniform CameraBlock {
 // Shading properties
 struct Shading
 {
-                     // base  offset  
+                     // base  offset
   vec4 KaIa;         //   4N      0N
   vec4 KdId;         //   4N      4N
   vec4 KsIs;         //   4N      8N
-  vec3 lightVector;  //   4N     12N  
+  vec3 lightVector;  //   4N     12N
   float shininess;   //   1N     16N
   float gaussianEps; //   1N     20N
 };
@@ -49,7 +49,7 @@ layout (std140) uniform ShadingBlock {
 
 // Transformation matrices
 struct Transform {
-                      // base  offset  
+                      // base  offset
   mat4 MV_I;          //   4N      0N
                       //   4N      4N
                       //   4N      8N
@@ -91,7 +91,7 @@ float mpow2 (in float b) { return b * b; }
 float mpow3 (in float b) { return b * b * b; }
 float mpow4 (in float b) {
   float b2 = b * b;
-  return b2 * b2; 
+  return b2 * b2;
 }
 float mpow5 (in float b) {
   float b2 = b * b;
@@ -99,7 +99,7 @@ float mpow5 (in float b) {
 }
 float mpow6 (in float b) {
   float b3 = b * b * b;
-  return b3 * b3; 
+  return b3 * b3;
 }
 float mpow7 (in float b) {
   float b2 = b * b;
@@ -112,7 +112,7 @@ float mpow8 (in float b) {
 }
 float mpow9 (in float b) {
   float b3 = b * b * b;
-  return b3 * b3 * b3; 
+  return b3 * b3 * b3;
 }
 float mpow10(in float b) {
   float b2 = b * b;
@@ -259,7 +259,7 @@ bool intersectAABB(in  Ray   ray     /* ray origin and direction          */,
 bool intersectSphere(in  Ray   ray    /* ray origin and direction          */,
                      out float tStart /* ray parameter at 1st intersection */,
                      out float tEnd   /* ray parameter at 2nd intersection */)
-{  
+{
   vec3 proj = ray.origin + ray.direction * dot(-ray.origin, ray.direction);
   float len2 = dot(proj, proj);
   if (len2 <= kBoundRadiusSquared)
@@ -274,7 +274,7 @@ bool intersectSphere(in  Ray   ray    /* ray origin and direction          */,
 }
 
 /*
- * Intersects axis-aligned bounding box centered at origin with ray starting 
+ * Intersects axis-aligned bounding box centered at origin with ray starting
  * from inside the box.
  *
  * Returns ray parameter at point of exit.
@@ -305,7 +305,7 @@ float intersectSphereFromInside(in Ray ray)
 }
 
 /*
- * Uses simple sign test to check whether there is a root in a ray parameter 
+ * Uses simple sign test to check whether there is a root in a ray parameter
  * interval.
  */
 bool signTest(in float tAValue /* value function at start of interval */,
@@ -316,7 +316,7 @@ bool signTest(in float tAValue /* value function at start of interval */,
 
 /*
  * Uses Taylor test to check whether there is a root in the given interval, as
- * described in Jag Mohan Singh's Masters dissertation "Real Time Rendering of 
+ * described in Jag Mohan Singh's Masters dissertation "Real Time Rendering of
  * Implicit Surfaces on the GPU", 2008.
  */
 bool taylorTest(in Ray   ray     /* ray origin and direction            */,
@@ -350,7 +350,7 @@ bool fixedMarch(in  Ray   ray    /* ray origin and direction             */,
                 in  float tEnd   /* ray parameter at ray tEnd            */,
                 out float tHit   /* ray parameter of surface tHit        */,
                 out bool  inside /* true if surface was tHit from inside */)
-{  
+{
   float stepSize = (tEnd - tStart) / float(RAY_MARCH_STEPS);
 
   float t = tStart;
@@ -365,7 +365,7 @@ bool fixedMarch(in  Ray   ray    /* ray origin and direction             */,
     if (signTest(leftValue, rightValue))
 #else
     if (taylorTest(ray, t - stepSize, t, leftValue, rightValue))
-#endif    
+#endif
     {
       tHit = t + (rightValue * stepSize) / (leftValue - rightValue);
       inside = leftValue < 0.0 ? true : false;
@@ -391,30 +391,30 @@ const int maxSteps = RAY_MARCH_STEPS * int(1.0 / (minStepScale * minStepScale));
 /*
  * Intersects ray with implicit surface using adaptive ray marching.
  *
- * The step size is changed according to the function's value 
- * $S: \mathbb{R}^3 \to \mathbb{R}$ and gradient $\nabla S$ evaluated at the 
+ * The step size is changed according to the function's value
+ * $S: \mathbb{R}^3 \to \mathbb{R}$ and gradient $\nabla S$ evaluated at the
  * current step.
  *
- * The ray marching starts with a base step size that is multiplied by $|S|$ 
- * clamped to $[s_{min}, s_{max}]$, where $s_{min}$ and $s_{max}$ are minimum 
+ * The ray marching starts with a base step size that is multiplied by $|S|$
+ * clamped to $[s_{min}, s_{max}]$, where $s_{min}$ and $s_{max}$ are minimum
  * and maximum step scaling factors (we use $s_{min}=0.25$ and $s_{max}=1.5$).
  *
- * If $|S| < \tau$, where $\tau$ is a small distance from the level set (we use 
- * $\tau=0.05$), and furthermore the ray is close to the silhouette of the 
- * isosurface, the step size is multiplied by $\max \{ s_{min}, |S|/\tau \}$, 
+ * If $|S| < \tau$, where $\tau$ is a small distance from the level set (we use
+ * $\tau=0.05$), and furthermore the ray is close to the silhouette of the
+ * isosurface, the step size is multiplied by $\max \{ s_{min}, |S|/\tau \}$,
  * i.e. the step size decreases as the ray approaches the surface near a
  * silhouette. This silhouette condition is tested by checking if the ray is at
- * a small grazing angle with respect to the local gradient: 
- * $|\nabla S\cdot \hat{r}_{\rm dir}| < \cos{\left(\pi/2-\theta\right)}$, where 
+ * a small grazing angle with respect to the local gradient:
+ * $|\nabla S\cdot \hat{r}_{\rm dir}| < \cos{\left(\pi/2-\theta\right)}$, where
  * $\hat{r}_{\rm dir}$ is the ray direction and $\theta$ is the threshold of the
  * grazing angle. We use $\theta=\pi/36=5^{\circ}$.
  *
- * Since the rays exit the bounding geometry at different step sizes, artifacts 
- * may be visible at these exit points. To prevent that, we decrease the step 
- * size as the ray approaches the exit. We measure the distance to the exit as 
- * $l=t_{end}-t_{cur}$, where $t_{end}$ is the ray parameter at the exit point 
- * and $t_{cur}\leq t_{end}$ is the current ray parameter. If $l$ is smaller 
- * than an epsilon, the step size is multiplied by $\max\{s_{min},l/\tau\}$. 
+ * Since the rays exit the bounding geometry at different step sizes, artifacts
+ * may be visible at these exit points. To prevent that, we decrease the step
+ * size as the ray approaches the exit. We measure the distance to the exit as
+ * $l=t_{end}-t_{cur}$, where $t_{end}$ is the ray parameter at the exit point
+ * and $t_{cur}\leq t_{end}$ is the current ray parameter. If $l$ is smaller
+ * than an epsilon, the step size is multiplied by $\max\{s_{min},l/\tau\}$.
  * For the epsilon, we use the base step size multiplied by $s_{max}$.
  */
 bool adaptiveMarch(in  Ray   ray    /* ray origin and direction             */,
@@ -433,18 +433,18 @@ bool adaptiveMarch(in  Ray   ray    /* ray origin and direction             */,
   for (int i = 0; i < maxSteps; ++i)
   {
     float leftValueAbs = abs(leftValue);
-        
+
     // Step size is proportional to the function value
     float stepSize = baseStepSize * clamp(leftValueAbs, minStepScale, maxStepScale);
 
-    // Decrease the step size when the ray is near the surface (<= tau) at a 
+    // Decrease the step size when the ray is near the surface (<= tau) at a
     // small grazing angle
     if ((leftValueAbs < tau &&
         abs(dot(evalGradient(P), ray.direction)) < epsAngle))
-    {      
+    {
       stepSize *= max(leftValueAbs / tau, minStepScale);
     }
-    else 
+    else
     {
       // Decrease the step size if the ray is exiting the bounding geometry
       float distFromExit = tEnd - tCurrent;
@@ -462,7 +462,7 @@ bool adaptiveMarch(in  Ray   ray    /* ray origin and direction             */,
     if (signTest(leftValue, rightValue))
 #else
     if (taylorTest(ray, tCurrent - stepSize, tCurrent, leftValue, rightValue))
-#endif    
+#endif
     {
       float diffValue = (leftValue - rightValue);
 #if !defined(USE_SIGN_TEST)
@@ -470,7 +470,7 @@ bool adaptiveMarch(in  Ray   ray    /* ray origin and direction             */,
       if (abs(diffValue) < 1e-5)
          tHit = tCurrent - stepSize;
       else
-#endif      
+#endif
         tHit = tCurrent + (rightValue * stepSize) / diffValue;
       inside = leftValue < 0.0 ? true : false;
       return true;
@@ -490,7 +490,7 @@ bool adaptiveMarch(in  Ray   ray    /* ray origin and direction             */,
 }
 
 /*
- * Returns the value of a Gaussian radial basis function for a given distance 
+ * Returns the value of a Gaussian radial basis function for a given distance
  * r. The is used by colorFromScalar to map scalar values from r \in [0,inf) to
  * a range that starts with 1 at r=0 and approaches 0 as |r| -> inf.
  */
@@ -501,7 +501,7 @@ float gaussianRBF(in float r)
 }
 
 /*
- * Computes the color for a given scalar field value using a hard-coded 
+ * Computes the color for a given scalar field value using a hard-coded
  * transfer function.
  */
 vec4 colorFromScalar(in float x) {
@@ -518,7 +518,7 @@ vec4 colorFromScalar(in float x) {
   const float s4 = 3.0 / stepMax;
   const float s5 = 4.0 / stepMax;
 
-  float t = x >= 0.0 ? 0.5 + (1.0 - gaussianRBF(x)) / 2.0 : 
+  float t = x >= 0.0 ? 0.5 + (1.0 - gaussianRBF(x)) / 2.0 :
                        gaussianRBF(-x) / 2.0;
 
   vec4 color;
@@ -575,18 +575,18 @@ bool adaptiveMarchShadowRay(in  Ray   ray  /* ray origin and direction */,
   for (int i = 0; i < maxSteps; ++i)
   {
     float leftValueAbs = abs(leftValue);
-    
+
     // Step size is proportional to the function value
     float stepSize = baseStepSize * clamp(leftValueAbs, minStepScale, maxStepScale);
 
-    // Halve the step size when the ray is near the surface (<= tau) at a 
+    // Halve the step size when the ray is near the surface (<= tau) at a
     // small grazing angle
     if (leftValueAbs <= tau &&
         abs(dot(evalGradient(P), ray.direction)) < epsAngle)
-    {      
+    {
       stepSize *= max(leftValueAbs / tau, minStepScale);
     }
-    else 
+    else
     {
       float distFromExit = tEnd - tCurrent;
       if (distFromExit < epsExit)
@@ -619,7 +619,7 @@ bool adaptiveMarchShadowRay(in  Ray   ray  /* ray origin and direction */,
 /*
  * Check whether the point P is in shadow with respect to light direction L.
  */
-bool inShadow(in vec3 P /* intersection point with surface */, 
+bool inShadow(in vec3 P /* intersection point with surface */,
               in vec3 L /* normalized direction to light source */)
 {
   const float bias = 2.0 * kBoundRadius / 1e3;
@@ -636,16 +636,16 @@ bool inShadow(in vec3 P /* intersection point with surface */,
 /*
  * Determines the color of the shaded surface at P with normal N.
  */
-vec4 shade(in vec3 P      /* intersection point with surface */, 
-           in vec3 N      /* normal to the surface at P */, 
+vec4 shade(in vec3 P      /* intersection point with surface */,
+           in vec3 N      /* normal to the surface at P */,
            in bool inside /* whether the ray hit from inside */) {
-  vec4 ambientColor = uShading.KaIa;  
+  vec4 ambientColor = uShading.KaIa;
 
-#if defined(USE_SHADOWS)  
-  if (inShadow(P, uShading.lightVector)) { 
+#if defined(USE_SHADOWS)
+  if (inShadow(P, uShading.lightVector)) {
     return ambientColor;
   }
-#endif  
+#endif
 
   vec3 origN = N;
   if (inside) {
@@ -676,8 +676,8 @@ vec4 shade(in vec3 P      /* intersection point with surface */,
   vec4 diffuseColor = (inside ? insideColor : uShading.KdId) * lambertian;
 #endif
   vec4 specularColor = uShading.KsIs * specular;
-  
-  return ambientColor + diffuseColor + specularColor;  
+
+  return ambientColor + diffuseColor + specularColor;
 }
 
 /*
@@ -705,13 +705,13 @@ vec4 rayMarch(in Ray ray)
   {
     float tHit;
     bool inside;
-#if defined(SHOW_ISOSURFACE)  
+#if defined(SHOW_ISOSURFACE)
 
-#if defined(USE_ADAPTIVE_RAY_MARCH)    
+#if defined(USE_ADAPTIVE_RAY_MARCH)
     if (adaptiveMarch(ray, tStart, tEnd, tHit, inside)) {
 #else
     if (fixedMarch(ray, tStart, tEnd, tHit, inside)) {
-#endif      
+#endif
       vec3 P = ray.origin + ray.direction * tHit;
       vec3 N = normalize(evalGradient(P));
       vec4 color = shade(P, N, inside);
@@ -729,7 +729,7 @@ vec4 rayMarch(in Ray ray)
   return vec4(0);
 }
 
-void main() 
+void main()
 {
   outColor = rayMarch(generatePrimaryRay());
 }

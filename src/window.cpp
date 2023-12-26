@@ -1,4 +1,3 @@
-
 /**
  * @file window.cpp
  *
@@ -19,7 +18,7 @@
 #include "settings.hpp"
 #include "window.hpp"
 
-static char const *const kAppVersion{"v2.2.1"};
+static char const *const kAppVersion{"v2.2.2"};
 
 #if defined(__EMSCRIPTEN__)
 EM_JS(void, jsUpdateEquation,
@@ -183,8 +182,9 @@ void Window::onCreate() {
 
   for (auto const &index : iter::range(m_buttonTexture.size())) {
     m_buttonTexture.at(index) = abcg::loadOpenGLTexture(
-        assetsPath + fmt::format("textures/top_button{}.png", index), false,
-        false);
+        {.path = assetsPath + fmt::format("textures/top_button{}.png", index),
+         .generateMipmaps = false,
+         .flipUpsideDown = false});
   }
 
   abcg::glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -828,7 +828,7 @@ void Window::paintUIShaderComboBox() {
 void Window::paintUIAboutTab() {
   ImGui::Text("%s", fmt::format("ImpVis {}", kAppVersion).c_str());
   ImGui::Text("3D Implicit Function Viewer");
-  ImGui::Text("Copyright (c) 2022 Harlen Batagelo");
+  ImGui::Text("Copyright (c) 2023 Harlen Batagelo");
 
   ImGui::Spacing();
   ImGui::Spacing();

@@ -6,7 +6,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2022 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -86,15 +86,14 @@ struct abcg::OpenGLSettings {
  * Derive from this class to create a custom OpenGL window object to be passed
  * to abcg::Application::run.
  *
- * @sa abcg::OpenGLWindow::onEvent for custom handling of SDL events.
- * @sa abcg::OpenGLWindow::onCreate for custom initialization of OpenGL
- * resources.
- * @sa abcg::OpenGLWindow::onPaint for custom scene rendering commands.
- * @sa abcg::OpenGLWindow::onPaintUI for custom UI rendering commands.
- * @sa abcg::OpenGLWindow::onResize for custom handling of window resizing
- * events.
- * @sa abcg::OpenGLWindow::onDestroy for custom clean up of OpenGL resources.
- *
+ * @sa abcg::OpenGLWindow::onEvent for handling SDL events.
+ * @sa abcg::OpenGLWindow::onCreate for initializing OpenGL resources.
+ * @sa abcg::OpenGLWindow::onPaint for scene rendering.
+ * @sa abcg::OpenGLWindow::onPaintUI for UI rendering.
+ * @sa abcg::OpenGLWindow::onResize for handling of window resize events.
+ * @sa abcg::OpenGLWindow::onUpdate for commands to be called every frame.
+ * @sa abcg::OpenGLWindow::onDestroy for cleaning up OpenGL resources.
+
  * @remark Objects of this type cannot be copied or copy-constructed.
  */
 class abcg::OpenGLWindow : public Window {
@@ -109,6 +108,7 @@ protected:
   virtual void onPaint();
   virtual void onPaintUI();
   virtual void onResize(glm::ivec2 const &size);
+  virtual void onUpdate();
   virtual void onDestroy();
 
 private:
@@ -119,10 +119,10 @@ private:
   [[nodiscard]] glm::ivec2 getWindowSize() const final;
 
   OpenGLSettings m_openGLSettings;
-
   std::string m_GLSLVersion;
-
   SDL_GLContext m_GLContext{};
+  bool m_hidden{};
+  bool m_minimized{};
 };
 
 #endif

@@ -4,7 +4,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2022 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -13,7 +13,7 @@
 #include <SDL_events.h>
 #include <SDL_image.h>
 #include <imgui_impl_opengl3.h>
-#include <imgui_impl_sdl.h>
+#include <imgui_impl_sdl2.h>
 
 #include "abcgEmbeddedFonts.hpp"
 #include "abcgException.hpp"
@@ -53,9 +53,9 @@ void abcg::OpenGLWindow::saveScreenshotPNG(std::string_view filename) const {
   auto const size{getWindowSize()};
   auto const bitsPerPixel{8};
   auto const channels{4};
-  auto const pitch{static_cast<long>(size.x * channels)};
+  auto const pitch{gsl::narrow<long>(size.x * channels)};
 
-  auto const numPixels{static_cast<std::size_t>(size.x * size.y * channels)};
+  auto const numPixels{gsl::narrow<std::size_t>(size.x * size.y * channels)};
   std::vector<unsigned char> pixels(numPixels);
   glReadBuffer(m_openGLSettings.doubleBuffering ? GL_BACK : GL_FRONT);
   glReadPixels(0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
@@ -69,7 +69,7 @@ void abcg::OpenGLWindow::saveScreenshotPNG(std::string_view filename) const {
 
   if (auto *const surface{SDL_CreateRGBSurfaceFrom(
           pixels.data(), size.x, size.y, channels * bitsPerPixel,
-          static_cast<int>(pitch), 0x000000FF, 0x0000FF00, 0x00FF0000,
+          gsl::narrow<int>(pitch), 0x000000FF, 0x0000FF00, 0x00FF0000,
           0xFF000000)}) {
     IMG_SavePNG(surface, filename.data());
     SDL_FreeSurface(surface);
@@ -102,8 +102,10 @@ void abcg::OpenGLWindow::onCreate() { glClearColor(0, 0, 0, 1); }
 /**
  * @brief Custom handler for rendering the OpenGL scene.
  *
- * This virtual function is called for each frame in the rendering loop, just
- * after abcg::OpenGLWindow::onPaintUI is called.
+ * This virtual function is called for each frame of the rendering loop, just
+ * after abcg::OpenGLWindow::onPaintUI.
+ *
+ * This is not called when the window is minimized.
  *
  * Override it for custom behavior. By default, it clears the color buffer and
  * calls `glViewport(0, 0, w, h)`, where `w` is the width, and `h` is the height
@@ -118,12 +120,14 @@ void abcg::OpenGLWindow::onPaint() {
 /**
  * @brief Custom handler for rendering Dear ImGUI controls.
  *
- * This virtual function is called for each frame in the rendering loop, just
- * before abcg::OpenGLWindow::onPaint is called.
+ * This virtual function is called for each frame of the rendering loop, just
+ * before abcg::OpenGLWindow::onPaint.
+ *
+ * This is not called when the window is minimized.
  *
  * Override it for custom behavior. By default, it shows a FPS counter if
- * abcg::WindowSettings::showFPS is set to `true`, and a toggle fullscren button
- * if abcg::WindowSettings::showFullscreenButton is set to `true`.
+ * abcg::WindowSettings::showFPS is set to `true`, and a toggle fullscreen
+ * button if abcg::WindowSettings::showFullscreenButton is set to `true`.
  */
 void abcg::OpenGLWindow::onPaintUI() {
   // FPS counter
@@ -147,11 +151,11 @@ void abcg::OpenGLWindow::onPaintUI() {
                      ImGuiWindowFlags_NoBringToFrontOnFocus |
                      ImGuiWindowFlags_NoFocusOnAppearing);
     auto const label{fmt::format("avg {:.1f} FPS", fps)};
-    ImGui::PlotLines("", frames.data(), static_cast<int>(frames.size()),
-                     static_cast<int>(offset), label.c_str(), 0.0f,
+    ImGui::PlotLines("", frames.data(), gsl::narrow<int>(frames.size()),
+                     gsl::narrow<int>(offset), label.c_str(), 0.0f,
                      // *std::ranges::max_element(frames) * 2,
                      *std::max_element(frames.begin(), frames.end()) * 2,
-                     ImVec2(static_cast<float>(frames.size()), 50));
+                     ImVec2(gsl::narrow<float>(frames.size()), 50));
     ImGui::End();
   }
 
@@ -159,8 +163,8 @@ void abcg::OpenGLWindow::onPaintUI() {
   if (abcg::Window::getWindowSettings().showFullscreenButton) {
 #if defined(__EMSCRIPTEN__)
     auto const isFullscreenAvailable{
-        static_cast<bool>(EM_ASM_INT({ return document.fullscreenEnabled; })) &&
-        static_cast<bool>(EM_ASM_INT({ return !isMobile(); }))};
+        gsl::narrow<bool>(EM_ASM_INT({ return document.fullscreenEnabled; })) &&
+        gsl::narrow<bool>(EM_ASM_INT({ return !isMobile(); }))};
     if (isFullscreenAvailable)
 #endif
     {
@@ -170,7 +174,7 @@ void abcg::OpenGLWindow::onPaintUI() {
 
       ImGui::SetNextWindowSize(
           ImVec2(widgetSize.x + windowBorder.x, widgetSize.y + windowBorder.y));
-      ImGui::SetNextWindowPos(ImVec2(5, static_cast<float>(windowSize.y) -
+      ImGui::SetNextWindowPos(ImVec2(5, gsl::narrow<float>(windowSize.y) -
                                             (widgetSize.y + windowBorder.y) -
                                             5));
 
@@ -200,6 +204,16 @@ void abcg::OpenGLWindow::onPaintUI() {
 void abcg::OpenGLWindow::onResize([[maybe_unused]] glm::ivec2 const &size) {}
 
 /**
+ * @brief Custom handler called for each frame before painting.
+ *
+ * This virtual function is called just before abcg::VulkanWindow::onPaint, even
+ * if the window is minimized.
+ *
+ * Override it for custom behavior. By default, it does nothing.
+ */
+void abcg::OpenGLWindow::onUpdate() {}
+
+/**
  * @brief Custom handler for cleaning up OpenGL resources.
  *
  * This is a hook function called when the application is exiting.
@@ -214,6 +228,19 @@ void abcg::OpenGLWindow::handleEvent(SDL_Event const &event) {
 
   if (event.type == SDL_WINDOWEVENT) {
     switch (event.window.event) {
+    case SDL_WINDOWEVENT_HIDDEN:
+      m_hidden = true;
+      break;
+    case SDL_WINDOWEVENT_SHOWN:
+    case SDL_WINDOWEVENT_EXPOSED:
+      m_hidden = false;
+      break;
+    case SDL_WINDOWEVENT_MINIMIZED:
+      m_minimized = true;
+      break;
+    case SDL_WINDOWEVENT_RESTORED:
+      m_minimized = false;
+      break;
     case SDL_WINDOWEVENT_SIZE_CHANGED:
     case SDL_WINDOWEVENT_RESIZED: {
       onResize(getWindowSize());
@@ -317,7 +344,7 @@ void abcg::OpenGLWindow::create() {
     } else {
       break;
     }
-  };
+  }
 
   if (abcg::Window::getSDLWindow() == nullptr) {
     throw abcg::SDLError("SDL_CreateWindow failed");
@@ -335,26 +362,32 @@ void abcg::OpenGLWindow::create() {
 
 #if !defined(__EMSCRIPTEN__)
   if (auto const err{glewInit()}; GLEW_OK != err) {
-    throw abcg::Exception{fmt::format("Failed to initialize OpenGL loader: {}",
-                                      glewGetErrorString(err))};
+    throw abcg::Exception{
+        fmt::format("Failed to initialize OpenGL loader: {}",
+                    reinterpret_cast<char const *>(glewGetErrorString(err)))};
   }
-  fmt::print("Using GLEW.....: {}\n", glewGetString(GLEW_VERSION));
+  fmt::print("Using GLEW.....: {}\n",
+             reinterpret_cast<char const *>(glewGetString(GLEW_VERSION)));
 #endif
 
-  fmt::print("OpenGL vendor..: {}\n", glGetString(GL_VENDOR));
-  fmt::print("OpenGL renderer: {}\n", glGetString(GL_RENDERER));
-  fmt::print("OpenGL version.: {}\n", glGetString(GL_VERSION));
-  fmt::print("GLSL version...: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+  fmt::print("OpenGL vendor..: {}\n",
+             reinterpret_cast<char const *>(glGetString(GL_VENDOR)));
+  fmt::print("OpenGL renderer: {}\n",
+             reinterpret_cast<char const *>(glGetString(GL_RENDERER)));
+  fmt::print("OpenGL version.: {}\n",
+             reinterpret_cast<char const *>(glGetString(GL_VERSION)));
+  fmt::print(
+      "GLSL version...: {}\n",
+      reinterpret_cast<char const *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
-  /*
   // Print out extensions
-  GLint numExtensions{};
-  glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-  for (std::size_t posStart{}; auto const index : iter::range(numExtensions)) {
-    fmt::print("GL extension {}: {}\n", index,
-               glGetStringi(GL_EXTENSIONS, index));
-  }
-  */
+  // GLint numExtensions{};
+  // glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+  // for (auto const index : iter::range(gsl::narrow<GLuint>(numExtensions))) {
+  //   fmt::print(
+  //       "GL extension {}: {}\n", index,
+  //       reinterpret_cast<char const *>(glGetStringi(GL_EXTENSIONS, index)));
+  // }
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -381,7 +414,7 @@ void abcg::OpenGLWindow::create() {
   fontConfig.FontDataOwnedByAtlas = false;
   if (std::array ttf{INCONSOLATA_MEDIUM_TTF};
       guiIO.Fonts->AddFontFromMemoryTTF(ttf.data(),
-                                        static_cast<int>(ttf.size()), 16.0f,
+                                        gsl::narrow<int>(ttf.size()), 16.0f,
                                         &fontConfig) == nullptr) {
     throw abcg::RuntimeError("Failed to load font file");
   }
@@ -392,6 +425,11 @@ void abcg::OpenGLWindow::create() {
 }
 
 void abcg::OpenGLWindow::paint() {
+  onUpdate();
+
+  if (m_hidden || m_minimized)
+    return;
+
   SDL_GL_MakeCurrent(abcg::Window::getSDLWindow(), m_GLContext);
 
 #if defined(__EMSCRIPTEN__)
