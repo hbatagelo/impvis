@@ -1,70 +1,101 @@
-![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)
+# ImpVis - 3D Implicit Function Viewer
+
+[![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)](https://github.com/hbatagelo/impvis/actions/workflows/build.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=hbatagelo/impvis\&utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
 
-# ImpVis - 3D Implicit Function Viewer
-
-ImpVis is a real-time visualization tool for displaying isosurfaces and scalar fields of algebraic and non-algebraic 3D implicit functions. The application focuses on interactivity, allowing users to change the function parameters and expressions on the fly.
+ImpVis is a real-time visualization tool for displaying isosurfaces and scalar fields of algebraic and non-algebraic 3D
+implicit functions. The application focuses on interactivity, allowing users to change the function parameters and
+expressions on the fly.
 
 ## [Live Demo](https://hbatagelo.github.io/impvis/public/)
 
-Below is a screenshot of ImpVis displaying a quintic surface known as [Togliatti surface](https://en.wikipedia.org/wiki/Togliatti_surface). The positive and negative sides of the surface are shown in red and magenta, respectively.
+Below is a screenshot of ImpVis displaying a quintic surface known as
+[Togliatti surface](https://en.wikipedia.org/wiki/Togliatti_surface).
+The positive and negative sides of the surface are shown in red and magenta, respectively.
 
 ![Togliatti snapshot](./art/snapshot_togliatti.jpg "Togliatti quintic surface")
 
-ImpVis can also render scalar fields using direct volume rendering, as shown below. The color transfer function maps positive values to red/orange hues, negative values to magenta/purple, and values near zero to white. The mapping can be adjusted using an exponential scaling factor.
+ImpVis can also render scalar fields using direct volume rendering, as shown below.
+The color transfer function maps positive values to red/orange hues, negative values to magenta/purple,
+and values near zero to white. The mapping can be adjusted using an exponential scaling factor.
 
 ![Chmutov snapshot](./art/snapshot_chmutov.jpg "Chmutov Cubic volume rendering")
 
 ## Basic usage
 
-*   Drag to rotate the surface (left mouse button) or light source (right mouse button).
-*   Use the mouse wheel to zoom in/out.
-*   Press F11 to toggle fullscreen.
-*   Drag the bottom slider to set the isovalue.
-*   Use the top-right window to select an equation, change the function parameters and adjust the render settings.
+* Drag to rotate the surface (left mouse button) or light source (right mouse button).
+* Use the mouse wheel to zoom in/out.
+* Press F11 to toggle fullscreen.
+* Drag the bottom slider to set the isovalue.
+* Use the top-right window to select an equation, change the function parameters and adjust the render settings.
 
 ## Equation editor
 
-ImpVis features an equation editor that allows users to write new expressions by modifying existing ones from a catalog of predefined implicit equations.
+ImpVis features an equation editor that allows users to write new expressions by modifying existing ones from a
+catalog of predefined implicit equations.
 
-In the equation editor, the expression for the left-hand side of the equation is written in a modified GLSL ES syntax in which the caret symbol `^` is used as an **exponentiation operator** instead of **bit-wise exclusive or** operator. For example, for the Torus implicit equation
+In the equation editor, the expression for the left-hand side of the equation is written in a modified GLSL ES syntax
+in which the caret symbol `^` is used as an **exponentiation operator** instead of **bit-wise exclusive or** operator.
+For example, for the Torus implicit equation
 
 $$
 (c-\sqrt{x^2+y^2})^2+z^2-a^2=0,
 $$
 
-the left-hand side expression can be written as `(c-sqrt(x^2+y^2))^2+z^2-a^2` instead of `pow(c-sqrt(x*x+y*y),2.0)+z*z-a*a`, which is also supported.
+the left-hand side expression can be written as `(c-sqrt(x^2+y^2))^2+z^2-a^2` instead of
+`pow(c-sqrt(x*x+y*y),2.0)+z*z-a*a`, which is also supported.
 
-Under the hood, exponentiation expressions of the form `b^n`, where `n` is a positive integer between 2 and 16 (inclusive), are converted to the product of multiplying `n` bases: `b*b*...*b`. This is often more efficient than using the native `pow` function. ImpVis also has custom built-in functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, that can be used in place of `b^2`, `b^3`, up to `b^16`, where `b` is an expression that evaluates to `float`.
+Under the hood, exponentiation expressions of the form `b^n`, where `n` is a positive integer between 2 and 16
+(inclusive), are converted to the product of multiplying `n` bases: `b*b*...*b`. This is often more efficient than
+using the native `pow` function. ImpVis also has custom built-in functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`,
+that can be used in place of `b^2`, `b^3`, up to `b^16`, where `b` is an expression that evaluates to `float`.
 
-Another syntax difference from GLSL is the use of square brackets for grouping (as parentheses) instead of array indexing. For example, for the Cassini quartic surface equation
+Another syntax difference from GLSL is the use of square brackets for grouping (as parentheses) instead of array
+indexing. For example, for the Cassini quartic surface equation
 
 $$
-\left\[(x+r)^2+y^2\right]\left\[(x-r)^2+y^2\right]-z^2=0,
+\left[(x+r)^2+y^2\right]\left[(x-r)^2+y^2\right]-z^2=0,
 $$
 
 the left-hand side expression can be written as `[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2`.
 
-The editor also allows injecting GLSL ES code both in the global scope of the shader and in the local scope of the shader function that evaluates the implicit function. Try selecting different equations from the catalog to see how their scopes are implemented in the equation editor. As a rule of thumb:
+The editor also allows injecting GLSL ES code both in the global scope of the shader and in the local scope of the
+shader function that evaluates the implicit function. Try selecting different equations from the catalog to see how their scopes are implemented in the equation editor. As a rule of thumb:
 
-*   Use the global scope to define GLSL functions and constants to be used either in the local scope or directly in the implicit function.
-*   Use the local scope to define GLSL variables to be used in the implicit function expression.
+* Use the global scope to define GLSL functions and constants to be used either in the local scope or directly in the
+implicit function.
+* Use the local scope to define GLSL variables to be used in the implicit function expression.
 
-Any changes to the currently selected equation (expression, local scope, or global scope) will be saved as a user-defined equation at the end of the group of equations called "Other".
+Any changes to the currently selected equation (expression, local scope, or global scope) will be saved as a
+user-defined equation at the end of the group of equations called "Other".
 
 ### Remarks
 
 The following applies to code injected in the local scope:
 
-*   `p` is the name of a `vec3` variable containing the values of the `x`, `y`, and `z` variables of the 3D implicit function. Thus, in the local scope, use `p.x`, `p.y`, and `p.z` instead of `x`, `y`, and `z`.
-*   `p2` is a shortcut for `p*p`, `p3` is a shortcut for `p*p*p`, and so on up to `p16`. Again, these are often more efficient than `pow(p,n)`. The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available in the local scope.
+* `p` is the name of a `vec3` variable containing the values of the `x`, `y`, and `z` variables of the 3D implicit
+function. Thus, in the local scope, use `p.x`, `p.y`, and `p.z` instead of `x`, `y`, and `z`.
+* `p2` is a shortcut for `p*p`, `p3` is a shortcut for `p*p*p`, and so on up to `p16`. Again, these are often more
+efficient than `pow(p,n)`. The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`,
+are also available in the local scope.
 
 ## How it works
 
-Isosurfaces are rendered using an adaptive raymarching algorithm. Scalar fields are rendered using direct volume rendering. Both are implemented as [GLSL ES 3.00](\(https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf\)) shaders. Equation names and expressions shown in the top-left corner of the screen are rendered using [MathJax](https://www.mathjax.org/) (available in the WebAssembly build only).
+Isosurfaces are rendered using an adaptive raymarching algorithm.
+Scalar fields are rendered using direct volume rendering. Both are implemented as
+[GLSL ES 3.00](\(https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf\)) shaders.
+Equation names and expressions shown in the top-left corner of the screen are rendered
+using [MathJax](https://www.mathjax.org/) (available in the WebAssembly build only).
 
-The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the *adaptive marching points* algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader at `src/assets/shaders/raycast.frag`.
+The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field
+and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as
+it moves away from it. This is similar to the *adaptive marching points* algorithm described in
+[Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235)
+(Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing
+the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the
+bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader
+at `src/assets/shaders/raycast.frag`.
 
 ## Building
 
@@ -79,9 +110,9 @@ cd impvis
 
 Ensure the following tools are installed and are reachable from path:
 
-*   [Conan](https://conan.io/) 2.0 or later (not required for WebAssembly).
-*   [CMake](https://cmake.org/) 3.24 or later.
-*   A C++ compiler with at least partial support to C++20 (tested with GCC 11, Clang 13, MSVC 17, and emcc 3.1).
+* [Conan](https://conan.io/) 2.0 or later (not required for WebAssembly).
+* [CMake](https://cmake.org/) 3.24 or later.
+* A C++ compiler with at least partial support to C++20 (tested with GCC 11, Clang 13, MSVC 17, and emcc 3.1).
 
 ### Building for the desktop
 
@@ -92,8 +123,8 @@ conan build .
 
 ### Building for the web
 
-1.  Install [Emscripten](https://emscripten.org/) and activate its environment variables.
-2.  Run `build-wasm.bat` (Windows) or `build-wasm.sh` (Linux, macOS).
+1. Install [Emscripten](https://emscripten.org/) and activate its environment variables.
+2. Run `build-wasm.bat` (Windows) or `build-wasm.sh` (Linux, macOS).
 
 The WASM binaries will be written to `impvis/public`.
 
@@ -101,33 +132,38 @@ The WASM binaries will be written to `impvis/public`.
 
 ### Unit tests
 
-1.  Configure CMake with `-DENABLE_UNIT_TESTING=ON` (default is `OFF`).
-2.  Build the project. The executable `tests` will be written to the build directory.
-3.  Run `tests`.
+1. Configure CMake with `-DENABLE_UNIT_TESTING=ON` (default is `OFF`).
+2. Build the project. The executable `tests` will be written to the build directory.
+3. Run `tests`.
 
 ### Fuzzing tests
 
-1.  Install [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
+1. Install [libFuzzer](https://llvm.org/docs/LibFuzzer.html).
 
-2.  Configure CMake with Clang as compiler, and `-DENABLE_FUZZ_TESTING=ON` (default is `OFF`).
+2. Configure CMake with Clang as compiler, and `-DENABLE_FUZZ_TESTING=ON` (default is `OFF`).
 
-3.  Build the project. The executable `fuzzer` will be written to the build directory.
+3. Build the project. The executable `fuzzer` will be written to the build directory.
 
-4.  Copy `fuzzer` to `tests/fuzzer` and run:
+4. Copy `fuzzer` to `tests/fuzzer` and run:
 
-    ```sh
-    ./fuzzer corpus -dict=dictionary.txt -max_len=1280 -timeout=5
-    ```
+   ```sh
+   ./fuzzer corpus -dict=dictionary.txt -max_len=1280 -timeout=5
+   ```
 
-    This will use the corpus of sample inputs contained in `tests/fuzzer/corpus`, and the dictionary of keywords in `tests/fuzzer/dictionary.txt`. During the fuzzing process, test cases that trigger coverage of new paths through the code will be added to the corpus directory.
+   This will use the corpus of sample inputs contained in `tests/fuzzer/corpus`, and the dictionary of keywords in
+   `tests/fuzzer/dictionary.txt`. During the fuzzing process, test cases that trigger coverage of new paths through the
+   code will be added to the corpus directory.
 
-    By default, the fuzzer runs indefinitely, or until a bug is found. Use the parameter `-max_total_time` to set a time limit. For example, `-max_total_time=60` forces the test to stop after one minute.
+   By default, the fuzzer runs indefinitely, or until a bug is found. Use the parameter `-max_total_time` to set a time
+   limit. For example, `-max_total_time=60` forces the test to stop after one minute.
 
 ## File format of the catalog of equations
 
 The equations are described as [TOML](https://toml.io) files located in `src\assets\equations`.
 
-Each TOML file must have a `title` key in root level with a value that is the name of the equation group (e.g., `title="Cubic"` for the file that contains cubic equations). Each equation is then described by a table with the following key/value pairs, from which only the `expression` key/value pair is required:
+Each TOML file must have a `title` key in root level with a value that is the name of the equation group
+(e.g., `title="Cubic"` for the file that contains cubic equations). Each equation is then described by a table with the
+following key/value pairs, from which only the `expression` key/value pair is required:
 
 | Key                  | Value type             | Description                                                      |
 | :------------------- | :--------------------- | :--------------------------------------------------------------- |
@@ -217,4 +253,6 @@ MIT License.
 
 ## Development history
 
-ImpVis was originally designed in 2014, based on Qt, and licensed under GPLv3. The current version is a complete rewrite of the [first version](http://professor.ufabc.edu.br/~harlen.batagelo/impvis/). It is now available under the MIT license and is based on the [ABCg](https://github.com/hbatagelo/abcg)  framework.
+ImpVis was originally designed in 2014, based on Qt, and licensed under GPLv3. The current version is a complete
+rewrite of the [first version](http://professor.ufabc.edu.br/~harlen.batagelo/impvis/). It is now available under the
+MIT license and is based on the [ABCg](https://github.com/hbatagelo/abcg)  framework.
