@@ -26,6 +26,7 @@ bindings
 
 # CMake build configuration
 CMakeSettings.json
+CMakeUserPresets.json
 compile_commands.json
 
 # Git

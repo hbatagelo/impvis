@@ -24,11 +24,13 @@ namespace iter {
     using FilterFn = IterToolFnOptionalBindFirst<Filtered, BoolTester>;
   }
 
-  constexpr impl::FilterFn filter{};
+  inline constexpr impl::FilterFn filter{};
 }
 
 template <typename FilterFunc, typename Container>
 class iter::impl::Filtered {
+  static_assert(!std::is_reference_v<FilterFunc>);
+
  private:
   Container container_;
   mutable FilterFunc filter_func_;
@@ -39,7 +41,7 @@ class iter::impl::Filtered {
   // Value constructor for use only in the filter function
   Filtered(FilterFunc filter_func, Container&& container)
       : container_(std::forward<Container>(container)),
-        filter_func_(filter_func) {}
+        filter_func_(std::move(filter_func)) {}
 
  public:
   Filtered(Filtered&&) = default;
@@ -84,8 +86,8 @@ class iter::impl::Filtered {
     using iterator_category = std::input_iterator_tag;
     using value_type = iterator_traits_deref<ContainerT>;
     using difference_type = std::ptrdiff_t;
-    using pointer = value_type*;
-    using reference = value_type&;
+    using pointer = typename Holder::pointer;
+    using reference = typename Holder::reference;
 
     Iterator(IteratorWrapper<ContainerT>&& sub_iter,
         IteratorWrapper<ContainerT>&& sub_end, FilterFunc& filter_func)

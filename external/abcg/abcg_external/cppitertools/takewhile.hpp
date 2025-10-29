@@ -16,7 +16,7 @@ namespace iter {
 
     using TakeWhileFn = IterToolFnOptionalBindFirst<Taker, BoolTester>;
   }
-  constexpr impl::TakeWhileFn takewhile{};
+  inline constexpr impl::TakeWhileFn takewhile{};
 }
 
 template <typename FilterFunc, typename Container>
@@ -29,7 +29,7 @@ class iter::impl::Taker {
 
   Taker(FilterFunc filter_func, Container&& container)
       : container_(std::forward<Container>(container)),
-        filter_func_(filter_func) {}
+        filter_func_(std::move(filter_func)) {}
 
  public:
   Taker(Taker&&) = default;

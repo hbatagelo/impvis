@@ -16,12 +16,13 @@ namespace iter {
           // See #66
           -> StarMapper<MapFunc,
               decltype(zip(std::forward<Containers>(containers)...))> {
-        return starmap(map_func, zip(std::forward<Containers>(containers)...));
+        return starmap(
+            std::move(map_func), zip(std::forward<Containers>(containers)...));
       }
       using PipeableAndBindFirst<IMapFn>::operator();
     };
   }
-  constexpr impl::IMapFn imap{};
+  inline constexpr impl::IMapFn imap{};
 }
 
 #endif

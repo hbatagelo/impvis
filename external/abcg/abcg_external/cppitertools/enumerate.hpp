@@ -33,16 +33,16 @@ namespace iter {
 
     using EnumerateFn = IterToolFnOptionalBindSecond<Enumerable, std::size_t>;
   }
-  constexpr impl::EnumerateFn enumerate{};
+  inline constexpr impl::EnumerateFn enumerate{};
 }
 
 namespace std {
   template <typename Index, typename Elem>
-  class tuple_size<iter::impl::EnumIterYield<Index, Elem>>
+  struct tuple_size<iter::impl::EnumIterYield<Index, Elem>>
       : public tuple_size<iter::impl::EnumBasePair<Index, Elem>> {};
 
   template <std::size_t N, typename Index, typename Elem>
-  class tuple_element<N, iter::impl::EnumIterYield<Index, Elem>>
+  struct tuple_element<N, iter::impl::EnumIterYield<Index, Elem>>
       : public tuple_element<N, iter::impl::EnumBasePair<Index, Elem>> {};
 }
 

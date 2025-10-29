@@ -46,6 +46,7 @@ struct Settings {
   bool overlayMathJaxComment{true};
 
   glm::vec2 viewportSize{};
+  glm::ivec2 windowSize{};
   bool redrawBackgroundRenderTex{true};
   bool updateEquationEditorLayout{true};
   bool updateLogWindowLayout{true};

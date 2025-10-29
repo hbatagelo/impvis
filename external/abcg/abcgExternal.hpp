@@ -19,7 +19,7 @@
 
 #include <SDL.h>
 #include <cppitertools/itertools.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/hash.hpp>

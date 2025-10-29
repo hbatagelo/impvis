@@ -55,14 +55,14 @@ Any changes to the currently selected equation (expression, local scope, or glob
 
 ### Remarks
 
-The following apply for code injected in the local scope:
+The following applies to code injected in the local scope:
 
 *   `p` is the name of a `vec3` variable containing the values of the `x`, `y`, and `z` variables of the 3D implicit function. Thus, in the local scope, use `p.x`, `p.y`, and `p.z` instead of `x`, `y`, and `z`.
 *   `p2` is a shortcut for `p*p`, `p3` is a shortcut for `p*p*p`, and so on up to `p16`. Again, these are often more efficient than `pow(p,n)`. The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available in the local scope.
 
 ## How it works
 
-The isosurfaces are rendered using an adaptive raymarching algorithm. The scalar fields are rendered using direct volume rendering. Both are implemented as [GLSL ES 3.00](\(https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf\)) shaders. The equation names and the expressions shown in the top-left corner of the screen are rendered using [MathJax](https://www.mathjax.org/) (WebAssembly only).
+Isosurfaces are rendered using an adaptive raymarching algorithm. Scalar fields are rendered using direct volume rendering. Both are implemented as [GLSL ES 3.00](\(https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf\)) shaders. Equation names and expressions shown in the top-left corner of the screen are rendered using [MathJax](https://www.mathjax.org/) (available in the WebAssembly build only).
 
 The adaptive raymarching algorithm adjusts the size of the ray's next step according to the value of the scalar field and gradient evaluated at the current step. The step size decreases as the ray approaches the surface, and increases as it moves away from it. This is similar to the *adaptive marching points* algorithm described in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235) (Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing the number of conditional branchings. In addition, the step size decreases as the ray approaches the limits of the bounding volume as a measure to avoid clipping artifacts. For details, read the inline comments in the fragment shader at `src/assets/shaders/raycast.frag`.
 
@@ -77,51 +77,20 @@ git clone https://github.com/hbatagelo/impvis.git
 cd impvis
 ```
 
-Make sure the following tools are installed and are reachable from the path:
+Ensure the following tools are installed and are reachable from path:
 
-*   [Conan](https://conan.io/) >=1.44, <2.0 (not required for WebAssembly). Conan 2.* is not supported yet.
-*   [CMake](https://cmake.org/) 3.18 or later.
+*   [Conan](https://conan.io/) 2.0 or later (not required for WebAssembly).
+*   [CMake](https://cmake.org/) 3.24 or later.
 *   A C++ compiler with at least partial support to C++20 (tested with GCC 11, Clang 13, MSVC 17, and emcc 3.1).
 
-### On Windows
-
-Run `build-vs.bat` for building with Visual Studio 2022, using x64 as target platform. The script will execute the following commands:
-
-```bat
-:: Create the build directory
-mkdir build && cd build
-
-:: Set the build type
-set BUILD_TYPE=Release
-
-:: Configure (VS 2022 generator for a 64-bit target architecture)
-cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ..
-
-:: Build
-cmake --build . --config %BUILD_TYPE%
-```
-
-### On macOS and Linux (including WSL2)
-
-Run `./build.sh` to execute the following commands:
+### Building for the desktop
 
 ```sh
-# Create the build directory
-mkdir build && cd build
-
-# Set the build type
-BUILD_TYPE=Release
-
-# Configure (Makefile generator)
-cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
-
-# Build
-cmake --build . --config $BUILD_TYPE
+conan install . --output-folder=build --build=missing
+conan build .
 ```
 
-**Note:** on macOS, if you encounter errors building with AppleClang, try Clang installed via HomeBrew.
-
-### Building for WebAssembly
+### Building for the web
 
 1.  Install [Emscripten](https://emscripten.org/) and activate its environment variables.
 2.  Run `build-wasm.bat` (Windows) or `build-wasm.sh` (Linux, macOS).

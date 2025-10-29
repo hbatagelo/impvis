@@ -49,7 +49,7 @@ void setupImGuiStyle(bool const darkTheme, float const alpha) {
   style.ScrollbarSize                         = 15.0f;
   style.WindowTitleAlign                      = ImVec2(0.50f, 0.50f);
   style.Colors[ImGuiCol_Text]                 = ColorAlpha(black, 1.00f);
-  style.Colors[ImGuiCol_TextDisabled]         = ColorAlpha(gray3, 1.00f);  
+  style.Colors[ImGuiCol_TextDisabled]         = ColorAlpha(gray3, 1.00f);
   style.Colors[ImGuiCol_WindowBg]             = ColorAlpha(gray5, 0.95f);
   style.Colors[ImGuiCol_ChildBg]              = ColorAlpha(white, 0.16f);
   style.Colors[ImGuiCol_PopupBg]              = ColorAlpha(gray6, 0.97f);

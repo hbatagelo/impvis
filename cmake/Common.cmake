@@ -59,70 +59,6 @@ endif()
 
 # Conan
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  # Set up some extra Conan dependencies based on our needs before loading Conan
-  set(CONAN_SETTINGS "")
-  set(CONAN_EXTRA_REQUIRES "")
-  set(CONAN_EXTRA_OPTIONS "")
-  set(CONAN_IMPORTS "")
-
-  # fmt
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} fmt/10.0.0)
-
-  # imGUI
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} imgui/1.89.4)
-  set(CONAN_IMPORTS
-      ${CONAN_IMPORTS} "./res/bindings, *.cpp -> ${CMAKE_SOURCE_DIR}/bindings"
-      "./res/bindings, *.h -> ${CMAKE_SOURCE_DIR}/bindings")
-
-  # CPPItertools
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} cppitertools/2.1)
-
-  # GLM
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} glm/0.9.9.8)
-
-  # ms-gsl
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} ms-gsl/4.0.0)
-
-  # GLEW
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} glew/2.2.0)
-
-  # re2
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} re2/20220601)
-
-  # tomlplusplus
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} tomlplusplus/3.2.0)
-
-  # SDL2
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl/2.26.5)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:alsa=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:pulse=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:nas=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl*:wayland=False)
-
-  # SDL2_image
-  set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} sdl_image/2.0.5)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:bmp=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:gif=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:lbm=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:pcx=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:pnm=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:svg=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:tga=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:xcf=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:xpm=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:xv=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:with_libjpeg=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:with_libtiff=False)
-  set(CONAN_EXTRA_OPTIONS ${CONAN_EXTRA_OPTIONS} sdl_image*:with_libwebp=False)
-
-  # Use Google's test framework for unit testing
-  if(ENABLE_UNIT_TESTING)
-    set(CONAN_EXTRA_REQUIRES ${CONAN_EXTRA_REQUIRES} gtest/1.12.1)
-  endif()
-
-  include(${CMAKE_CURRENT_LIST_DIR}/Conan.cmake)
-  run_conan()
-
   find_package(fmt)
   find_package(imgui)
   find_package(cppitertools)
@@ -158,7 +94,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
       INTERFACE GTest::gtest GTest::gtest_main ${OPTIONS_TARGET}
                 ${SANITIZERS_TARGET})
   endif()
-
 endif()
 
 # mold

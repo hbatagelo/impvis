@@ -38,7 +38,7 @@ namespace iter {
 
     using FilterFalseFn = IterToolFnOptionalBindFirst<FilterFalsed, BoolTester>;
   }
-  constexpr impl::FilterFalseFn filterfalse{};
+  inline constexpr impl::FilterFalseFn filterfalse{};
 }
 
 // Delegates to Filtered with PredicateFlipper<FilterFunc>
@@ -48,7 +48,8 @@ class iter::impl::FilterFalsed
   friend FilterFalseFn;
   FilterFalsed(FilterFunc in_filter_func, Container&& in_container)
       : Filtered<PredicateFlipper<FilterFunc>, Container>(
-            {in_filter_func}, std::forward<Container>(in_container)) {}
+            {std::move(in_filter_func)},
+            std::forward<Container>(in_container)) {}
 };
 
 #endif

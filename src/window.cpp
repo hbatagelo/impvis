@@ -18,7 +18,7 @@
 #include "settings.hpp"
 #include "window.hpp"
 
-static char const *const kAppVersion{"v2.2.2"};
+static char const *const kAppVersion{"v2.3.0"};
 
 #if defined(__EMSCRIPTEN__)
 EM_JS(void, jsUpdateEquation,
@@ -333,22 +333,23 @@ void Window::onPaintUI() {
 
 void Window::paintUIMainWindow() {
   // Create main window widget
-  auto const minWindowSize{ImVec2(248, 534)};
-  auto const maxWindowSize{minWindowSize};
+  auto const minUIWindowSize{ImVec2(248, 534)};
+  auto const maxUIWindowSize{minUIWindowSize};
   std::size_t parametersExtraHeight{};
   auto const &parameters{m_settings.equation.getParameters()};
   if (!parameters.empty()) {
     parametersExtraHeight = 34 + parameters.size() * 26;
   }
 
-  ImVec2 const windowSize{
-      minWindowSize.x,
-      std::max(minWindowSize.y,
-               std::min(maxWindowSize.y, m_settings.viewportSize.y * 0.5f))};
+  ImVec2 const uiWindowSize{
+      minUIWindowSize.x,
+      std::max(minUIWindowSize.y,
+               std::min(maxUIWindowSize.y, m_settings.viewportSize.y * 0.5f))};
 
   ImGui::SetNextWindowPos(
-      ImVec2(m_settings.viewportSize.x - windowSize.x - 5, 5));
-  ImGui::SetNextWindowSize(windowSize);
+      ImVec2(m_settings.windowSize.x - uiWindowSize.x - 5, 5));
+
+  ImGui::SetNextWindowSize(uiWindowSize);
 
   ImGui::Begin("ImpVis", nullptr,
                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
@@ -358,7 +359,7 @@ void Window::paintUIMainWindow() {
 
   if (ImGui::BeginTabBar("##main_tab_bar", ImGuiTabBarFlags_None)) {
     if (ImGui::BeginTabItem("Equations")) {
-      paintUIEquationsTab(windowSize.y - 63);
+      paintUIEquationsTab(uiWindowSize.y - 63);
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Settings")) {
@@ -376,10 +377,10 @@ void Window::paintUIMainWindow() {
 
   // Parameters
   if (!parameters.empty() && m_rayCast.isProgramValid()) {
-    ImGui::SetNextWindowPos(ImVec2(m_settings.viewportSize.x - windowSize.x - 5,
-                                   windowSize.y + 10));
+    ImGui::SetNextWindowPos(ImVec2(m_settings.windowSize.x - uiWindowSize.x - 5,
+                                   uiWindowSize.y + 10));
     ImGui::SetNextWindowSize(
-        ImVec2(windowSize.x, gsl::narrow<float>(parametersExtraHeight)));
+        ImVec2(uiWindowSize.x, gsl::narrow<float>(parametersExtraHeight)));
     ImGui::Begin("Parameters", nullptr,
                  ImGuiWindowFlags_NoFocusOnAppearing |
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
@@ -828,7 +829,7 @@ void Window::paintUIShaderComboBox() {
 void Window::paintUIAboutTab() {
   ImGui::Text("%s", fmt::format("ImpVis {}", kAppVersion).c_str());
   ImGui::Text("3D Implicit Function Viewer");
-  ImGui::Text("Copyright (c) 2023 Harlen Batagelo");
+  ImGui::Text("Copyright (c) 2025 Harlen Batagelo");
 
   ImGui::Spacing();
   ImGui::Spacing();
@@ -871,28 +872,28 @@ void Window::paintUIAboutTab() {
 }
 
 void Window::paintUIEquationEditor() {
-  ImVec2 windowSize{};
-  ImVec2 const minWindowSize{250, 240};
+  ImVec2 uiWindowSize{};
+  ImVec2 const minUIWindowSize{250, 240};
   auto const inputTextHeight{ImGui::GetTextLineHeight() + 8};
   auto const &loadedData{m_settings.equation.getLoadedData()};
 
   // Window first appear centered in screen
   if (m_settings.updateEquationEditorLayout) {
-    windowSize = ImVec2{std::max(m_settings.viewportSize.x - 10,
-                                 m_settings.viewportSize.x * 0.75f),
+    uiWindowSize = ImVec2{std::max(m_settings.windowSize.x - 10.0f,
+                                 m_settings.windowSize.x * 0.75f),
                         190.0f};
     ImGui::SetNextWindowPos(
-        ImVec2((m_settings.viewportSize.x - windowSize.x) / 2.0f,
-               m_settings.viewportSize.y - windowSize.y - 100));
-    ImGui::SetNextWindowSize(windowSize);
+        ImVec2((m_settings.windowSize.x - uiWindowSize.x) / 2.0f,
+               m_settings.windowSize.y - uiWindowSize.y - 100));
+    ImGui::SetNextWindowSize(uiWindowSize);
     m_settings.updateEquationEditorLayout = false;
   }
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minWindowSize);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minUIWindowSize);
   ImGui::Begin("Equation Editor", nullptr,
                ImGuiWindowFlags_HorizontalScrollbar |
                    ImGuiWindowFlags_NoBringToFrontOnFocus);
-  windowSize = ImGui::GetWindowSize();
+  uiWindowSize = ImGui::GetWindowSize();
 
   static const std::size_t maxTextSize{80ul * 16};
 
@@ -901,14 +902,14 @@ void Window::paintUIEquationEditor() {
     auto const *const errorMessage{"ERROR: Ill-formed code or expression"};
 
     auto const textSize{ImGui::CalcTextSize(errorMessage)};
-    ImGui::SameLine(windowSize.x - textSize.x - 8);
+    ImGui::SameLine(uiWindowSize.x - textSize.x - 8);
 
     ImVec4 const redColor{1.0f, 0.35f, 0.35f, 1.0f};
     ImGui::TextColored(redColor, "%s", errorMessage);
   }
-  ImGui::BeginChild("##code_child", ImVec2(0, windowSize.y - 134), true);
+  ImGui::BeginChild("##code_child", ImVec2(0, uiWindowSize.y - 134), true);
   ImGui::Text("Global scope:");
-  ImGui::SameLine(windowSize.x / 2 - 4);
+  ImGui::SameLine(uiWindowSize.x / 2 - 4);
   ImGui::Text("Local scope:");
 
   std::string newExpression{};
@@ -923,7 +924,7 @@ void Window::paintUIEquationEditor() {
     ImGui::PushFont(m_monospacedFont);
     ImGui::InputTextMultiline("##code_global_edit", injectedCode.data(),
                               injectedCode.size(),
-                              ImVec2(windowSize.x / 2 - 20, windowSize.y - 170),
+                              ImVec2(uiWindowSize.x / 2 - 20, uiWindowSize.y - 170),
                               ImGuiInputTextFlags_AllowTabInput);
     ImGui::PopFont();
     newInjectedCodeGlobal.assign(injectedCode.data(), maxTextSize);
@@ -939,7 +940,7 @@ void Window::paintUIEquationEditor() {
     ImGui::PushFont(m_monospacedFont);
     ImGui::InputTextMultiline("##code_local_edit", injectedCode.data(),
                               injectedCode.size(),
-                              ImVec2(windowSize.x / 2 - 20, windowSize.y - 170),
+                              ImVec2(uiWindowSize.x / 2 - 20, uiWindowSize.y - 170),
                               ImGuiInputTextFlags_AllowTabInput);
     ImGui::PopFont();
     newInjectedCodeLocal.assign(injectedCode.data(), maxTextSize);
@@ -960,7 +961,7 @@ void Window::paintUIEquationEditor() {
   ImGui::PushFont(m_monospacedFont);
   ImGui::InputTextMultiline(
       "##eqn_edit", multilineText.data(), multilineText.size(),
-      ImVec2(windowSize.x - (eqIsoValueSize.x + 25), inputTextHeight * 2 + 4),
+      ImVec2(uiWindowSize.x - (eqIsoValueSize.x + 25), inputTextHeight * 2 + 4),
       ImGuiInputTextFlags_AllowTabInput);
   ImGui::PopFont();
 
@@ -1024,8 +1025,8 @@ void Window::paintUIEquationEditor() {
 }
 
 void Window::paintUIIsoValueWindow() {
-  ImGui::SetNextWindowPos(ImVec2(5, m_settings.viewportSize.y - 44));
-  ImGui::SetNextWindowSize(ImVec2(m_settings.viewportSize.x - 10, -1));
+  ImGui::SetNextWindowPos(ImVec2(5, m_settings.windowSize.y - 44.0f));
+  ImGui::SetNextWindowSize(ImVec2(m_settings.windowSize.x - 10.0f, -1));
   ImGui::Begin("Isovalue Bar", nullptr, ImGuiWindowFlags_NoDecoration);
 
   static const auto defaultIsoMin{-2.0f};
@@ -1045,7 +1046,7 @@ void Window::paintUIIsoValueWindow() {
   // Slider will fill the horizontal span of the window
   auto const widgetWidth{176};
   ImGui::SameLine();
-  ImGui::PushItemWidth(m_settings.viewportSize.x - (widgetWidth + 22));
+  ImGui::PushItemWidth(m_settings.windowSize.x - (widgetWidth + 22.0f));
   ImGui::SliderFloat("##iso_slider", &m_settings.isoValue, isoMin, isoMax,
                      "Isovalue: %.3g", ImGuiSliderFlags_NoRoundToFormat);
   if (ImGui::IsItemHovered() && !ImGui::IsAnyMouseDown()) {
@@ -1078,8 +1079,8 @@ void Window::paintUIIsoValueWindow() {
 
 void Window::paintUIParserDebugInfo() {
   if (m_settings.updateLogWindowLayout) {
-    ImGui::SetNextWindowPos({5.0f, m_settings.viewportSize.y - 425});
-    ImGui::SetNextWindowSize({m_settings.viewportSize.x / 2, 130});
+    ImGui::SetNextWindowPos({5.0f, m_settings.windowSize.y - 425.0f});
+    ImGui::SetNextWindowSize({m_settings.windowSize.x / 2.0f, 130});
     m_settings.updateLogWindowLayout = false;
   }
 
@@ -1114,6 +1115,8 @@ void Window::paintUIParserDebugInfo() {
 
 void Window::onResize(glm::ivec2 const &size) {
   m_settings.viewportSize = size;
+
+  SDL_GetWindowSize(getSDLWindow(), &m_settings.windowSize.x, &m_settings.windowSize.y);
 
   m_settings.updateEquationEditorLayout = true;
   m_settings.updateLogWindowLayout = true;

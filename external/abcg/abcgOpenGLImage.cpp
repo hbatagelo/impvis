@@ -12,7 +12,7 @@
 #include "abcgImage.hpp"
 
 #include <cppitertools/itertools.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
 #include <gsl/gsl>
 
 #include "abcgException.hpp"

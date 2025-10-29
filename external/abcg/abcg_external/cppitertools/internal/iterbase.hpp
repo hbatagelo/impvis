@@ -95,8 +95,8 @@ namespace iter {
 
     // iterator_type<C> is the type of C's iterator
     template <typename Container>
-    using const_iterator_type = decltype(
-        get_begin(std::declval<const std::remove_reference_t<Container>&>()));
+    using const_iterator_type = decltype(get_begin(
+        std::declval<const std::remove_reference_t<Container>&>()));
 
     // iterator_deref<C> is the type obtained by dereferencing an iterator
     // to an object of type C
@@ -117,7 +117,7 @@ namespace iter {
 
     template <typename Container>
     using iterator_traits_deref =
-        std::remove_reference_t<iterator_deref<Container>>;
+        std::remove_cv_t<std::remove_reference_t<iterator_deref<Container>>>;
 
     template <typename T, typename = void>
     struct IsIterable : std::false_type {};
@@ -128,6 +128,13 @@ namespace iter {
 
     template <typename T>
     constexpr bool is_iterable = IsIterable<T>::value;
+
+    struct Identity {
+      template <typename T>
+      const T& operator()(const T& t) const {
+        return t;
+      }
+    };
 
     namespace detail {
       template <typename T, typename = void>
@@ -207,28 +214,20 @@ namespace iter {
       }
     }
 
-    template <typename Iter, typename EndIter, typename Distance>
-    void dumb_advance_impl(
-        Iter& iter, const EndIter& end, Distance distance, std::false_type) {
-      for (Distance i(0); i < distance && iter != end; ++i) {
-        ++iter;
-      }
-    }
-
-    template <typename Iter, typename EndIter, typename Distance>
-    void dumb_advance_impl(
-        Iter& iter, const EndIter& end, Distance distance, std::true_type) {
-      if (static_cast<Distance>(end - iter) < distance) {
-        iter = end;
-      } else {
-        iter += distance;
-      }
-    }
-
     // iter will not be incremented past end
     template <typename Iter, typename EndIter, typename Distance = std::size_t>
     void dumb_advance(Iter& iter, const EndIter& end, Distance distance) {
-      dumb_advance_impl(iter, end, distance, is_random_access_iter<Iter>{});
+      if constexpr (is_random_access_iter<Iter>{}) {
+        if (static_cast<Distance>(end - iter) < distance) {
+          iter = end;
+        } else {
+          iter += distance;
+        }
+      } else {
+        for (Distance i(0); i < distance && iter != end; ++i) {
+          ++iter;
+        }
+      }
     }
 
     template <typename ForwardIt, typename Distance = std::size_t>
@@ -263,9 +262,8 @@ namespace iter {
               std::is_same<T, U>::value && are_same<T, Ts...>::value> {};
 
     // DerefHolder holds the value gotten from an iterator dereference
-    // if the iterate dereferences to an lvalue references, a pointer to the
-    //     element is stored
-    // if it does not, a value is stored instead
+    // if the iterator dereferences to an lvalue references, a pointer to the
+    // element is stored.  if it does not, a value is stored instead
     // get() returns a reference to the held item
     // get_ptr() returns a pointer to the held item
     // reset() replaces the currently held item
@@ -275,7 +273,7 @@ namespace iter {
       static_assert(!std::is_lvalue_reference<T>::value,
           "Non-lvalue-ref specialization used for lvalue ref type");
       // it could still be an rvalue reference
-      using TPlain = std::remove_reference_t<T>;
+      using TPlain = std::remove_cv_t<std::remove_reference_t<T>>;
 
       std::optional<TPlain> item_p_;
 
@@ -346,6 +344,14 @@ namespace iter {
     template <typename ItTool>
     struct Pipeable {
       template <typename T>
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 14
+      [[gnu::no_dangling]]
+#endif
+      friend decltype(auto) operator|(T&& x, Pipeable&& p) {
+        return static_cast<ItTool&&>(p)(std::forward<T>(x));
+      }
+
+      template <typename T>
       friend decltype(auto) operator|(T&& x, const Pipeable& p) {
         return static_cast<const ItTool&>(p)(std::forward<T>(x));
       }
@@ -368,11 +374,17 @@ namespace iter {
      protected:
       template <typename T>
       struct FnPartial : Pipeable<FnPartial<T>> {
+        static_assert(!std::is_reference_v<T>);
         mutable T stored_arg;
-        constexpr FnPartial(T in_t) : stored_arg(in_t) {}
+        constexpr FnPartial(T in_t) : stored_arg(std::move(in_t)) {}
 
         template <typename Container>
-        auto operator()(Container&& container) const {
+        auto operator()(Container&& container) && {
+          return F{}(std::move(stored_arg), std::forward<Container>(container));
+        }
+
+        template <typename Container>
+        auto operator()(Container&& container) const& {
           return F{}(stored_arg, std::forward<Container>(container));
         }
       };
@@ -381,6 +393,42 @@ namespace iter {
       template <typename T, typename = std::enable_if_t<!is_iterable<T>>>
       FnPartial<std::decay_t<T>> operator()(T&& t) const {
         return {std::forward<T>(t)};
+      }
+    };
+
+    // Pipeable callable which allows binding of the second argument
+    // f(a, b) is the same as a | f(b)
+    // f(a) with an iterable is the same as f(a, DefaultT{})
+    template <typename F, typename DefaultT>
+    struct PipeableAndBindOptionalSecond : Pipeable<F> {
+     protected:
+      template <typename T>
+      struct FnPartial : Pipeable<FnPartial<T>> {
+        mutable T stored_arg;
+        constexpr FnPartial(T in_t) : stored_arg(std::move(in_t)) {}
+
+        template <typename Container>
+        auto operator()(Container&& container) && {
+          return F{}(std::forward<Container>(container), std::move(stored_arg));
+        }
+
+        template <typename Container>
+        auto operator()(Container&& container) const& {
+          return F{}(std::forward<Container>(container), stored_arg);
+        }
+      };
+
+     public:
+      template <typename T, typename = std::enable_if_t<!is_iterable<T>>>
+      FnPartial<std::decay_t<T>> operator()(T&& t) const {
+        return {std::forward<T>(t)};
+      }
+
+      template <typename Container,
+          typename = std::enable_if_t<is_iterable<Container>>>
+      auto operator()(Container&& container) const {
+        return static_cast<const F&>(*this)(
+            std::forward<Container>(container), DefaultT{});
       }
     };
 
@@ -395,22 +443,14 @@ namespace iter {
       using Base =
           PipeableAndBindFirst<IterToolFnOptionalBindFirst<ItImpl, DefaultT>>;
 
-     protected:
-      template <typename Container>
-      auto operator()(Container&& container, std::false_type) const {
-        return static_cast<const Base&>(*this)(
-            std::forward<Container>(container));
-      }
-
-      template <typename Container>
-      auto operator()(Container&& container, std::true_type) const {
-        return (*this)(DefaultT{}, std::forward<Container>(container));
-      }
-
      public:
       template <typename T>
       auto operator()(T&& t) const {
-        return (*this)(std::forward<T>(t), IsIterable<T>{});
+        if constexpr (IsIterable<T>{}) {
+          return (*this)(DefaultT{}, std::forward<T>(t));
+        } else {
+          return static_cast<const Base&>(*this)(std::forward<T>(t));
+        }
       }
 
       template <typename T, typename Container,
@@ -428,10 +468,16 @@ namespace iter {
       template <typename T>
       struct FnPartial : Pipeable<FnPartial<T>> {
         mutable T stored_arg;
-        constexpr FnPartial(T in_t) : stored_arg(in_t) {}
+        constexpr FnPartial(T in_t) : stored_arg(std::move(in_t)) {}
 
         template <typename Container>
-        auto operator()(Container&& container) const {
+        auto operator()(Container&& container) && {
+          return IterToolFnOptionalBindSecond{}(
+              std::forward<Container>(container), std::move(stored_arg));
+        }
+
+        template <typename Container>
+        auto operator()(Container&& container) const& {
           return IterToolFnOptionalBindSecond{}(
               std::forward<Container>(container), stored_arg);
         }

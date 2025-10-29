@@ -16,9 +16,9 @@ set(ABCG_FILES
     abcgOpenGLShader.cpp
     abcgOpenGLWindow.cpp)
 
-add_subdirectory(abcg_external)
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  add_subdirectory(abcg_external)
+
   add_library(${PROJECT_NAME} ${ABCG_FILES})
 
   target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -49,7 +49,6 @@ else()
                              PUBLIC ${IMGUI_BINDINGS_DIR})
   target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC abcg_external
     PUBLIC ${OPTIONS_TARGET})
 
   # Enable warnings only for selected files
