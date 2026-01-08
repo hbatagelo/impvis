@@ -28,9 +28,8 @@ GLuint createAndBindAttachmentTexture() {
 
 } // namespace
 
-RenderTarget::RenderTarget(std::vector<AttachmentSpec> const &attachments) {
-  m_specs = attachments;
-}
+RenderTarget::RenderTarget(std::vector<AttachmentSpec> const &attachments)
+    : m_specs(attachments) {}
 
 void RenderTarget::resize(glm::ivec2 size) {
   if (size == m_size) {

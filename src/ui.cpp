@@ -79,7 +79,6 @@ constexpr std::size_t kMainWindowWidth{251};
 #ifndef NDEBUG
 void debugInfo(AppContext &context, Camera &camera) {
   auto &appState{context.appState};
-  auto &renderState{context.renderState};
 
   if (appState.updateLogWindowLayout) {
     ImGui::SetNextWindowPos(
@@ -91,6 +90,8 @@ void debugInfo(AppContext &context, Camera &camera) {
 
   ImGui::Begin("Debug Info", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
   {
+    auto &renderState{context.renderState};
+
     ImGui::Text("%s",
                 std::format("Model scale: {}", camera.getModelScale()).c_str());
     ImGui::Text(

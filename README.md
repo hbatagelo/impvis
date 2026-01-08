@@ -1,11 +1,12 @@
-# ImpVis - 3D Implicit Function Viewer
-
 [![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)](https://github.com/hbatagelo/impvis/actions/workflows/build.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=hbatagelo/impvis\&utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
 
-ImpVis is a real-time tool for interactive visualization of 3D implicit functions, featuring isosurface and volume
-rendering, live editing, and differential geometry inspection.
+# ImpVis - 3D Implicit Function Viewer
+
+ImpVis is a real-time tool for interactive visualization of 3D implicit
+functions, featuring isosurface and volume rendering, live editing, and
+differential geometry inspection.
 
 ## [Live Demo](https://hbatagelo.github.io/impvis/public/)
 
@@ -19,44 +20,52 @@ rendering, live editing, and differential geometry inspection.
 ## Screenshots
 
 Below is a screenshot showing the rendering of a quintic surface known as the
-[Togliatti surface](https://en.wikipedia.org/wiki/Togliatti_surface). In this visualization mode, the isosurface is
-color-coded based on the sign of $f(x,y,z)-\textrm{isovalue}$.
+[Togliatti surface](https://en.wikipedia.org/wiki/Togliatti_surface). In this
+visualization mode, the isosurface is color-coded based on the sign of
+$f(x,y,z)-\textrm{isovalue}$.
 
 ![Togliatti snapshot](./art/screenshots/togliatti.png "Togliatti surface")
 
-ImpVis also includes a volume rendering mode for visualizing scalar fields, shown below for a cubic
-[Chmutov](https://mathworld.wolfram.com/ChmutovSurface.html) function. The color and opacity transfer function
-is a hyperbolic tangent that maps values greater than the selected isovalue to warm colors (yellow/red),
-values less than the selected isovalue to cold colors (blue/purple), and values near the selected isovalue to white.
-The colormap, the density (absorption coefficient), and sigmoid falloff parameters can be fine-tuned.
+ImpVis also includes a volume rendering mode for visualizing scalar fields,
+shown below for a cubic [Chmutov](https://mathworld.wolfram.com/ChmutovSurface.html)
+function. The color and opacity transfer function is a hyperbolic tangent that
+maps values greater than the selected isovalue to warm colors (yellow/red),
+values less than the selected isovalue to cold colors (blue/purple), and values
+near the selected isovalue to white. The colormap, the density (absorption
+coefficient), and sigmoid falloff parameters can be fine-tuned.
 
 ![Chmutov snapshot](./art/screenshots/chmutov.png "Volume rendering of a cubic Chmutov function")
 
-Surface normals and curvatures can also be visualized as colors. The screenshot below shows the Gaussian curvature of
-the [Chair surface](https://mathworld.wolfram.com/ChairSurface.html). In the default colormap, parabolic regions are
-shown in white, saddle regions in cold colors, and elliptic regions in warm colors.
+Surface normals and curvatures can also be visualized as colors. The screenshot
+below shows the Gaussian curvature of the
+[Chair surface](https://mathworld.wolfram.com/ChairSurface.html). In the
+default colormap, parabolic regions are shown in white, saddle regions in cold
+colors, and elliptic regions in warm colors.
 
 ![Chair snapshot](./art/screenshots/chair.png "Gaussian curvature of the Chair surface")
 
-Below is a [Tetrahedroid](https://mathworld.wolfram.com/Tetrahedroid.html) visualized using several rendering modes
-supported by ImpVis:
+Below is a [Tetrahedroid](https://mathworld.wolfram.com/Tetrahedroid.html)
+visualized using several rendering modes supported by ImpVis:
 
 ![Tetrahedroid](./art/screenshots/tetrahedroid.png "Tetrahedroid viewed in different modes")
 
 ## Basic Usage
 
-* Drag to rotate the surface (left mouse button) or light source (right mouse button).
+* Drag to rotate the surface (left mouse button) or light source (right mouse
+  button).
 * Use the mouse wheel to scale the view.
 * Hover the cursor on the rendering to inspect surface/volume properties.
 * Press F11 to toggle fullscreen.
-* Use the top-right window to select a function, change the function parameters and adjust the render settings.
+* Use the top-right window to select a function, change the function parameters
+  and adjust the render settings.
 
 ## Function Editor
 
-Functions can be created or modified using a built-in editor, which can be toggled via the
-"Show function editor" checkbox in the "Functions" tab. The syntax for writing function expressions is similar
-to that used in numerical computing software such as MATLAB and Octave. For example, the left-hand side of the torus
-equation,
+Functions can be created or modified using a built-in editor, which can be
+toggled via the "Show function editor" checkbox in the "Functions" tab. The
+syntax for writing function expressions is similar to that used in numerical
+computing software such as MATLAB and Octave. For example, the left-hand side
+of the torus equation,
 
 $$
 \left(c-\sqrt{x^2+y^2}\right)^2+z^2-a^2=0,
@@ -64,72 +73,87 @@ $$
 
 can be written as `(c-sqrt(x^2+y^2))^2+z^2-a^2`.
 
-The letters `c` and `a` are automatically treated as free parameters that can be tweaked using sliders
-below the main window. In general, identifiers that do not match `x`, `y`, or `z`, built-in math functions
-(`sqrt`, `abs`, `max`, etc.), or GLSL variable names (see [Mixing with GLSL Code](#mixing-with-glsl-code)) are treated
-as free scalar parameters.
+The letters `c` and `a` are automatically treated as free parameters that can
+be tweaked using sliders below the main window. In general, identifiers that do
+not match `x`, `y`, or `z`, built-in math functions (`sqrt`, `abs`, `max`,
+etc.), or GLSL variable names (see
+[Mixing with GLSL Code](#mixing-with-glsl-code)) are treated as free scalar
+parameters.
 
-For better readability, square brackets can be used for grouping in the same way as parentheses. For example, for the
-Cassini quartic surface implicit equation
+For better readability, square brackets can be used for grouping in the same
+way as parentheses. For example, for the Cassini quartic surface implicit
+equation
 
 $$
 \left[(x+r)^2+y^2\right]\left[(x-r)^2+y^2\right]-z^2=0,
 $$
 
-the left-hand side expression can be written as `[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2`.
+the left-hand side expression can be written as
+`[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^2`.
 
-Any changes to the currently selected function are automatically saved as a function in the "User-defined" function
-group.
+Any changes to the currently selected function are automatically saved as a
+function in the "User-defined" function group.
 
 ### Expression Syntax
 
 Function expressions use a modified
-[GLSL ES 3.00](https://registry.khronos.org/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf) syntax.
-As shown in the previous examples, the caret symbol `^` is interpreted as an exponentiation operator rather than
-the bitwise exclusive OR defined in GLSL, and square brackets are used for grouping.
-Otherwise, plain GLSL syntax is also supported. Thus, the expression for the torus can be written as
+[GLSL ES 3.00](https://registry.khronos.org/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf)
+syntax. As shown in the previous examples, the caret symbol `^` is interpreted
+as an exponentiation operator rather than the bitwise exclusive OR defined in
+GLSL, and square brackets are used for grouping. Otherwise, plain GLSL syntax
+is also supported. Thus, the expression for the torus can be written as
 `(c-sqrt(x^2+y^2))^2+z^2-a^2`, but also as `pow(c-sqrt(x*x+y*y),2.0)+z*z-a*a`.
 
-Under the hood, exponentiation expressions of the form `b^n`, where `n` is an integer from 2 to 16,
-are converted to a sequence of `n` multiplications: `b*b*...*b`. ImpVis also has custom built-in functions `mpow2(b)`,
-`mpow3(b)`, up to `mpow16(b)`, that can be used in place of `b^2`, `b^3`, ..., `b^16`.
+Under the hood, exponentiation expressions of the form `b^n`, where `n` is an
+integer from 2 to 16, are converted to a sequence of `n` multiplications:
+`b*b*...*b`. ImpVis also has custom built-in functions `mpow2(b)`, `mpow3(b)`,
+up to `mpow16(b)`, that can be used in place of `b^2`, `b^3`, ..., `b^16`.
 
 ### Mixing with GLSL Code
 
-The function editor allows embedding custom GLSL ES code both in the global and local scope of the shader function that
-evaluates the implicit function. Try selecting different functions from the catalog to see how they use embedded GLSL
-code. As a rule of thumb:
+The function editor allows embedding custom GLSL ES code both in the global and
+local scope of the shader function that evaluates the implicit function. Try
+selecting different functions from the catalog to see how they use embedded
+GLSL code. As a rule of thumb:
 
-* Use the global scope to define GLSL functions and constants to be used either in the local scope or directly in the
-  function expression.
-* Use the local scope to define GLSL variables to be used in the function expression.
+* Use the global scope to define GLSL functions and constants to be used either
+  in the local scope or directly in the function expression.
+* Use the local scope to define GLSL variables to be used in the function
+  expression.
 
 Additionally:
 
-* In the local scope, `p` is a `vec3` GLSL variable containing the surface/volume point at which the function is
-  evaluated. `x`, `y`, and `z` are aliases to `p.x`, `p.y`, and `p.z`.
+* In the local scope, `p` is a `vec3` GLSL variable containing the
+  surface/volume point at which the function is evaluated. `x`, `y`, and `z`
+  are aliases to `p.x`, `p.y`, and `p.z`.
 * `uIsoValue` is the current isovalue.
-* The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available in the global and local scope.
+* The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available
+  in the global and local scope.
 
 ## How It Works
 
 Isosurfaces are rendered using an adaptive ray marching algorithm.
-Scalar fields are rendered using direct volume rendering. Both are implemented as GLSL ES 3.00 shaders.
-Function names and expressions displayed in the top-left corner are rendered using
-[MathJax](https://www.mathjax.org/) (available in the WebAssembly build only).
+Scalar fields are rendered using direct volume rendering. Both are implemented
+as GLSL ES 3.00 shaders. Function names and expressions displayed in the
+top-left corner are rendered using [MathJax](https://www.mathjax.org/)
+(available in the WebAssembly build only).
 
-The adaptive ray marching algorithm adjusts the size of the ray's next step according to the scalar field value and its
-gradient evaluated at the current sample point. The step size decreases as the ray approaches the surface, and
-increases as it moves away from it. This is conceptually similar to the *adaptive marching points* algorithm described
-in [Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235)
-(Singh et al. 2009). However, in ImpVis the step size varies gradually as the rays approach the surface, thus reducing
-the number of conditional branchings. In addition, the step size decreases as the ray approaches the boundary of the
-bounding volume to reduce clipping artifacts at these regions. For details, see the inline comments in the fragment
-shader at `src/assets/shaders/raycast.frag`.
+The adaptive ray marching algorithm adjusts the size of the ray's next step
+according to the scalar field value and its gradient evaluated at the current
+sample point. The step size decreases as the ray approaches the surface, and
+increases as it moves away from it. This is conceptually similar to the
+*adaptive marching points* algorithm described in
+[Real-Time Ray Tracing of Implicit Surfaces on the GPU](https://ieeexplore.ieee.org/document/4815235)
+(Singh et al. 2009). However, in ImpVis the step size varies gradually as the
+rays approach the surface, thus reducing the number of conditional branchings.
+In addition, the step size decreases as the ray approaches the boundary of the
+bounding volume to reduce clipping artifacts at these regions. For details, see
+the inline comments in the fragment shader at `src/assets/shaders/raycast.frag`.
 
 ## Building
 
-ImpVis can be built for the desktop (Windows, Linux, macOS) and the web (WebAssembly).
+ImpVis can be built for the desktop (Windows, Linux, macOS) and the web
+(WebAssembly).
 
 First clone the repo:
 
@@ -146,7 +170,8 @@ Ensure the following tools are installed and are reachable from `PATH`:
 
 ### Building for the Desktop
 
-1. Run `conan install` to resolve dependencies and prepare the project for build:
+1. Run `conan install` to resolve dependencies and prepare the project for
+   build:
     <details>
     <summary>Linux</summary>
 
@@ -180,11 +205,12 @@ Ensure the following tools are installed and are reachable from `PATH`:
 
 ### Building for the Web
 
-1. Install [Emscripten](https://emscripten.org/) and activate its environment variables.
-2. Run `build-wasm.bat` (Windows) or `build-wasm.sh` (Linux, macOS). The WebAssembly binaries are written to
-   `impvis/public/`.
-3. To test locally, start a local web server with `runweb.bat` (Windows) or `runweb.sh` (Linux, macOS), then open
-   http://localhost:8080/.
+1. Install [Emscripten](https://emscripten.org/) and activate its environment
+   variables.
+2. Run `build-wasm.bat` (Windows) or `build-wasm.sh` (Linux, macOS). The
+   WebAssembly binaries are written to `impvis/public/`.
+3. To test locally, start a local web server with `runweb.bat` (Windows) or
+   `runweb.sh` (Linux, macOS), then open http://localhost:8080/.
 
 The following parameters can be added to the URL:
 | Parameter           | Value  | Description                              |
@@ -196,11 +222,13 @@ The following parameters can be added to the URL:
 | `no_mathjax`        | -      | Hide the function name and equation      |
 
 For example, [`https://hbatagelo.github.io/impvis/public/?no_bkgnd&no_ui&no_mathjax&function=barth%20decic`](https://hbatagelo.github.io/impvis/public/?no_bkgnd\&no_ui\&no_mathjax\&function=barth%20decic)
-displays the "Barth Decic" surface with a transparent background, no UI controls, and no MathJax rendering of the
-function name and equation.
+displays the "Barth Decic" surface with a transparent background, no UI
+controls, and no MathJax rendering of the function name and equation.
 
-The URL parameters are useful when embedding the application in iframes, as shown in the
-[ImpVis Sample Gallery](https://hbatagelo.github.io/impvis/public/embedded.html) and as follows:
+The URL parameters are useful when embedding the application in iframes, as
+shown in the
+[ImpVis Sample Gallery](https://hbatagelo.github.io/impvis/public/embedded.html)
+and as follows:
 
 ```html
 <iframe src="https://hbatagelo.github.io/impvis/public/?no_bkgnd&no_ui&no_mathjax&function=barth%20decic"
@@ -226,10 +254,12 @@ The URL parameters are useful when embedding the application in iframes, as show
 
 ### Fuzz Testing
 
-Fuzzing is supported via [libFuzzer](https://llvm.org/docs/LibFuzzer.html), which is included with Clang.
+Fuzzing is supported via [libFuzzer](https://llvm.org/docs/LibFuzzer.html),
+which is included with Clang.
 
-1. Run `conan install` as shown in [Building for the desktop](#building-for-the-desktop). Ensure Clang is used as the
-compiler, as libFuzzer is Clang-only.
+1. Run `conan install` as shown in
+[Building for the desktop](#building-for-the-desktop). Ensure Clang is used as
+the compiler, as libFuzzer is Clang-only.
 
 2. ```sh
    cmake --preset conan-release -DENABLE_FUZZ_TESTING=ON
@@ -245,20 +275,25 @@ compiler, as libFuzzer is Clang-only.
    ./fuzzer corpus -dict=dictionary.txt -max_len=1280 -timeout=5
    ```
 
-   This will use the corpus of sample inputs contained in `tests/fuzzer/corpus`, and the dictionary of keywords in
-   `tests/fuzzer/dictionary.txt`. During the fuzzing process, test cases that trigger coverage of new paths through the
+   This will use the corpus of sample inputs contained in `tests/fuzzer/corpus`,
+   and the dictionary of keywords in `tests/fuzzer/dictionary.txt`. During the
+   fuzzing process, test cases that trigger coverage of new paths through the
    code are added to the corpus directory.
 
-   By default, the fuzzer runs indefinitely or until it finds a bug. Use the parameter `-max_total_time` to set a time
-   limit. For example, `-max_total_time=60` forces the test to stop after one minute.
+   By default, the fuzzer runs indefinitely or until it finds a bug. Use the
+   parameter `-max_total_time` to set a time limit. For example,
+   `-max_total_time=60` forces the test to stop after one minute.
 
 ## Function Catalog File Format
 
-The implicit functions are described as [TOML](https://toml.io) files located in `src/assets/functions`.
+The implicit functions are described as [TOML](https://toml.io) files located
+in `src/assets/functions`.
 
-Each TOML file must have a `title` key at the root level with a value that is the name of the function group
-(e.g., `title="Cubic"` for the file that contains cubic functions). Each function is then described by a table with the
-following key/value pairs, of which only the `expression` key/value pair is required:
+Each TOML file must have a `title` key at the root level with a value that is
+the name of the function group (e.g., `title="Cubic"` for the file that
+contains cubic functions). Each function is then described by a table with the
+following key/value pairs, of which only the `expression` key/value pair is
+required:
 
 | Key                             | Value type      | Description                                                                                             |
 | :------------------------------ | :-------------- | :------------------------------------------------------------------------------------------------------ |
@@ -290,7 +325,8 @@ Each inline table of the `parameters`' array must have two key/value pairs:
 | `name`  | string     | Parameter name  |
 | `value` | number     | Parameter value |
 
-Below is an excerpt from `01_quartic.toml`. Browse `src/assets/functions` for more examples.
+Below is an excerpt from `01_quartic.toml`. Browse `src/assets/functions` for
+more examples.
 
 ```toml
 title = "Quartic"
@@ -377,5 +413,6 @@ See [ATTRIBUTIONS.md](ATTRIBUTIONS.md) for attribution information.
 ## Development History
 
 ImpVis began in 2014 as a Qt-based GPLv3 project available
-[here](http://professor.ufabc.edu.br/~harlen.batagelo/impvis/). The current version is a complete rewrite,
-now MIT-licensed and built on the [ABCg](https://github.com/hbatagelo/abcg) framework.
+[here](http://professor.ufabc.edu.br/~harlen.batagelo/impvis/). The current
+version is a complete rewrite, now MIT-licensed and built on the
+[ABCg](https://github.com/hbatagelo/abcg) framework.

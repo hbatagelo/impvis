@@ -22,6 +22,8 @@
 
 class RenderPipeline {
 public:
+  RenderPipeline() = default;
+
   void onCreate(RenderState const &renderState);
   void onUpdate();
   void onPaint(RenderState &renderState, AppState const &appState,

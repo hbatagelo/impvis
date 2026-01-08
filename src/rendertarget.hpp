@@ -23,6 +23,14 @@ public:
     GLenum type{GL_UNSIGNED_BYTE};
   };
 
+  explicit RenderTarget(std::vector<AttachmentSpec> const &attachments);
+  ~RenderTarget() { destroy(); }
+
+  RenderTarget(RenderTarget const &) = delete;
+  RenderTarget &operator=(RenderTarget const &) = delete;
+  RenderTarget(RenderTarget &&) = delete;
+  RenderTarget &operator=(RenderTarget &&) = delete;
+
   static constexpr AttachmentSpec kRGBA8{
       .internalFormat = GL_RGBA8, .format = GL_RGBA, .type = GL_UNSIGNED_BYTE};
   static constexpr AttachmentSpec kRGBA32F{
@@ -31,14 +39,6 @@ public:
                                                GL_DEPTH_COMPONENT24,
                                            .format = GL_DEPTH_COMPONENT,
                                            .type = GL_UNSIGNED_INT};
-
-  RenderTarget(std::vector<AttachmentSpec> const &attachments);
-  ~RenderTarget() { destroy(); }
-
-  RenderTarget(RenderTarget const &) = delete;
-  RenderTarget &operator=(RenderTarget const &) = delete;
-  RenderTarget(RenderTarget &&) = delete;
-  RenderTarget &operator=(RenderTarget &&) = delete;
 
   void bind() const;
   static void unbind();

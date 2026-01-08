@@ -11,7 +11,8 @@
 
 SwapChain::SwapChain(
     std::vector<RenderTarget::AttachmentSpec> const &attachments)
-    : m_targets({{attachments}, {attachments}}) {}
+    : m_targets(std::array<RenderTarget, 2>{RenderTarget{attachments},
+                                            RenderTarget{attachments}}) {}
 
 void SwapChain::resize(glm::ivec2 size) {
   if (m_targets[0].getSize() == size) {

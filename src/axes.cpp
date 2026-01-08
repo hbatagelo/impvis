@@ -161,7 +161,7 @@ void Axes::onCreate() {
 
   // Z glyph
   m_glyphData[2].uv0 = glm::vec2(142.0f / texWidth, 1.0f);
-  m_glyphData[2].uv1 = glm::vec2(204.0f / texWidth, 0.0f);
+  m_glyphData[2].uv1 = glm::vec2(1.0f, 0.0f);
   m_glyphData[2].aspectRatio = 62.0f / texHeight;
 
   createBillboards();

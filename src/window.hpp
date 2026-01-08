@@ -18,6 +18,16 @@
 #include <imgui.h>
 
 class Window : public abcg::OpenGLWindow {
+public:
+  Window() = default;
+
+#if defined(__EMSCRIPTEN__)
+  static inline std::string s_initialFunctionName;
+  static inline std::optional<std::monostate> s_noAxes;
+  static inline std::optional<std::monostate> s_noBackground;
+  static inline std::optional<std::monostate> s_noUI;
+#endif
+
 protected:
   void onEvent(SDL_Event const &event) override;
   void onCreate() override;
@@ -37,14 +47,6 @@ private:
 
   void applyRecommendedSettings();
   void selectInitialFunction();
-
-public:
-#if defined(__EMSCRIPTEN__)
-  static inline std::string s_initialFunctionName;
-  static inline std::optional<std::monostate> s_noAxes;
-  static inline std::optional<std::monostate> s_noBackground;
-  static inline std::optional<std::monostate> s_noUI;
-#endif
 
   friend class UI;
 };

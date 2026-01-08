@@ -199,8 +199,6 @@ void Window::onDestroy() {
 void Window::selectInitialFunction() {
   auto &appState{m_context.appState};
 
-  auto functionFound{false};
-
 #if defined(__EMSCRIPTEN__)
   appState.showUI = !s_noUI.has_value();
   appState.drawBackground = !s_noBackground.has_value();
@@ -210,7 +208,7 @@ void Window::selectInitialFunction() {
     if (auto const id{m_context.functionManager.getId(s_initialFunctionName)}) {
       appState.selectedFunctionGroupIndex = id->group;
       appState.selectedFunctionIndex = id->index;
-      functionFound = true;
+      return;
     } else {
       fmt::print(stderr, "Warning: Function '{}' not found, using default\n",
                  s_initialFunctionName);
@@ -220,14 +218,12 @@ void Window::selectInitialFunction() {
 #endif
 
   // Use default selection if no match found
-  if (!functionFound) {
-    auto const &groups{m_context.functionManager.getGroups()};
-    if (appState.selectedFunctionGroupIndex < groups.size()) {
-      auto const &functions{
-          groups[appState.selectedFunctionGroupIndex].functions};
-      if (appState.selectedFunctionIndex >= functions.size()) {
-        appState.selectedFunctionIndex = 0;
-      }
+  auto const &groups{m_context.functionManager.getGroups()};
+  if (appState.selectedFunctionGroupIndex < groups.size()) {
+    auto const &functions{
+        groups[appState.selectedFunctionGroupIndex].functions};
+    if (appState.selectedFunctionIndex >= functions.size()) {
+      appState.selectedFunctionIndex = 0;
     }
   }
 }
@@ -255,10 +251,10 @@ void Window::applyRecommendedSettings() {
 
   auto const gradientEvaluation{
       ivUtil::toLower(data.isosurfaceRaymarchGradientEvaluation)};
-  if (rootTestMode == "central difference") {
+  if (gradientEvaluation == "central difference") {
     renderState.raymarchGradientEvaluation =
         RenderState::GradientMode::CentralDifference;
-  } else if (rootTestMode == "5-point stencil") {
+  } else if (gradientEvaluation == "5-point stencil") {
     renderState.raymarchGradientEvaluation =
         RenderState::GradientMode::FivePointStencil;
   } else {

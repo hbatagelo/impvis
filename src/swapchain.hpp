@@ -16,7 +16,8 @@
 
 class SwapChain {
 public:
-  SwapChain(std::vector<RenderTarget::AttachmentSpec> const &attachments);
+  explicit SwapChain(
+      std::vector<RenderTarget::AttachmentSpec> const &attachments);
   ~SwapChain() = default;
 
   SwapChain(SwapChain const &) = delete;
@@ -29,7 +30,7 @@ public:
   [[nodiscard]] RenderTarget const &back() const noexcept;
   [[nodiscard]] RenderTarget const &front() const noexcept;
 
-  private:
+private:
   std::array<RenderTarget, 2> m_targets;
   std::size_t m_backIndex{0};
 };
