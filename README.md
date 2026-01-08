@@ -240,7 +240,8 @@ and as follows:
 
 ### Unit Testing
 
-1. Run `conan install` as shown in "Building for the desktop".
+1. Run `conan install` as shown in
+   [Building for the Desktop](#building-for-the-desktop).
 
 2. ```sh
    cmake --preset conan-release -DENABLE_UNIT_TESTING=ON
@@ -258,7 +259,7 @@ Fuzzing is supported via [libFuzzer](https://llvm.org/docs/LibFuzzer.html),
 which is included with Clang.
 
 1. Run `conan install` as shown in
-[Building for the desktop](#building-for-the-desktop). Ensure Clang is used as
+[Building for the Desktop](#building-for-the-desktop). Ensure Clang is used as
 the compiler, as libFuzzer is Clang-only.
 
 2. ```sh
