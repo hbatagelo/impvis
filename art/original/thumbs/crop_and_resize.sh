@@ -12,4 +12,4 @@ mogrify \
   -gravity center \
   -resize 128x128 \
   -extent 128x128 \
-  *.png
+  ./*.png

@@ -10,6 +10,9 @@
 #include "renderpipeline.hpp"
 #include "renderstate.hpp"
 
+RenderPipeline::RenderPipeline()
+    : m_arrow(), m_axes(), m_background(), m_raycast(), m_textureBlit() {}
+
 void RenderPipeline::onCreate(RenderState const &renderState) {
   m_background.onCreate();
   m_raycast.onCreate(renderState);

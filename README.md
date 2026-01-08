@@ -1,8 +1,8 @@
+# ImpVis - 3D Implicit Function Viewer
+
 [![build workflow](https://github.com/hbatagelo/impvis/actions/workflows/build.yml/badge.svg)](https://github.com/hbatagelo/impvis/actions/workflows/build.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d27782d0396d4aeaa13dbe4abe9dd56a)](https://www.codacy.com/gh/hbatagelo/impvis/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=hbatagelo/impvis\&utm_campaign=Badge_Grade)
 [![license](https://img.shields.io/github/license/hbatagelo/impvis)](https://github.com/hbatagelo/impvis/blob/main/LICENSE)
-
-# ImpVis - 3D Implicit Function Viewer
 
 ImpVis is a real-time tool for interactive visualization of 3D implicit
 functions, featuring isosurface and volume rendering, live editing, and
@@ -11,6 +11,7 @@ differential geometry inspection.
 ## [Live Demo](https://hbatagelo.github.io/impvis/public/)
 
 ## Key Features
+
 - Real-time isosurface and direct volume rendering
 - Live parameter and expression editing
 - Inspection of surface and volume properties
@@ -51,12 +52,12 @@ visualized using several rendering modes supported by ImpVis:
 
 ## Basic Usage
 
-* Drag to rotate the surface (left mouse button) or light source (right mouse
+- Drag to rotate the surface (left mouse button) or light source (right mouse
   button).
-* Use the mouse wheel to scale the view.
-* Hover the cursor on the rendering to inspect surface/volume properties.
-* Press F11 to toggle fullscreen.
-* Use the top-right window to select a function, change the function parameters
+- Use the mouse wheel to scale the view.
+- Hover the cursor on the rendering to inspect surface/volume properties.
+- Press F11 to toggle fullscreen.
+- Use the top-right window to select a function, change the function parameters
   and adjust the render settings.
 
 ## Function Editor
@@ -116,18 +117,18 @@ local scope of the shader function that evaluates the implicit function. Try
 selecting different functions from the catalog to see how they use embedded
 GLSL code. As a rule of thumb:
 
-* Use the global scope to define GLSL functions and constants to be used either
+- Use the global scope to define GLSL functions and constants to be used either
   in the local scope or directly in the function expression.
-* Use the local scope to define GLSL variables to be used in the function
+- Use the local scope to define GLSL variables to be used in the function
   expression.
 
 Additionally:
 
-* In the local scope, `p` is a `vec3` GLSL variable containing the
+- In the local scope, `p` is a `vec3` GLSL variable containing the
   surface/volume point at which the function is evaluated. `x`, `y`, and `z`
   are aliases to `p.x`, `p.y`, and `p.z`.
-* `uIsoValue` is the current isovalue.
-* The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available
+- `uIsoValue` is the current isovalue.
+- The functions `mpow2(b)`, `mpow3(b)`, up to `mpow16(b)`, are also available
   in the global and local scope.
 
 ## How It Works
@@ -164,9 +165,9 @@ cd impvis
 
 Ensure the following tools are installed and are reachable from `PATH`:
 
-* [Conan](https://conan.io/) ≥ 2.0.
-* [CMake](https://cmake.org/) ≥ 3.24.
-* A C++ compiler with support for C++20.
+- [Conan](https://conan.io/) ≥ 2.0.
+- [CMake](https://cmake.org/) ≥ 3.24.
+- A C++ compiler with support for C++20.
 
 ### Building for the Desktop
 
@@ -199,6 +200,7 @@ Ensure the following tools are installed and are reachable from `PATH`:
 
     </details>
 2. Run `conan build` to build the project:
+
    ```sh
    conan build .
    ```
@@ -210,7 +212,7 @@ Ensure the following tools are installed and are reachable from `PATH`:
 2. Run `build-wasm.bat` (Windows) or `build-wasm.sh` (Linux, macOS). The
    WebAssembly binaries are written to `impvis/public/`.
 3. To test locally, start a local web server with `runweb.bat` (Windows) or
-   `runweb.sh` (Linux, macOS), then open http://localhost:8080/.
+   `runweb.sh` (Linux, macOS), then open <http://localhost:8080/>.
 
 The following parameters can be added to the URL:
 | Parameter           | Value  | Description                              |

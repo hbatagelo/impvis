@@ -22,7 +22,7 @@
 
 class RenderPipeline {
 public:
-  RenderPipeline() = default;
+  RenderPipeline();
 
   void onCreate(RenderState const &renderState);
   void onUpdate();
