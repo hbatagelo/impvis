@@ -4,13 +4,11 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
 #include "abcgApplication.hpp"
-
-#include <SDL_image.h>
 
 #include <span>
 
@@ -19,6 +17,10 @@
 
 #if defined(__EMSCRIPTEN__)
 #include "abcgOpenGLExternal.hpp"
+#endif
+
+#ifdef _WIN32
+#include <windows.h> // SetProcessDPIAware()
 #endif
 
 #if defined(__EMSCRIPTEN__)
@@ -69,19 +71,16 @@ abcg::Application::Application([[maybe_unused]] int argc, char **argv) {
  * @throw abcg::SDLImageError if `IMG_Init` failed.
  */
 void abcg::Application::run(Window &window) {
+#ifdef _WIN32
+  ::SetProcessDPIAware();
+#endif
+  SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR, "1");
+  SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
+
   if (Uint32 const subsystemMask{SDL_INIT_VIDEO};
-      SDL_Init(subsystemMask) != 0) {
+      !SDL_Init(subsystemMask)) {
     throw abcg::SDLError("SDL_Init failed");
   }
-
-#if !defined(__EMSCRIPTEN__)
-  // Load support for PNG image format
-  auto const imageFlags{IMG_INIT_PNG};
-  if (auto const initialized{IMG_Init(imageFlags)};
-      (initialized & imageFlags) != imageFlags) {
-    throw abcg::SDLImageError("IMG_Init failed");
-  }
-#endif
 
   m_window = &window;
   m_window->templateCreate();
@@ -97,9 +96,6 @@ void abcg::Application::run(Window &window) {
 
   m_window->templateDestroy();
 
-#if !defined(__EMSCRIPTEN__)
-  IMG_Quit();
-#endif
   SDL_Quit();
 }
 
@@ -142,7 +138,7 @@ void abcg::Application::mainLoopIterator([[maybe_unused]] bool &done) const {
   SDL_Event event{};
   while (SDL_PollEvent(&event) != 0) {
 #if !defined(__EMSCRIPTEN__)
-    if (event.type == SDL_QUIT)
+    if (event.type == SDL_EVENT_QUIT)
       done = true;
 #endif
     m_window->templateHandleEvent(event, done);

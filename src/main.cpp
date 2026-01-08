@@ -3,17 +3,15 @@
  *
  * This file is part of ImpVis (https://github.com/hbatagelo/impvis).
  *
- * @copyright (c) 2022 Harlen Batagelo. All rights reserved.
- * This project is released under the MIT license.
+ * @copyright (c) 2022--2026 Harlen Batagelo. All rights reserved.
+ * ImpVis is released under the MIT license.
  */
 
-#include "abcg.hpp"
 #include "window.hpp"
 
 int main(int argc, char **argv) {
   try {
     abcg::Application app(argc, argv);
-
     Window window;
     window.setWindowSettings({.width = 1024,
                               .height = 1024,

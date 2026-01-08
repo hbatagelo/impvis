@@ -4,7 +4,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -25,6 +25,8 @@ class abcg::Timer {
 public:
   [[nodiscard]] double elapsed() const;
   double restart();
+
+  auto operator<=>(Timer const &) const = default;
 
 private:
   using clock = std::chrono::steady_clock;

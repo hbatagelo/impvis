@@ -1,0 +1,87 @@
+title = "Non-algebraic"
+
+[blobby]
+name = "Blobby"
+thumbnail = "textures/thumbs/nonalg/blobby.png"
+bounds_radius = 2.5
+isosurface_raymarch_steps = 65
+scale = 1.0
+dvr_raymarch_steps = 200
+dvr_falloff = 1.0
+gaussian_curvature_falloff = 0.03
+mean_curvature_falloff = 0.15
+max_abs_curvature_falloff = 0.1
+normal_length_falloff = 0.2
+expression = "x^2+y^2+z^2+sin(4*x)-cos(4*y)+sin(4*z)-1"
+
+[borg]
+name = "Borg"
+thumbnail = "textures/thumbs/nonalg/borg.png"
+bounds_shape = "box"
+bounds_radius = 5.0
+isosurface_raymarch_steps = 150
+scale = 0.3
+dvr_raymarch_steps = 300
+dvr_falloff = 1.0
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.2
+normal_length_falloff = 0.15
+expression = "sin(x*y)+sin(y*z)+sin(z*x)"
+
+[chladni]
+name = "Chladni Pattern"
+thumbnail = "textures/thumbs/nonalg/chladni.png"
+bounds_shape = "box"
+bounds_radius = 3.0
+isosurface_raymarch_steps = 120
+scale = 0.5
+dvr_raymarch_steps = 200
+dvr_falloff = 0.75
+gaussian_curvature_falloff = 0.08
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.2
+normal_length_falloff = 0.1
+parameters = [{name = "k", value = 1},
+              {name = "l", value = 2},
+              {name = "m", value = 1},
+              {name = "s", value = 1}]
+code_global = "const float pi=3.14259265;"
+comment = '''
+\mathrm{by\;Roman\;Chijner\;(GeoGebra).}'''
+expression = '''
+cos(k*x*pi)*[cos(l*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(l*z*pi)]
++cos(l*x*pi)*[cos(k*y*pi)*cos(m*z*pi)+s*cos(m*y*pi)*cos(k*z*pi)]
++cos(m*x*pi)*[cos(k*y*pi)*cos(l*z*pi)+s*cos(l*y*pi)*cos(k*z*pi)]'''
+
+[diamond]
+name = "Diamond"
+thumbnail = "textures/thumbs/nonalg/diamond.png"
+bounds_radius = 10.0
+isosurface_raymarch_steps = 25
+scale = 0.2
+dvr_raymarch_steps = 600
+dvr_falloff = 1.5
+gaussian_curvature_falloff = 1.0
+mean_curvature_falloff = 12.5
+max_abs_curvature_falloff = 1.5
+normal_length_falloff = 0.35
+expression = '''
+sin(x)*sin(y)*sin(z)
++sin(x)*cos(y)*cos(z)
++cos(x)*sin(y)*cos(z)
++cos(x)*cos(y)*sin(z)'''
+
+[scherk_minimal]
+name = "Scherk Minimal"
+thumbnail = "textures/thumbs/nonalg/scherk_minimal.png"
+bounds_radius = 10.0
+isosurface_raymarch_steps = 360
+scale = 0.2
+dvr_raymarch_steps = 600
+dvr_falloff = 1.0
+gaussian_curvature_falloff = 1.0
+mean_curvature_falloff = 0.2
+max_abs_curvature_falloff = 1.5
+normal_length_falloff = 0.05
+expression = "exp(z)*cos(y)-cos(x)"

@@ -4,18 +4,19 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
 #include "abcgWindow.hpp"
 
-#include <SDL_video.h>
+#include <SDL3/SDL_properties.h>
+#include <SDL3/SDL_video.h>
 
-#include <imgui_impl_sdl2.h>
+#include <imgui_impl_sdl3.h>
 
 namespace {
-ImVec4 ColorAlpha(ImVec4 const &color, float const alpha) {
+ImVec4 ColorAlpha(ImVec4 color, float const alpha) {
   return {color.x, color.y, color.z, alpha};
 }
 
@@ -50,6 +51,8 @@ void setupImGuiStyle(bool const darkTheme, float const alpha) {
   style.WindowTitleAlign                      = ImVec2(0.50f, 0.50f);
   style.Colors[ImGuiCol_Text]                 = ColorAlpha(black, 1.00f);
   style.Colors[ImGuiCol_TextDisabled]         = ColorAlpha(gray3, 1.00f);
+  style.Colors[ImGuiCol_TextSelectedBg]       = ColorAlpha(black, 0.35f);
+  style.Colors[ImGuiCol_InputTextCursor]      = ColorAlpha(black, 0.75f);
   style.Colors[ImGuiCol_WindowBg]             = ColorAlpha(gray5, 0.95f);
   style.Colors[ImGuiCol_ChildBg]              = ColorAlpha(white, 0.16f);
   style.Colors[ImGuiCol_PopupBg]              = ColorAlpha(gray6, 0.97f);
@@ -82,7 +85,6 @@ void setupImGuiStyle(bool const darkTheme, float const alpha) {
   style.Colors[ImGuiCol_PlotLinesHovered]     = ColorAlpha(gray0, 1.00f);
   style.Colors[ImGuiCol_PlotHistogram]        = ColorAlpha(gray1, 1.00f);
   style.Colors[ImGuiCol_PlotHistogramHovered] = ColorAlpha(gray0, 1.00f);
-  style.Colors[ImGuiCol_TextSelectedBg]       = ColorAlpha(gray4, 0.67f);
   style.Colors[ImGuiCol_ModalWindowDimBg]     = ColorAlpha(gray0, 0.35f);
   style.Colors[ImGuiCol_NavHighlight]         = ColorAlpha(gray1, 1.00f);
   style.Colors[ImGuiCol_Tab]                  = ColorAlpha(gray1, 0.30f);
@@ -124,21 +126,27 @@ void setupImGuiStyle(bool const darkTheme, float const alpha) {
 }
 } // namespace
 
-int abcg::resizingEventWatcher(void *data, SDL_Event *event) {
-  if (event->type == SDL_WINDOWEVENT &&
-      event->window.event == SDL_WINDOWEVENT_RESIZED) {
-    auto *SDLWindow{SDL_GetWindowFromID(event->window.windowID)};
-    if (SDLWindow == static_cast<SDL_Window *>(data)) {
-      abcg::Window &window{*(
-          static_cast<abcg::Window *>(SDL_GetWindowData(SDLWindow, "window")))};
-      if (window.m_enableResizingEventWatcher) {
-        [[maybe_unused]] bool done{};
-        window.templateHandleEvent(*event, done);
-        window.templatePaint();
-      }
-    }
-  }
-  return 0;
+bool abcg::resizingEventWatcher(void *data, SDL_Event *event) {
+  if (event->type != SDL_EVENT_WINDOW_RESIZED)
+    return false;
+
+  auto *SDLWindow{SDL_GetWindowFromID(event->window.windowID)};
+  if (SDLWindow != data)
+    return false;
+
+  auto const properties{SDL_GetWindowProperties(SDLWindow)};
+  if (!properties)
+    return false;
+
+  auto *window{static_cast<abcg::Window *>(
+      SDL_GetPointerProperty(properties, "window", nullptr))};
+  if (!window || !window->m_enableResizingEventWatcher)
+    return false;
+
+  bool done{};
+  window->templateHandleEvent(*event, done);
+  window->templatePaint();
+  return true;
 }
 
 #if defined(__EMSCRIPTEN__)
@@ -146,12 +154,15 @@ EM_BOOL
 abcg::fullscreenchangeCallback(int eventType,
                                EmscriptenFullscreenChangeEvent const *event,
                                void *userData) {
-  auto &window{*(static_cast<abcg::Window *>(userData))};
-  if (event->isFullscreen) {
-    SDL_SetWindowSize(window.getSDLWindow(), event->screenWidth,
-                      event->screenHeight);
+  if (eventType == EMSCRIPTEN_EVENT_FULLSCREENCHANGE && userData) {
+    auto &window{*(static_cast<abcg::Window *>(userData))};
+    if (event->isFullscreen) {
+      SDL_SetWindowSize(window.getSDLWindow(), event->screenWidth,
+                        event->screenHeight);
+    }
+    return true;
   }
-  return true;
+  return false;
 }
 #endif
 
@@ -186,6 +197,7 @@ abcg::WindowSettings const &abcg::Window::getWindowSettings() const noexcept {
  * @brief Sets the configuration settings of the window.
  */
 void abcg::Window::setWindowSettings(WindowSettings const &windowSettings) {
+
   if (m_window != nullptr) {
     if (windowSettings.title != m_windowSettings.title) {
       SDL_SetWindowTitle(m_window, windowSettings.title.c_str());
@@ -241,17 +253,35 @@ bool abcg::Window::createSDLWindow(SDL_WindowFlags extraFlags) {
   if (m_window != nullptr)
     return false;
 
-  auto commonFlags{SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI};
+#ifdef SDL_HINT_IME_SHOW_UI
+  SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+#endif
 
-  m_window = SDL_CreateWindow(
-      m_windowSettings.title.c_str(), SDL_WINDOWPOS_CENTERED,
-      SDL_WINDOWPOS_CENTERED, m_windowSettings.width, m_windowSettings.height,
-      gsl::narrow<Uint32>(extraFlags) | gsl::narrow<Uint32>(commonFlags));
+  auto const commonFlags{SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY};
+
+  SDL_PropertiesID propertiesID = SDL_CreateProperties();
+  SDL_SetBooleanProperty(propertiesID, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN,
+                         true);
+  SDL_SetStringProperty(propertiesID, SDL_PROP_WINDOW_CREATE_TITLE_STRING,
+                        m_windowSettings.title.c_str());
+  SDL_SetNumberProperty(propertiesID, SDL_PROP_WINDOW_CREATE_X_NUMBER,
+                        SDL_WINDOWPOS_CENTERED);
+  SDL_SetNumberProperty(propertiesID, SDL_PROP_WINDOW_CREATE_Y_NUMBER,
+                        SDL_WINDOWPOS_CENTERED);
+  SDL_SetNumberProperty(propertiesID, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER,
+                        m_windowSettings.width);
+  SDL_SetNumberProperty(propertiesID, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER,
+                        m_windowSettings.height);
+  SDL_SetNumberProperty(propertiesID, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER,
+                        gsl::narrow_cast<Sint64>(extraFlags | commonFlags));
+  m_window = SDL_CreateWindowWithProperties(propertiesID);
+  SDL_DestroyProperties(propertiesID);
   if (m_window == nullptr)
     return false;
 
 #if defined(WIN32)
-  SDL_SetWindowData(m_window, "window", this);
+  propertiesID = SDL_GetWindowProperties(m_window);
+  SDL_SetPointerProperty(propertiesID, "window", this);
   SDL_AddEventWatch(resizingEventWatcher, m_window);
 #endif
 
@@ -288,64 +318,48 @@ void abcg::Window::toggleFullscreen() {
   // frame while the current one has not finished.
   setEnableResizingEventWatcher(false);
 
-  constexpr Uint32 windowFlags{SDL_WINDOW_FULLSCREEN |
-                               SDL_WINDOW_FULLSCREEN_DESKTOP};
-  bool const fullscreen{(SDL_GetWindowFlags(m_window) & windowFlags) != 0U};
-  enum class WindowType { Windowed, Fullscreen /*, FullscreenExclusive*/ };
+  bool const fullscreen{
+      (SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN) != 0U};
 
-  switch (auto const desiredWindowType{fullscreen ? WindowType::Windowed
-                                                  : WindowType::Fullscreen};
-          desiredWindowType) {
-  case WindowType::Windowed:
-    SDL_SetWindowFullscreen(getSDLWindow(), 0);
+  SDL_SetWindowFullscreen(m_window, !fullscreen);
+
+  if (fullscreen) {
     SDL_SetWindowSize(m_window, m_windowSettings.width,
                       m_windowSettings.height);
-    break;
-    //  case WindowType::FullscreenExclusive:
-    //    SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN);
-    //    break;
-  case WindowType::Fullscreen:
-    SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    break;
   }
-  SDL_ShowCursor(static_cast<int>(fullscreen));
 
   setEnableResizingEventWatcher(true);
 #endif
 }
 
 void abcg::Window::templateHandleEvent(SDL_Event const &event, bool &done) {
-  ImGui_ImplSDL2_ProcessEvent(&event);
+  ImGui_ImplSDL3_ProcessEvent(&event);
 
   if (event.window.windowID != m_windowID)
     return;
 
-  if (event.type == SDL_WINDOWEVENT) {
-    switch (event.window.event) {
-    case SDL_WINDOWEVENT_CLOSE:
-      done = true;
-      break;
+  switch (event.type) {
+  case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+    done = true;
+    break;
 
-    case SDL_WINDOWEVENT_RESIZED: {
-      auto const fullscreen{
-          (SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN) != 0U};
-      if (!fullscreen) {
-        m_windowSettings.width = event.window.data1;
-        m_windowSettings.height = event.window.data2;
-      }
-#if defined(__EMSCRIPTEN__)
+  case SDL_EVENT_WINDOW_RESIZED: {
+    auto const fullscreen{
+        (SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN) != 0U};
+    if (!fullscreen) {
       m_windowSettings.width = event.window.data1;
       m_windowSettings.height = event.window.data2;
-      SDL_SetWindowSize(m_window, m_windowSettings.width,
-                        m_windowSettings.height);
-#endif
-    } break;
-    default:
-      break;
     }
+#if defined(__EMSCRIPTEN__)
+    m_windowSettings.width = event.window.data1;
+    m_windowSettings.height = event.window.data2;
+    SDL_SetWindowSize(m_window, m_windowSettings.width,
+                      m_windowSettings.height);
+#endif
   }
-  if (event.type == SDL_KEYUP) {
-    if (event.key.keysym.sym == SDLK_F11) {
+  }
+  if (event.type == SDL_EVENT_KEY_UP) {
+    if (event.key.key == SDLK_F11) {
 #if defined(__EMSCRIPTEN__)
       auto const isFullscreenAvailable{
           gsl::narrow<bool>(
@@ -361,17 +375,20 @@ void abcg::Window::templateHandleEvent(SDL_Event const &event, bool &done) {
   // mouse
   auto useCustomEventHandler{true};
   if (ImGui::GetIO().WantCaptureMouse &&
-      (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN ||
-       event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL)) {
+      (event.type == SDL_EVENT_MOUSE_MOTION ||
+       event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+       event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+       event.type == SDL_EVENT_MOUSE_WHEEL)) {
     useCustomEventHandler = false;
   }
 
   // Won't pass keyboard events to the application if ImGUI has captured the
   // keyboard
   if (ImGui::GetIO().WantCaptureKeyboard &&
-      (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
-       event.type == SDL_TEXTEDITING || event.type == SDL_TEXTINPUT ||
-       event.type == SDL_KEYMAPCHANGED)) {
+      (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP ||
+       event.type == SDL_EVENT_TEXT_EDITING ||
+       event.type == SDL_EVENT_TEXT_INPUT ||
+       event.type == SDL_EVENT_KEYMAP_CHANGED)) {
     useCustomEventHandler = false;
   }
 

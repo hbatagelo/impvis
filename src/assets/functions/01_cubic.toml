@@ -1,0 +1,88 @@
+title = "Cubic"
+
+[cayley_cubic]
+name = "Cayley Cubic"
+thumbnail = "textures/thumbs/cubic/cayley_cubic.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 120
+scale = 1.4
+dvr_falloff = 1.5
+gaussian_curvature_falloff = 0.25
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.1
+expression = "-5*[x^2*(y+z)+y^2*(x+z)+z^2*(x+y)]+2*(x*y+x*z+y*z)"
+
+[chmutov_cubic]
+name = "Chmutov Cubic"
+thumbnail = "textures/thumbs/cubic/chmutov_cubic.png"
+bounds_shape = "box"
+bounds_radius = 1.4
+isosurface_raymarch_steps = 60
+scale = 1.0
+dvr_raymarch_steps = 250
+dvr_falloff = 0.75
+gaussian_curvature_falloff = 0.25
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.06
+code_global = '''
+float T_3(float x) {
+  float x2=x*x;
+  return x*(4.*x2-3.);
+}
+'''
+comment = '''
+\mathrm{where}\; T_3(x)=4x^3-3x+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;3.}
+'''
+expression = "T_3(x)+T_3(y)+T_3(z)+1"
+
+[clebsch]
+name = "Clebsch"
+thumbnail = "textures/thumbs/cubic/clebsch.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 230
+scale = 1.35
+dvr_falloff = 0.03
+gaussian_curvature_falloff = 0.02
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.07
+normal_length_falloff = 0.002
+expression = '''
+81*(x^3+y^3+z^3)
+-189*[x^2*(y+z)+y^2*(x+z)+z^2*(x+y)]
++126*(x*y+x*z+y*z)
++54*x*y*z
+-9*(x^2+y^2+z^2)
+-9*(x+y+z)+1'''
+
+[ding-dong]
+name = "Ding-Dong"
+thumbnail = "textures/thumbs/cubic/ding-dong.png"
+bounds_radius = 2.0
+isosurface_raymarch_steps = 150
+scale = 1.0
+dvr_falloff = 5.0
+gaussian_curvature_falloff = 0.2
+mean_curvature_falloff = 0.35
+max_abs_curvature_falloff = 0.15
+normal_length_falloff = 0.25
+expression = "x^2+y^2-(1-z)*z^2"
+
+[strophoid]
+name = "Strophoid"
+thumbnail = "textures/thumbs/cubic/strophoid.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 150
+scale = 1.4
+dvr_raymarch_steps = 350
+dvr_falloff = 10.0
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.2
+max_abs_curvature_falloff = 0.1
+normal_length_falloff = 0.75
+parameters = [{name = "a", value = 1},
+              {name = "b", value = -0.1},
+              {name = "c", value = 1.5}]
+expression = "(b-x)*(y^2+z^2)-c^2*a*x^2-c^2*x^3"

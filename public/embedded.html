@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ImpVis Sample Gallery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: white;
+            padding: 20px;
+            background: linear-gradient(135deg, #150818 0%, #2b172e 100%);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .intro {
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .intro p {
+            margin-bottom: 15px;
+        }
+
+        .intro code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .features {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .features ul {
+            margin: 10px 0 0 20px;
+        }
+
+        .features li {
+            margin-bottom: 8px;
+        }
+
+        .impvis-container {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1;
+            margin: 0 auto;
+            overflow: hidden;
+            margin-bottom: 40px;
+            border-radius: 8px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border: none;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #7dd3fc;
+        }
+
+        a:hover {
+            color: #bae6fd;
+        }
+
+        a:visited {
+            color: #c4b5fd;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>ImpVis Sample Gallery</h1>
+
+    <div class="intro">
+        <p>
+            <strong>ImpVis</strong> is a <a href="https://github.com/hbatagelo/impvis">3D implicit function viewer</a>.
+            This gallery shows how to embed ImpVis visualizations in iframes with customizable display options.
+        </p>
+    </div>
+
+    <div class="features">
+        <strong>URL Parameters Used:</strong>
+        <ul>
+            <li><code>no_axes</code> - Hides the coordinate axes</li>
+            <li><code>no_bkgnd</code> - Hides the background gradient</li>
+            <li><code>no_ui</code> - Hides the UI controls</li>
+            <li><code>no_mathjax</code> - Disables MathJax rendering</li>
+            <li><code>function=name</code> - Which surface to render</li>
+        </ul>
+    </div>
+
+    <h2>Tetrahedroid:</h2>
+    <div class="impvis-container">
+        <iframe src="index.html?no_bkgnd&no_axes&no_ui&no_mathjax&function=tetrahedroid"></iframe>
+    </div>
+
+    <h2>Labs:</h2>
+    <div class="impvis-container">
+        <iframe src="index.html?no_bkgnd&no_axes&no_ui&no_mathjax&function=labs%20septic"></iframe>
+    </div>
+
+    <h2>Barth Decic:</h2>
+    <div class="impvis-container">
+        <iframe src="index.html?no_bkgnd&no_axes&no_ui&no_mathjax&function=barth%20decic"></iframe>
+    </div>
+
+    <h2>Diamond:</h2>
+    <div class="impvis-container">
+        <iframe src="index.html?no_bkgnd&no_axes&no_ui&no_mathjax&function=diamond"></iframe>
+    </div>
+</body>
+
+</html>

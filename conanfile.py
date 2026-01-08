@@ -14,41 +14,24 @@ class ImpVis(ConanFile):
         cmake.build()
 
     def requirements(self):
-        self.requires("fmt/12.0.0")
-        self.requires("imgui/1.89.4")
         self.requires("cppitertools/2.2")
-        self.requires("glm/0.9.9.8")
-        self.requires("ms-gsl/4.0.0")
-        self.requires("glew/2.2.0")
-        self.requires("re2/20220601")
-        self.requires("tomlplusplus/3.2.0")
-        self.requires("sdl/2.28.3")
-        self.requires("sdl_image/2.8.2")
+        self.requires("fmt/12.1.0")
+        if self.settings.os != "Emscripten":
+            self.requires("glew/2.2.0")
+        self.requires("glm/1.0.1")
         self.requires("gtest/1.17.0")
+        self.requires("imgui/1.92.5")
+        self.requires("ms-gsl/4.2.0")
+        self.requires("re2/20251105")
+        self.requires("sdl/3.2.20")
+        self.requires("stb/cci.20240531")
+        self.requires("tomlplusplus/3.4.0")
 
     def configure(self):
-        # SDL options - only available on Linux
         if self.settings.os == "Linux":
-            self.options["sdl"].alsa = False
-            self.options["sdl"].pulse = False
-            self.options["sdl"].nas = False
-            self.options["sdl"].wayland = False
-
-        # SDL_image options (disable many image backends & optional libs)
-        self.options["sdl_image"].xv = False
-        self.options["sdl_image"].bmp = False
-        self.options["sdl_image"].gif = False
-        self.options["sdl_image"].lbm = False
-        self.options["sdl_image"].pcx = False
-        self.options["sdl_image"].pnm = False
-        self.options["sdl_image"].qoi = False
-        self.options["sdl_image"].svg = False
-        self.options["sdl_image"].tga = False
-        self.options["sdl_image"].xcf = False
-        self.options["sdl_image"].xpm = False
-        self.options["sdl_image"].with_libjpeg = False
-        self.options["sdl_image"].with_libtiff = False
-        self.options["sdl_image"].with_libwebp = False
+            self.options["sdl"].audio = False
+            # Uncomment if building for Wayland (run with EGL_PLATFORM=wayland SDL_VIDEODRIVER=wayland)
+            # self.options["glew"].with_egl = True
 
     def layout(self):
         cmake_layout(self)

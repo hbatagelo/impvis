@@ -1,0 +1,32 @@
+title = "Semialgebraic"
+
+[superquadric]
+name = "Superquadric"
+thumbnail = "textures/thumbs/semialg/superquadric.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 100
+scale = 1.4
+dvr_raymarch_steps = 200
+dvr_falloff = 5.0
+gaussian_curvature_falloff = 0.2
+mean_curvature_falloff = 0.2
+max_abs_curvature_falloff = 0.1
+normal_length_falloff = 0.35
+parameters = [{name = "r", value = 1.5},
+              {name = "s", value = 0.75},
+              {name = "t", value = 4}]
+expression = "abs(x)^r+abs(y)^s+abs(z)^t-1"
+
+[tetrahedon]
+name = "Tetrahedron"
+thumbnail = "textures/thumbs/semialg/tetrahedron.png"
+bounds_radius = 6.1
+isosurface_raymarch_steps = 300
+scale = 0.4
+dvr_raymarch_steps = 250
+dvr_falloff = 1.5
+gaussian_curvature_falloff = 1.0
+mean_curvature_falloff = 1.0
+max_abs_curvature_falloff = 1.0
+normal_length_falloff = 0.1
+expression = "abs(abs(abs(x)+2*y)+abs(x)+2*z)+abs(abs(x)+2*y)+abs(x)-5"

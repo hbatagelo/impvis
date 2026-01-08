@@ -1,7 +1,5 @@
 # Set standard project warnings for target project_target
 function(set_project_warnings project_target project_warnings)
-  option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" TRUE)
-
   # Set warning flags for MSVC
   set(_MSVC_WARNINGS
       /W4 # Baseline reasonable warnings

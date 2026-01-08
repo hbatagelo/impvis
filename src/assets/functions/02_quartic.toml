@@ -1,0 +1,241 @@
+title = "Quartic"
+
+[bifolia]
+name = "Bifolia"
+thumbnail = "textures/thumbs/quartic/bifolia.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 80
+scale = 1.4
+dvr_raymarch_steps = 200
+dvr_falloff = 7.0
+gaussian_curvature_falloff = 0.25
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.075
+normal_length_falloff = 0.9
+expression = "(x^2+y^2+z^2)^2-3*y*(x^2+z^2)"
+
+[cassini]
+name = "Cassini"
+thumbnail = "textures/thumbs/quartic/cassini.png"
+bounds_radius = 3
+isosurface_raymarch_steps = 110
+isosurface_raymarch_root_test = "taylor 2nd-order"
+scale = 0.8
+dvr_raymarch_steps = 200
+dvr_falloff = 0.75
+gaussian_curvature_falloff = 0.05
+mean_curvature_falloff = 0.2
+max_abs_curvature_falloff = 0.1
+normal_length_falloff = 0.03
+parameters = [{name = "r", value = 1}]
+expression = "[(x+r)^2+y^2]*[(x-r)^2+y^2]-z^4"
+
+[chair]
+name = "Chair"
+thumbnail = "textures/thumbs/quartic/chair.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 100
+scale = 1.5
+dvr_raymarch_steps = 300
+dvr_falloff = 8.0
+gaussian_curvature_falloff = 0.075
+mean_curvature_falloff = 0.075
+max_abs_curvature_falloff = 0.025
+parameters = [{name = "a", value = 0.95},
+              {name = "b", value = 0.8},
+              {name = "k", value = 1}]
+expression = "(x^2+y^2+z^2-a*k^2)^2-b*[(z-k)^2-2*x^2]*[(z+k)^2-2*y^2]"
+
+[chmutov_quartic]
+name = "Chmutov Quartic"
+thumbnail = "textures/thumbs/quartic/chmutov_quartic.png"
+bounds_shape = "box"
+bounds_radius = 1.2
+isosurface_raymarch_steps = 100
+scale = 1.4
+dvr_raymarch_steps = 300
+dvr_falloff = 0.75
+gaussian_curvature_falloff = 0.075
+mean_curvature_falloff = 1.0
+max_abs_curvature_falloff = 0.2
+normal_length_falloff = 0.07
+code_global = '''
+float T_4(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  return 8.*x4-8.*x2+1.;
+}
+'''
+comment = '''
+\mathrm{where}\; T_4(x)=8x^4-8x^2+1\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;4.}
+'''
+expression = "T_4(x)+T_4(y)+T_4(z)"
+
+[cross-cap]
+name = "Cross-Cap"
+thumbnail = "textures/thumbs/quartic/cross-cap.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 200
+scale = 1.5
+dvr_raymarch_steps = 300
+dvr_falloff = 5.0
+gaussian_curvature_falloff = 0.075
+mean_curvature_falloff = 0.1
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.8
+parameters = [{name = "a", value = 1}]
+expression = "4*x^2*(x^2+y^2+z^2+a*z)+y^2*(y^2+z^2-a^2)"
+
+[cushion]
+name = "Cushion"
+thumbnail = "textures/thumbs/quartic/cushion.png"
+bounds_radius = 1.5
+isosurface_raymarch_steps = 150
+scale = 1.3
+dvr_raymarch_steps = 300
+dvr_falloff = 8.0
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.1
+max_abs_curvature_falloff = 0.075
+normal_length_falloff = 0.5
+expression = "-z^4+2*z^3+(x^2-y^2-2)*z^2+2*y^2*z+[x^2+y^2-(x^2+y^2)^2]"
+
+[devil]
+name = "Devil"
+thumbnail = "textures/thumbs/quartic/devil.png"
+bounds_radius = 3
+isosurface_raymarch_steps = 100
+scale = 0.8
+dvr_raymarch_steps = 300
+dvr_falloff = 1.0
+gaussian_curvature_falloff = 0.075
+mean_curvature_falloff = 0.15
+max_abs_curvature_falloff = 0.075
+normal_length_falloff = 0.03
+parameters = [{name = "a", value = -0.25},
+              {name = "b", value = 0.25}]
+expression = "x^4+2*x^2*z^2+a*x^2-y^4+b*y^2+z^4"
+
+[goursat]
+name = "Goursat"
+thumbnail = "textures/thumbs/quartic/goursat.png"
+bounds_radius = 2.5
+isosurface_raymarch_steps = 100
+scale = 0.9
+dvr_raymarch_steps = 300
+dvr_falloff = 2.5
+gaussian_curvature_falloff = 0.25
+mean_curvature_falloff = 0.25
+max_abs_curvature_falloff = 0.2
+normal_length_falloff = 0.17
+parameters = [{name = "a", value = 0},
+              {name = "b", value = -2},
+              {name = "c", value = 1}]
+expression = "x^4+y^4+z^4+a*(x^2+y^2+z^2)^2+b*(x^2+y^2+z^2)+c"
+
+[miter]
+name = "Miter"
+thumbnail = "textures/thumbs/quartic/miter.png"
+bounds_radius = 1.6
+isosurface_raymarch_steps = 180
+scale = 1.5
+dvr_raymarch_steps = 300
+dvr_falloff = 7.0
+gaussian_curvature_falloff = 0.15
+mean_curvature_falloff = 0.15
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.7
+expression = "4*x^2*(x^2+y^2+z^2)-y^2*(1-y^2-z^2)"
+
+[nordstrand]
+name = "Nordstrand"
+thumbnail = "textures/thumbs/quartic/nordstrand.png"
+bounds_radius = 1.2
+isosurface_raymarch_steps = 120
+scale = 1.8
+dvr_raymarch_steps = 250
+dvr_falloff = 1.0
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.04
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.01
+expression = '''
+25*[x^3*(y+z)+y^3*(x+z)+z^3*(x+y)]
++50*(x^2*y^2+x^2*z^2+y^2*x^2)
+-125*(x^2*y*z+y^2*x*z+z^2*x*y)
+-4*(x*y+x*z+y*z)
++60*x*y*z'''
+
+[piriform]
+name = "Piriform"
+thumbnail = "textures/thumbs/quartic/piriform.png"
+bounds_radius = 1.1
+isosurface_raymarch_steps = 100
+scale = 1.9
+dvr_falloff = 12.0
+gaussian_curvature_falloff = 0.05
+mean_curvature_falloff = 0.1
+max_abs_curvature_falloff = 0.025
+normal_length_falloff = 2.0
+parameters = [{name = "a", value = 1}]
+expression = "(x^4-a*x^3)+a^2*(y^2+z^2)"
+
+[steiner]
+name = "Steiner"
+thumbnail = "textures/thumbs/quartic/steiner.png"
+bounds_radius = 1.4
+isosurface_raymarch_steps = 80
+scale = 1.5
+dvr_raymarch_steps = 300
+dvr_falloff = 50.0
+gaussian_curvature_falloff = 0.15
+mean_curvature_falloff = 0.15
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 2.0
+parameters = [{name = "r", value = 1.5}]
+expression = "x^2*y^2+x^2*z^2+y^2*z^2-r^2*x*y*z"
+
+[tetrahedroid]
+name = "Tetrahedroid"
+thumbnail = "textures/thumbs/quartic/tetrahedroid.png"
+bounds_radius = 3
+isosurface_raymarch_steps = 150
+scale = 0.7
+dvr_raymarch_steps = 200
+dvr_falloff = 1.5
+gaussian_curvature_falloff = 1.0
+mean_curvature_falloff = 0.2
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.06
+expression = "x^4+y^4+z^4-x^2-y^2-z^2-x^2*y^2-y^2*z^2-z^2*x^2+1"
+
+[tooth]
+name  = "Tooth"
+thumbnail = "textures/thumbs/quartic/tooth.png"
+bounds_radius = 1.8
+isosurface_raymarch_steps = 60
+scale = 1.2
+dvr_raymarch_steps = 250
+dvr_falloff = 3.0
+gaussian_curvature_falloff = 0.25
+mean_curvature_falloff = 0.45
+max_abs_curvature_falloff = 0.4
+normal_length_falloff = 0.3
+comment = '''\mathrm{is\;a\;special\;case\;of\;Goursat's\;surface\;with\;}a=0, b=-1, c=0.'''
+expression = "x^4+y^4+z^4-(x^2+y^2+z^2)"
+
+[torus]
+name = "Torus"
+thumbnail = "textures/thumbs/quartic/torus.png"
+bounds_radius = 2
+isosurface_raymarch_steps = 80
+scale = 1.1
+dvr_raymarch_steps = 250
+dvr_falloff = 3.0
+gaussian_curvature_falloff = 0.45
+mean_curvature_falloff = 0.75
+max_abs_curvature_falloff = 0.35
+normal_length_falloff = 0.25
+parameters = [{name = "r", value = 0.5}, {name = "R", value = 1}]
+expression = "(x^2+y^2+z^2+R^2-r^2)^2-4*R^2*(x^2+y^2)"

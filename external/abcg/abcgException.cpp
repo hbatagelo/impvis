@@ -4,14 +4,14 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
 #include "abcgException.hpp"
 #include "abcgUtil.hpp"
 
-#include <SDL_image.h>
+#include <SDL3/SDL.h>
 
 /**
  * @brief Constructs an abcg::Exception object.
@@ -71,28 +71,6 @@ std::string abcg::SDLError::prettyPrint(std::string_view what,
          std::to_string(sourceLocation.line()) + ", " +
          toYellowString(sourceLocation.function_name()) + "\n";
 }
-
-/**
- * @brief Constructs an abcg::SDLError object.
- *
- * @param what Explanatory string.
- * @param sourceLocation Information about the source code.
- *
- * The object generates a color-coded string containing the explanatory string,
- * the result of `IMG_GetError`, and the source code information.
- */
-abcg::SDLImageError::SDLImageError(std::string_view what,
-                                   source_location const &sourceLocation)
-    : Exception(prettyPrint(what, sourceLocation)) {}
-
-std::string
-abcg::SDLImageError::prettyPrint(std::string_view what,
-                                 source_location const &sourceLocation) {
-  return toRedString(what.data()) + " (" + IMG_GetError() + ") in " +
-         sourceLocation.file_name() + ":" +
-         std::to_string(sourceLocation.line()) + ", " +
-         toYellowString(sourceLocation.function_name()) + "\n";
-}
 #else
 abcg::RuntimeError::RuntimeError(std::string_view what)
     : Exception(prettyPrint(what)) {}
@@ -108,10 +86,4 @@ std::string abcg::SDLError::prettyPrint(std::string_view what) {
   return toRedString(what.data()) + " (" + SDL_GetError() + ")\n";
 }
 
-abcg::SDLImageError::SDLImageError(std::string_view what)
-    : Exception(prettyPrint(what)) {}
-
-std::string abcg::SDLImageError::prettyPrint(std::string_view what) {
-  return toRedString(what.data()) + " (" + IMG_GetError() + ")\n";
-}
 #endif

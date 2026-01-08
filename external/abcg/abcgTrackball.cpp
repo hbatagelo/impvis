@@ -4,7 +4,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -20,7 +20,7 @@ constexpr static auto epsilon{std::numeric_limits<float>::epsilon()};
  *
  * @param position Position of the mouse cursor in window coordinates.
  */
-void abcg::TrackBall::mouseMove(glm::ivec2 const &position) {
+void abcg::TrackBall::mouseMove(glm::ivec2 position) {
   if (!m_mouseTracking)
     return;
 
@@ -56,7 +56,7 @@ void abcg::TrackBall::mouseMove(glm::ivec2 const &position) {
  *
  * @param position Position of the mouse cursor in window coordinates.
  */
-void abcg::TrackBall::mousePress(glm::ivec2 const &position) {
+void abcg::TrackBall::mousePress(glm::ivec2 position) {
   m_rotation = getRotation();
   m_mouseTracking = true;
 
@@ -72,7 +72,7 @@ void abcg::TrackBall::mousePress(glm::ivec2 const &position) {
  *
  * @param position Position of the mouse cursor in window coordinates.
  */
-void abcg::TrackBall::mouseRelease(glm::ivec2 const &position) {
+void abcg::TrackBall::mouseRelease(glm::ivec2 position) {
   mouseMove(position);
 
   // The longer the duration since last event, the slower the velocity
@@ -82,11 +82,11 @@ void abcg::TrackBall::mouseRelease(glm::ivec2 const &position) {
 }
 
 /**
- * @brief Function to be called when the window is resized.
+ * @brief Function to be called when the viewport is resized.
  *
- * @param size New size of the window, in pixels.
+ * @param size New size of the viewport, in pixels.
  */
-void abcg::TrackBall::resizeViewport(glm::ivec2 const &size) noexcept {
+void abcg::TrackBall::resizeViewport(glm::ivec2 size) noexcept {
   m_viewportSize = size;
 }
 
@@ -125,7 +125,7 @@ void abcg::TrackBall::setVelocity(float velocity) noexcept {
   m_velocity = velocity;
 }
 
-glm::vec3 abcg::TrackBall::project(const glm::vec2 &position) const {
+glm::vec3 abcg::TrackBall::project(glm::vec2 position) const {
   // Convert from window coordinates to NDC
   auto projected{glm::vec3(
       2.0f * position.x / gsl::narrow<float>(m_viewportSize.x) - 1.0f,

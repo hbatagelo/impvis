@@ -4,14 +4,13 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
 #ifndef ABCG_SHADER_HPP_
 #define ABCG_SHADER_HPP_
 
-#include <optional>
 #include <string>
 
 namespace abcg {

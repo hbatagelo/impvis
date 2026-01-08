@@ -4,16 +4,17 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
 #include "abcgOpenGLWindow.hpp"
 
-#include <SDL_events.h>
-#include <SDL_image.h>
+#include <SDL3/SDL_events.h>
 #include <imgui_impl_opengl3.h>
-#include <imgui_impl_sdl2.h>
+#include <imgui_impl_sdl3.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 #include "abcgEmbeddedFonts.hpp"
 #include "abcgException.hpp"
@@ -51,29 +52,25 @@ void abcg::OpenGLWindow::setOpenGLSettings(
  */
 void abcg::OpenGLWindow::saveScreenshotPNG(std::string_view filename) const {
   auto const size{getWindowSize()};
-  auto const bitsPerPixel{8};
   auto const channels{4};
   auto const pitch{gsl::narrow<long>(size.x * channels)};
 
   auto const numPixels{gsl::narrow<std::size_t>(size.x * size.y * channels)};
   std::vector<unsigned char> pixels(numPixels);
+
   glReadBuffer(m_openGLSettings.doubleBuffering ? GL_BACK : GL_FRONT);
   glReadPixels(0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
-  // Flip upside down
+  // Flip upside down (stb expects top-left origin)
   for (auto const line : iter::range(size.y / 2)) {
     std::swap_ranges(pixels.begin() + pitch * line,
                      pixels.begin() + pitch * (line + 1),
                      pixels.begin() + pitch * (size.y - line - 1));
   }
 
-  if (auto *const surface{SDL_CreateRGBSurfaceFrom(
-          pixels.data(), size.x, size.y, channels * bitsPerPixel,
-          gsl::narrow<int>(pitch), 0x000000FF, 0x0000FF00, 0x00FF0000,
-          0xFF000000)}) {
-    IMG_SavePNG(surface, filename.data());
-    SDL_FreeSurface(surface);
-  }
+  // Write PNG using stb_image_write
+  stbi_write_png(filename.data(), size.x, size.y, channels, pixels.data(),
+                 gsl::narrow<int>(pitch));
 }
 
 /**
@@ -201,7 +198,7 @@ void abcg::OpenGLWindow::onPaintUI() {
  *
  * Override it for custom behavior. By default, it does nothing.
  */
-void abcg::OpenGLWindow::onResize([[maybe_unused]] glm::ivec2 const &size) {}
+void abcg::OpenGLWindow::onResize([[maybe_unused]] glm::ivec2 size) {}
 
 /**
  * @brief Custom handler called for each frame before painting.
@@ -226,28 +223,24 @@ void abcg::OpenGLWindow::handleEvent(SDL_Event const &event) {
   if (event.window.windowID != abcg::Window::getSDLWindowID())
     return;
 
-  if (event.type == SDL_WINDOWEVENT) {
-    switch (event.window.event) {
-    case SDL_WINDOWEVENT_HIDDEN:
-      m_hidden = true;
-      break;
-    case SDL_WINDOWEVENT_SHOWN:
-    case SDL_WINDOWEVENT_EXPOSED:
-      m_hidden = false;
-      break;
-    case SDL_WINDOWEVENT_MINIMIZED:
-      m_minimized = true;
-      break;
-    case SDL_WINDOWEVENT_RESTORED:
-      m_minimized = false;
-      break;
-    case SDL_WINDOWEVENT_SIZE_CHANGED:
-    case SDL_WINDOWEVENT_RESIZED: {
-      onResize(getWindowSize());
-    } break;
-    default:
-      break;
-    }
+  switch (event.type) {
+  case SDL_EVENT_WINDOW_HIDDEN:
+    m_hidden = true;
+    break;
+  case SDL_EVENT_WINDOW_SHOWN:
+  case SDL_EVENT_WINDOW_EXPOSED:
+    m_hidden = false;
+    break;
+  case SDL_EVENT_WINDOW_MINIMIZED:
+    m_minimized = true;
+    break;
+  case SDL_EVENT_WINDOW_RESTORED:
+    m_minimized = false;
+    break;
+  case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+  case SDL_EVENT_WINDOW_RESIZED: {
+    onResize(getWindowSize());
+  }
   }
 
   onEvent(event);
@@ -380,15 +373,6 @@ void abcg::OpenGLWindow::create() {
       "GLSL version...: {}\n",
       reinterpret_cast<char const *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
-  // Print out extensions
-  // GLint numExtensions{};
-  // glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-  // for (auto const index : iter::range(gsl::narrow<GLuint>(numExtensions))) {
-  //   fmt::print(
-  //       "GL extension {}: {}\n", index,
-  //       reinterpret_cast<char const *>(glGetStringi(GL_EXTENSIONS, index)));
-  // }
-
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -397,14 +381,10 @@ void abcg::OpenGLWindow::create() {
   guiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   // Enable gamepad controls
   guiIO.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-
-  // For an Emscripten build we are disabling file-system access, so let's
-  // not attempt to do a fopen() of the imgui.ini file. You may manually
-  // call LoadIniSettingsFromMemory() to load settings from your own storage.
   guiIO.IniFilename = nullptr;
 
   // Setup platform/renderer bindings
-  ImGui_ImplSDL2_InitForOpenGL(abcg::Window::getSDLWindow(), m_GLContext);
+  ImGui_ImplSDL3_InitForOpenGL(abcg::Window::getSDLWindow(), m_GLContext);
   ImGui_ImplOpenGL3_Init(m_GLSLVersion.c_str());
 
   // Load fonts
@@ -444,7 +424,7 @@ void abcg::OpenGLWindow::paint() {
 #endif
 
   ImGui_ImplOpenGL3_NewFrame();
-  ImGui_ImplSDL2_NewFrame();
+  ImGui_ImplSDL3_NewFrame();
   ImGui::NewFrame();
 
   onPaintUI();
@@ -466,11 +446,11 @@ void abcg::OpenGLWindow::destroy() {
 
   if (ImGui::GetCurrentContext() != nullptr) {
     ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
   }
   if (m_GLContext != nullptr) {
-    SDL_GL_DeleteContext(m_GLContext);
+    SDL_GL_DestroyContext(m_GLContext);
     m_GLContext = nullptr;
   }
 }
@@ -478,7 +458,7 @@ void abcg::OpenGLWindow::destroy() {
 [[nodiscard]] glm::ivec2 abcg::OpenGLWindow::getWindowSize() const {
   glm::ivec2 size{};
   if (auto *window{abcg::Window::getSDLWindow()}; window != nullptr) {
-    SDL_GL_GetDrawableSize(window, &size.x, &size.y);
+    SDL_GetWindowSizeInPixels(window, &size.x, &size.y);
   }
   return size;
 }

@@ -6,7 +6,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -26,7 +26,7 @@ namespace abcg {
 struct WindowSettings;
 class Application;
 class Window;
-int resizingEventWatcher(void *data, SDL_Event *event);
+bool resizingEventWatcher(void *data, SDL_Event *event);
 #if defined(__EMSCRIPTEN__)
 EM_BOOL fullscreenchangeCallback(int eventType,
                                  EmscriptenFullscreenChangeEvent const *event,
@@ -179,7 +179,7 @@ private:
   bool m_enableResizingEventWatcher{true};
 
   friend Application;
-  friend int resizingEventWatcher(void *data, SDL_Event *event);
+  friend bool resizingEventWatcher(void *data, SDL_Event *event);
 #if defined(__EMSCRIPTEN__)
   friend EM_BOOL
   fullscreenchangeCallback(int eventType,

@@ -1,0 +1,130 @@
+title = "Decic and higher"
+
+[barth_decic]
+name = "Barth Decic"
+thumbnail = "textures/thumbs/decp/barth_decic.png"
+bounds_radius = 2.2
+isosurface_raymarch_steps = 500
+scale = 1.0
+dvr_raymarch_steps = 350
+dvr_falloff = 0.5
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.03
+max_abs_curvature_falloff = 0.025
+normal_length_falloff = 0.002
+code_global = "const float phi=1.618033988;"
+comment = '''
+\mathrm{where}\; \phi=\frac{1+\sqrt{5}}{2}\;\mathrm{\;is\;the\;golden\;ratio.}'''
+expression = '''
+8*(x^2-phi^4*y^2)*(y^2-phi^4*z^2)*(z^2-phi^4*x^2)
+*[x^4+y^4+z^4-2*(x^2*y^2+x^2*z^2+y^2*z^2)]
++(3+5*phi)*(x^2+y^2+z^2-1)^2*(x^2+y^2+z^2-2+phi)^2'''
+
+[chmutov]
+name = "Chmutov"
+thumbnail = "textures/thumbs/decp/chmutov.png"
+bounds_shape = "box"
+bounds_radius = 1.1
+isosurface_raymarch_method = "fixed-step"
+isosurface_raymarch_steps = 1000
+scale = 1.4
+dvr_raymarch_steps = 500
+dvr_falloff = 0.75
+gaussian_curvature_falloff = 0.01
+mean_curvature_falloff = 0.05
+max_abs_curvature_falloff = 0.02
+normal_length_falloff = 0.004
+code_global = '''
+const int n=18; // <- Order
+const float sgn_n=n%2>0?-1.:1.;
+float T_n(float x) {
+  if (abs(x) <= 1.) {
+    return cos(float(n)*acos(x));
+  }
+  else {
+    int sgn_x=sign(int(x));
+    float r=cosh(float(n)*acosh(float(sgn_x)*x));
+    return sgn_x>0?r:sgn_n*r;
+  }
+}
+'''
+comment = '''
+\mathrm{where}\;T_n\mathrm{\;is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind}\\
+&\mathrm{of\;degree\;}n,\mathrm{with}\;n\;\mathrm{defined\;in\;the\;injected\;code\;(default\;is\;18).}'''
+expression = "T_n(x)+T_n(y)+T_n(z)"
+
+[sarti_dodecic]
+name = "Sarti Dodecic"
+thumbnail = "textures/thumbs/decp/sarti_dodecic.png"
+bounds_radius = 3.8
+isosurface_raymarch_steps = 480
+scale = 0.6
+dvr_raymarch_steps = 400
+dvr_falloff = 0.00001
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.05
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.0001
+code_local = '''
+float x2=x*x;
+float y2=y*y;
+float z2=z*z;
+float x4=x2*x2;
+float y4=y2*y2;
+float z4=z2*z2;
+float l_1=x4+y4+z4+1.;
+float l_2=x2*y2+z2;
+float l_3=x2*z2+y2;
+float l_4=x2+y2*z2;
+float l_5=x*y*z;
+float l_1p2=l_1*l_1;
+float l_2p2=l_2*l_2;
+float l_3p2=l_3*l_3;
+float l_4p2=l_4*l_4;
+float l_5p2=l_5*l_5;
+float l_2p3=l_2p2*l_2;
+float l_3p3=l_3p2*l_3;
+float l_4p3=l_4p2*l_4;
+float s_1_0      =l_1*(l_2*l_3+l_2*l_4+l_3*l_4);
+float s_1_1      =l_1p2*(l_2+l_3+l_4);
+float s_1_2      =l_1*(l_2p2+l_3p2+l_4p2);
+float s_5_1      =l_5p2*(l_2+l_3+l_4);
+float s_2_3_4    =l_2p3+l_3p3+l_4p3;
+float s_2_3_plus =l_2p2*l_3+l_2*l_3p2;
+float s_2_3_minus=l_2p2*l_3-l_2*l_3p2;
+float s_3_4_plus =l_3p2*l_4+l_3*l_4p2;
+float s_3_4_minus=l_3p2*l_4-l_3*l_4p2;
+float s_4_2_plus =l_4p2*l_2+l_4*l_2p2;
+float s_4_2_minus=l_4p2*l_2-l_4*l_2p2;
+const float kS=33.*sqrt(5.);
+float S=kS*(s_2_3_minus+s_3_4_minus+s_4_2_minus)+
+        19.*(s_2_3_plus +s_3_4_plus +s_4_2_plus)+
+        10.*s_2_3_4-
+        14.*s_1_0+
+        2.*s_1_1-
+        6.*s_1_2-
+        352.*s_5_1+
+        336.*l_5p2*l_1+
+        48.*l_2*l_3*l_4;
+float Q=mpow6(x2+y2+z2+1.);
+'''
+comment = '''
+\mathrm{where}\\
+&\quad S=33\sqrt{5}(s_{2,3}^{-}+s_{3,4}^{-}+s_{4,2}^{-})+19(s_{2,3}^{+}+s_{3,4}^{+}+s_{4,2}^{+})+10s_{2,3,4}\\
+&\quad \;\phantom{S=}-14s_{1,0}+2s_{1,1}-6s_{1,2}-352s_{5,1}+336l_5^2l_1+48l_2l_3l_4,\\
+&\quad Q=(x^2+y^2+z^2)^6,\\
+&\mathrm{with}\\
+&\quad l_{1\phantom{,,3,4}}=x^4+y^4+z^4+1,\\
+&\quad l_{2\phantom{,,3,4}}=x^2y^2+z^2,\\
+&\quad l_{3\phantom{,,3,4}}=x^2z^2+y^2,\\
+&\quad l_{4\phantom{,,3,4}}=x^2+y^2z^2,\\
+&\quad l_{5\phantom{,,3,4}}=xyz,\\
+&\quad s_{1,0\phantom{,4}}=l_1(l_2l_3+l_2l_4+l_3l_4),\\
+&\quad s_{1,1\phantom{,4}}=l_1^2(l_2+l_3+l_4),\\
+&\quad s_{1,2\phantom{,4}}=l_1(l_2^2+l_3^2+l_4^2),\\
+&\quad s_{5,1\phantom{,4}}=l_5^2(l_2+l_3+l_4),\\
+&\quad s_{2,3,4}=l_2^3+l_3^3+l_4^3,\\
+&\quad s_{2,3\phantom{,4}}^{\pm}=l_2^2l_3\pm l_2l_3^2,\\
+&\quad s_{3,4\phantom{,4}}^{\pm}=l_3^2l_4\pm l_3l_4^2,\\
+&\quad s_{4,2\phantom{,4}}^{\pm}=l_4^2l_2\pm l_4l_2^2.'''
+expression = "243*S-22*Q"

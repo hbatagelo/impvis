@@ -3,19 +3,22 @@
  *
  * This file is part of ImpVis (https://github.com/hbatagelo/impvis).
  *
- * @copyright (c) 2022 Harlen Batagelo. All rights reserved.
- * This project is released under the MIT license.
+ * @copyright (c) 2022--2026 Harlen Batagelo. All rights reserved.
+ * ImpVis is released under the MIT license.
  */
 
 #ifndef UTIL_HPP_
 #define UTIL_HPP_
 
-#include <string>
+#include <abcgOpenGLExternal.hpp>
 
-// Syntax requirement of the callback function used by replaceAllAndInvoke
+#include <gsl/gsl>
+
+namespace ivUtil {
+
 template <typename Fun>
 concept ReplaceCallback =
-    std::is_invocable_v<Fun, std::string &, std::string::size_type>;
+    std::invocable<Fun, std::string &, std::string::size_type>;
 
 // Replace all occurrences of the string 'what' in 'inout' with the string
 // 'with'. For each replacement, 'replaceCallback' is called with arguments
@@ -25,18 +28,24 @@ std::size_t replaceAllAndInvoke(std::string &inout, std::string_view what,
                                 std::string_view with,
                                 ReplaceCallback auto &&replaceCallback,
                                 bool matchWholeWord = false) {
+  if (what.empty()) {
+    return 0;
+  }
+
+  auto const isAlpha{
+      [](char c) { return std::isalpha(static_cast<unsigned char>(c)); }};
+
   std::size_t count{};
-  for (std::string::size_type pos{};
-       std::string::npos !=
-       (pos = inout.find(what.data(), pos, what.length()));) {
+  for (auto pos{inout.find(what)}; pos != std::string::npos;
+       pos = inout.find(what, pos)) {
 
     if (matchWholeWord) {
       auto const posFirstChar{pos};
       auto const posLastChar{pos + what.length() - 1};
       auto const wholeWord{
-          (posFirstChar == 0 || !std::isalpha(inout.at(posFirstChar - 1))) &&
+          (posFirstChar == 0 || !isAlpha(inout.at(posFirstChar - 1))) &&
           (posLastChar >= inout.size() - 1 ||
-           !std::isalpha(inout.at(posLastChar + 1)))};
+           !isAlpha(inout.at(posLastChar + 1)))};
       if (!wholeWord) {
         ++pos;
         continue;
@@ -45,11 +54,13 @@ std::size_t replaceAllAndInvoke(std::string &inout, std::string_view what,
 
     inout.replace(pos, what.length(), with.data(), with.length());
 
-    replaceCallback(inout, pos + with.length());
-
     pos += with.length();
+
+    replaceCallback(inout, pos);
+
     ++count;
   }
+
   return count;
 }
 
@@ -58,8 +69,19 @@ std::size_t replaceAllAndInvoke(std::string &inout, std::string_view what,
 inline std::size_t replaceAll(std::string &inout, std::string_view what,
                               std::string_view with,
                               bool matchWholeWord = false) {
-  auto dummyLambda{[](std::string &, std::string::size_type) {}};
-  return replaceAllAndInvoke(inout, what, with, dummyLambda, matchWholeWord);
+  return replaceAllAndInvoke(
+      inout, what, with, [](auto &, auto) {}, matchWholeWord);
 }
+
+// Converts a string_view to a lowercase std::string (ASCII only).
+inline std::string toLower(std::string_view str) {
+  std::string result{str};
+  std::ranges::transform(result, result.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return result;
+}
+
+} // namespace ivUtil
 
 #endif

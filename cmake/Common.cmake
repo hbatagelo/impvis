@@ -2,98 +2,113 @@
 # tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  set(SANITIZERS_TARGET sanitizers)
-  set(WARNINGS_TARGET warnings)
-  set(OPTIONS_TARGET options)
-  add_library(${SANITIZERS_TARGET} INTERFACE)
-  add_library(${WARNINGS_TARGET} INTERFACE)
-  add_library(${OPTIONS_TARGET} INTERFACE)
-
-  if(NOT MSVC)
-    option(ENABLE_MOLD "Enable mold (Modern Linker)" ON)
-  endif()
-
-  if(NOT ENABLE_MOLD)
-    option(ENABLE_IPO "Enable Interprocedural Optimization" ON)
-  endif()
-
-  option(ENABLE_UNIT_TESTING "Enable unit testing" OFF)
-
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    option(ENABLE_FUZZ_TESTING "Enable fuzz testing" OFF)
-  endif()
-
-  if(ENABLE_UNIT_TESTING)
-    set(OPTIONS_UNIT_TESTING_TARGET options_unit_testing)
-    add_library(${OPTIONS_UNIT_TESTING_TARGET} INTERFACE)
-  endif()
-
-  if(ENABLE_FUZZ_TESTING)
-    set(OPTIONS_FUZZ_TESTING_TARGET options_fuzz_testing)
-    add_library(${OPTIONS_FUZZ_TESTING_TARGET} INTERFACE)
-
-    include(${CMAKE_CURRENT_LIST_DIR}/Fuzzer.cmake)
-    enable_fuzzer(${OPTIONS_FUZZ_TESTING_TARGET})
-  endif()
-
-  # Standard compiler warnings
-  include(${CMAKE_CURRENT_LIST_DIR}/Warnings.cmake)
-  set_project_warnings(${WARNINGS_TARGET} PROJECT_WARNINGS)
-
-  # Sanitizer options if supported by compiler
-  include(${CMAKE_CURRENT_LIST_DIR}/Sanitizers.cmake)
-  enable_sanitizers(${SANITIZERS_TARGET})
+if(NOT MSVC)
+  add_custom_target(
+    copy-compile-commands ALL
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_BINARY_DIR}/compile_commands.json
+      ${CMAKE_SOURCE_DIR}/compile_commands.json
+    DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json)
 endif()
+
+set(SANITIZERS_TARGET sanitizers)
+set(WARNINGS_TARGET warnings)
+set(OPTIONS_TARGET options)
+add_library(${SANITIZERS_TARGET} INTERFACE)
+add_library(${WARNINGS_TARGET} INTERFACE)
+add_library(${OPTIONS_TARGET} INTERFACE)
+
+if(NOT MSVC)
+  option(ENABLE_MOLD "Enable mold (Modern Linker)" ON)
+endif()
+
+if(NOT ENABLE_MOLD)
+  option(ENABLE_IPO "Enable Interprocedural Optimization" ON)
+endif()
+
+option(ENABLE_UNIT_TESTING "Enable unit testing" OFF)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  option(ENABLE_FUZZ_TESTING "Enable fuzz testing" OFF)
+endif()
+
+if(ENABLE_UNIT_TESTING)
+  set(OPTIONS_UNIT_TESTING_TARGET options_unit_testing)
+  add_library(${OPTIONS_UNIT_TESTING_TARGET} INTERFACE)
+endif()
+
+if(ENABLE_FUZZ_TESTING)
+  set(OPTIONS_FUZZ_TESTING_TARGET options_fuzz_testing)
+  add_library(${OPTIONS_FUZZ_TESTING_TARGET} INTERFACE)
+
+  include(${CMAKE_CURRENT_LIST_DIR}/Fuzzer.cmake)
+  enable_fuzzer(${OPTIONS_FUZZ_TESTING_TARGET})
+endif()
+
+# Standard compiler warnings
+include(${CMAKE_CURRENT_LIST_DIR}/Warnings.cmake)
+option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  set(WARNINGS_AS_ERRORS
+      OFF
+      CACHE BOOL "" FORCE)
+endif()
+set_project_warnings(${WARNINGS_TARGET} PROJECT_WARNINGS)
+
+# Sanitizer options if supported by compiler
+include(${CMAKE_CURRENT_LIST_DIR}/Sanitizers.cmake)
+enable_sanitizers(${SANITIZERS_TARGET})
+# endif()
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
   set(CMAKE_BUILD_TYPE
       Release
-      CACHE STRING "Choose the type of build." FORCE)
+      CACHE STRING "" FORCE)
   # Set the possible values of build type for cmake-gui, ccmake
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
                                                "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Conan
+# C++20
+target_compile_features(${OPTIONS_TARGET} INTERFACE cxx_std_20)
+
+find_package(fmt)
+find_package(imgui)
+find_package(cppitertools)
+find_package(glm)
+find_package(Microsoft.GSL)
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  find_package(fmt)
-  find_package(imgui)
-  find_package(cppitertools)
-  find_package(glm)
-  find_package(Microsoft.GSL)
   find_package(GLEW)
-  find_package(re2)
-  find_package(tomlplusplus)
-  find_package(SDL2)
-  find_package(SDL2_image)
+endif()
+find_package(re2)
+find_package(tomlplusplus)
+find_package(SDL3)
+find_package(stb)
 
-  # C++20
-  target_compile_features(${OPTIONS_TARGET} INTERFACE cxx_std_20)
+set(COMMON_LIBS
+    fmt::fmt
+    imgui::imgui
+    cppitertools::cppitertools
+    glm::glm
+    Microsoft.GSL::GSL
+    re2::re2
+    SDL3::SDL3
+    stb::stb
+    tomlplusplus::tomlplusplus)
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  list(APPEND COMMON_LIBS GLEW::GLEW)
+endif()
+target_link_libraries(${OPTIONS_TARGET} INTERFACE ${COMMON_LIBS})
 
-  # Conan libs
+if(ENABLE_UNIT_TESTING)
+  find_package(GTest)
   target_link_libraries(
-    ${OPTIONS_TARGET}
-    INTERFACE fmt::fmt
-              imgui::imgui
-              cppitertools::cppitertools
-              GLEW::GLEW
-              glm::glm
-              Microsoft.GSL::GSL
-              re2::re2
-              SDL2::SDL2
-              SDL2_image::SDL2_image
-              tomlplusplus::tomlplusplus)
-
-  if(ENABLE_UNIT_TESTING)
-    find_package(GTest)
-    target_link_libraries(
-      ${OPTIONS_UNIT_TESTING_TARGET}
-      INTERFACE GTest::gtest GTest::gtest_main ${OPTIONS_TARGET}
-                ${SANITIZERS_TARGET})
-  endif()
+    ${OPTIONS_UNIT_TESTING_TARGET}
+    INTERFACE GTest::gtest GTest::gtest_main ${OPTIONS_TARGET}
+              ${SANITIZERS_TARGET})
 endif()
 
 # mold

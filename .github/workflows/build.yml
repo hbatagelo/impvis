@@ -18,39 +18,31 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.11'
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake pkg-config
 
     - name: Install Conan
       run: pip install conan
-
-    - name: Install GCC
-      run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        sudo apt-get update
-        sudo apt-get install -y gcc-13 g++-13
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
-
-    - name: Install system dependencies
-      run: |
-        sudo apt-get install cmake pkg-config
-        sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev
-        sudo apt-get install libx11-dev libx11-xcb-dev libice-dev libsm-dev libxau-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxfixes-dev libxi-dev libxinerama-dev libxrandr-dev libxrender-dev libxtst-dev libxcb-xkb-dev uuid-dev libxcb-composite0-dev libfontenc-dev libxaw7-dev libxkbfile-dev libxmuu-dev libxres-dev libxss-dev libxv-dev libxxf86vm-dev libxcb-glx0-dev libxcb-render-util0-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-sync-dev libxcb-xinerama0-dev libxcb-dri3-dev libxcb-cursor-dev libxcb-dri2-0-dev libxcb-present-dev libxcb-ewmh-dev libxcb-res0-dev libxcb-util-dev libxcb-util0-dev
 
     - name: Detect Conan profile
       run: conan profile detect --force
 
     - name: Install dependencies
-      run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}}
+      run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
+
+    - name: Set build type lowercase
+      run: echo "BUILD_TYPE_LOWER=$(echo ${{env.BUILD_TYPE}} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+    - name: Configure
+      run: cmake --preset conan-${{env.BUILD_TYPE_LOWER}} -DENABLE_UNIT_TESTING=ON
 
     - name: Build
-      run: conan build .
+      run: cmake --build --preset conan-${{env.BUILD_TYPE_LOWER}}
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/build/${{env.BUILD_TYPE}}
       run: ctest -C ${{env.BUILD_TYPE}}
 
   macOS-build:
@@ -62,18 +54,8 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.11'
-
     - name: Install Conan
       run: pip install conan
-
-    - name: Install dependencies
-      run: |
-        brew update
-        brew install glew sdl2 sdl2_image
 
     - name: Detect Conan profile
       run: conan profile detect --force
@@ -83,10 +65,6 @@ jobs:
 
     - name: Build
       run: conan build .
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
 
   windows-build:
     runs-on: windows-latest
@@ -108,18 +86,14 @@ jobs:
     - name: Create Conan profile
       run: |
         conan profile detect --force
-        (Get-Content "$env:USERPROFILE\.conan2\profiles\default") -replace 'compiler.cppstd=14', 'compiler.cppstd=17' | Set-Content "$env:USERPROFILE\.conan2\profiles\default"
+        (Get-Content "$env:USERPROFILE\.conan2\profiles\default") -replace 'compiler.cppstd=14', 'compiler.cppstd=20' | Set-Content "$env:USERPROFILE\.conan2\profiles\default"
         Get-Content "$env:USERPROFILE\.conan2\profiles\default"
 
     - name: Install dependencies
-      run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=17
+      run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}} -s compiler.cppstd=20
 
     - name: Build
       run: conan build .
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
 
   wasm-build:
     runs-on: ubuntu-latest
@@ -130,10 +104,16 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git cmake python3
+        sudo apt-get install -y git cmake pkg-config
+
+    - name: Install Conan
+      run: pip install conan
+
+    - name: Detect Conan profile
+      run: conan profile detect --force
 
     - name: Install Emscripten
       run: |
@@ -142,12 +122,7 @@ jobs:
         ./emsdk install latest
         ./emsdk activate latest
 
-    - name: Configure CMake
+    - name: Build
       run: |
         source ./emsdk/emsdk_env.sh
-        emcmake cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build - ${{matrix.build-type}}
-      run: |
-        source ./emsdk/emsdk_env.sh
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j $(nproc)
+        source ./build-wasm.sh

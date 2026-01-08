@@ -14,8 +14,7 @@ function(enable_abcg project_target)
       PUBLIC ${PROJECT_WARNINGS}
       PUBLIC "-std=c++20"
       PUBLIC "-Oz"
-      PUBLIC "-sUSE_SDL=2"
-      PUBLIC "-sUSE_SDL_IMAGE=2")
+      PUBLIC "-sUSE_SDL=3")
 
     set(LINK_FLAGS "")
     # For debugging, use ASSERTIONS=1 and DISABLE_EXCEPTION_CATCHING=0
@@ -25,10 +24,9 @@ function(enable_abcg project_target)
     list(APPEND LINK_FLAGS "-sFULL_ES3=1")
     list(APPEND LINK_FLAGS "-sMAX_WEBGL_VERSION=2")
     list(APPEND LINK_FLAGS "-sMIN_WEBGL_VERSION=2")
-    list(APPEND LINK_FLAGS "-sUSE_SDL=2")
-    list(APPEND LINK_FLAGS "-sUSE_SDL_IMAGE=2")
+    list(APPEND LINK_FLAGS "-sUSE_SDL=3")
     list(APPEND LINK_FLAGS "-sWASM=1")
-    list(APPEND LINK_FLAGS "-sSTACK_SIZE=128KB")
+    list(APPEND LINK_FLAGS "-sSTACK_SIZE=192KB")
     list(APPEND LINK_FLAGS "--use-preload-plugins")
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/assets)
       list(APPEND LINK_FLAGS
@@ -59,19 +57,12 @@ function(enable_abcg project_target)
                   ${CMAKE_CURRENT_SOURCE_DIR}/assets ${output_dir}/assets)
       endif()
 
-      # Copy DLLs of SDL2: extract first string delimited by ';', extract path
-      # then copy
-      list(GET SDL2_LIBRARY 0 SDL2_FIRSTPATH)
-      string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL2_LIBPATH ${SDL2_FIRSTPATH})
-      file(GLOB SDL2_DLLS "${SDL2_LIBPATH}*.dll")
-      file(COPY ${SDL2_DLLS} DESTINATION ${output_dir})
-
-      # Copy DLLs of SDL2_image
-      list(GET SDL2_IMAGE_LIBRARIES 0 SDL2_IMG_FIRSTPATH)
-      string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL2_IMG_LIBPATH
-                           ${SDL2_IMG_FIRSTPATH})
-      file(GLOB SDL2_IMG_DLLS "${SDL2_IMG_LIBPATH}*.dll")
-      file(COPY ${SDL2_IMG_DLLS} DESTINATION ${output_dir})
+      # Copy SDL3 DLLs: extract first string delimited by ';', extract path then
+      # copy
+      list(GET SDL3_LIBRARY 0 SDL3_FIRSTPATH)
+      string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL3_LIBPATH ${SDL3_FIRSTPATH})
+      file(GLOB SDL3_DLLS "${SDL3_LIBPATH}*.dll")
+      file(COPY ${SDL3_DLLS} DESTINATION ${output_dir})
     else()
       # POST_BUILD: copy executable and assets to bin directory
       if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -96,20 +87,13 @@ function(enable_abcg project_target)
           "$<$<CONFIG:Release>:Release/>" "$<$<CONFIG:MinSizeRel>:MinSizeRel/>"
           "$<$<CONFIG:RelWithDebInfo>:RelWithDebInfo/>")
 
-        # Copy DLLs of SDL2: extract first string delimited by ';', extract path
+        # Copy SDL3 DLLs: extract first string delimited by ';', extract path
         # then copy
-        list(GET SDL2_LIBRARY 0 SDL2_FIRSTPATH)
-        string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL2_LIBPATH
-                             ${SDL2_FIRSTPATH})
-        file(GLOB SDL2_DLLS "${SDL2_LIBPATH}*.dll")
-        file(COPY ${SDL2_DLLS} DESTINATION ${output_dir}/)
-
-        # Copy DLLs of SDL2_image
-        list(GET SDL2_IMAGE_LIBRARIES 0 SDL2_IMG_FIRSTPATH)
-        string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL2_IMG_LIBPATH
-                             ${SDL2_IMG_FIRSTPATH})
-        file(GLOB SDL2_IMG_DLLS "${SDL2_IMG_LIBPATH}*.dll")
-        file(COPY ${SDL2_IMG_DLLS} DESTINATION ${output_dir}/)
+        list(GET SDL3_LIBRARY 0 SDL3_FIRSTPATH)
+        string(REGEX REPLACE "(.+\/).+\.lib" "\\1" SDL3_LIBPATH
+                             ${SDL3_FIRSTPATH})
+        file(GLOB SDL3_DLLS "${SDL3_LIBPATH}*.dll")
+        file(COPY ${SDL3_DLLS} DESTINATION ${output_dir}/)
       endif()
 
       add_custom_command(

@@ -1,0 +1,47 @@
+title = "Nonic"
+
+[chmutov_nonic]
+name = "Chmutov Nonic"
+thumbnail = "textures/thumbs/nonic/chmutov_nonic.png"
+bounds_shape = "box"
+bounds_radius = 1.1
+isosurface_raymarch_steps = 300
+scale = 1.3
+dvr_raymarch_steps = 400
+dvr_falloff = 0.75
+gaussian_curvature_falloff = 0.05
+mean_curvature_falloff = 0.1
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.005
+code_global = '''
+float T_9(float x) {
+  float x2=x*x;
+  float x4=x2*x2;
+  float x6=x4*x2;
+  float x8=x4*x4;
+  return x*(256.*x8-576.*x6+432.*x4-120.*x2+9.);
+}
+'''
+comment = '''
+\mathrm{where}\;T_9(x)=256x^9-576x^7+432x^5-120x^3+9x\\
+&\mathrm{is\;the\;Chebyshev\;polynomial\;of\;the\;first\;kind\;of\;degree\;9.}'''
+expression = "T_9(x)+T_9(y)+T_9(z)+1"
+
+[ennepers_minimal]
+name = "Enneper's Minimal"
+thumbnail = "textures/thumbs/nonic/ennepers_minimal.png"
+bounds_radius = 2.0
+isosurface_raymarch_steps = 350
+scale = 1.0
+dvr_raymarch_steps = 350
+dvr_falloff = 0.25
+gaussian_curvature_falloff = 0.05
+mean_curvature_falloff = 0.1
+max_abs_curvature_falloff = 0.25
+normal_length_falloff = 0.0001
+expression = '''
+64*z^9-128*z^7+64*z^5-702*x^2*y^2*z^3-18*x^2*y^2*z
++144*(y^2*z^6-x^2*z^6)+162*(y^4*z^2-x^4*z^2)
++27*(y^6-x^6)+9*(x^4*z+y^4*z)+48*(x^2*z^3+y^2*z^3)
+-432*(x^2*z^5+y^2*z^5)+81*(x^4*y^2-x^2*y^4)
++240*(y^2*z^4-x^2*z^4)-135*(x^4*z^3+y^4*z^3)'''

@@ -6,7 +6,7 @@
  *
  * This file is part of ABCg (https://github.com/hbatagelo/abcg).
  *
- * @copyright (c) 2021--2023 Harlen Batagelo. All rights reserved.
+ * @copyright (c) 2021--2026 Harlen Batagelo. All rights reserved.
  * This project is released under the MIT License.
  */
 
@@ -38,7 +38,6 @@ namespace abcg {
 class Exception;
 class RuntimeError;
 class SDLError;
-class SDLImageError;
 } // namespace abcg
 
 /**
@@ -59,8 +58,8 @@ private:
 /**
  * @brief Represents an exception object for runtime errors.
  *
- * This is used for throwing exceptions for errors not related to OpenGL, SDL,
- * or SDL_image.
+ * This is used for throwing exceptions for errors not related to OpenGL and
+ * SDL.
  *
  * The explanatory error message is appended with source location information.
  */
@@ -105,34 +104,6 @@ private:
 #else
 public:
   explicit SDLError(std::string_view what);
-
-private:
-  static std::string prettyPrint(std::string_view what);
-#endif
-};
-
-/**
- * @brief Represents an exception object for SDL_image errors.
- *
- * This is used for throwing exceptions for SDL errors that can be checked
- * with `IMG_GetError`.
- *
- * The explanatory error message is appended with source location information,
- * and the SDL_image error message.
- */
-class abcg::SDLImageError : public abcg::Exception {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__) && !defined(__APPLE__)
-public:
-  explicit SDLImageError(
-      std::string_view what,
-      source_location const &sourceLocation = source_location::current());
-
-private:
-  static std::string prettyPrint(std::string_view what,
-                                 source_location const &sourceLocation);
-#else
-public:
-  explicit SDLImageError(std::string_view what);
 
 private:
   static std::string prettyPrint(std::string_view what);
