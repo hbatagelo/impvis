@@ -23,7 +23,7 @@
 
 namespace {
 
-constexpr std::string_view kAppVersion{"v3.0.0"};
+constexpr std::string_view kAppVersion{"v3.1.0"};
 
 } // namespace
 
@@ -352,7 +352,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
       }
 
       // Antialiasing combo box
-      static constexpr std::array<std::string_view, 6> AAItems{
+      static constexpr std::array<std::string_view, 5> AAItems{
           "Off", "2x MSAA", "4x MSAA", "8x MSAA", "16x MSAA"};
       auto const currentAAIndex{
           gsl::narrow_cast<std::size_t>(std::log2(renderState.msaaSamples))};

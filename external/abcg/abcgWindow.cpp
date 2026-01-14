@@ -127,21 +127,25 @@ void setupImGuiStyle(bool const darkTheme, float const alpha) {
 } // namespace
 
 bool abcg::resizingEventWatcher(void *data, SDL_Event *event) {
-  if (event->type != SDL_EVENT_WINDOW_RESIZED)
+  if (event->type != SDL_EVENT_WINDOW_RESIZED) {
     return false;
+  }
 
   auto *SDLWindow{SDL_GetWindowFromID(event->window.windowID)};
-  if (SDLWindow != data)
+  if (SDLWindow != data) {
     return false;
+  }
 
   auto const properties{SDL_GetWindowProperties(SDLWindow)};
-  if (!properties)
+  if (properties == 0u) {
     return false;
+  }
 
   auto *window{static_cast<abcg::Window *>(
       SDL_GetPointerProperty(properties, "window", nullptr))};
-  if (!window || !window->m_enableResizingEventWatcher)
+  if (window == nullptr || !window->m_enableResizingEventWatcher) {
     return false;
+  }
 
   bool done{};
   window->templateHandleEvent(*event, done);
@@ -250,8 +254,9 @@ Uint32 abcg::Window::getSDLWindowID() const noexcept { return m_windowID; }
  * @returns `true` on success; `false` on failure.
  */
 bool abcg::Window::createSDLWindow(SDL_WindowFlags extraFlags) {
-  if (m_window != nullptr)
+  if (m_window != nullptr) {
     return false;
+  }
 
 #ifdef SDL_HINT_IME_SHOW_UI
   SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
@@ -276,8 +281,9 @@ bool abcg::Window::createSDLWindow(SDL_WindowFlags extraFlags) {
                         gsl::narrow_cast<Sint64>(extraFlags | commonFlags));
   m_window = SDL_CreateWindowWithProperties(propertiesID);
   SDL_DestroyProperties(propertiesID);
-  if (m_window == nullptr)
+  if (m_window == nullptr) {
     return false;
+  }
 
 #if defined(WIN32)
   propertiesID = SDL_GetWindowProperties(m_window);
@@ -321,11 +327,17 @@ void abcg::Window::toggleFullscreen() {
   bool const fullscreen{
       (SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN) != 0U};
 
+  static int windowed_w;
+  static int windowed_h;
+  if (!fullscreen) {
+    SDL_GetWindowSize(m_window, &windowed_w, &windowed_h);
+  }
+
   SDL_SetWindowFullscreen(m_window, !fullscreen);
 
   if (fullscreen) {
-    SDL_SetWindowSize(m_window, m_windowSettings.width,
-                      m_windowSettings.height);
+    SDL_SetWindowSize(m_window, windowed_w + 1, windowed_h + 1);
+    SDL_SetWindowSize(m_window, windowed_w, windowed_h);
   }
 
   setEnableResizingEventWatcher(true);
@@ -335,8 +347,9 @@ void abcg::Window::toggleFullscreen() {
 void abcg::Window::templateHandleEvent(SDL_Event const &event, bool &done) {
   ImGui_ImplSDL3_ProcessEvent(&event);
 
-  if (event.window.windowID != m_windowID)
+  if (event.window.windowID != m_windowID) {
     return;
+  }
 
   switch (event.type) {
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -356,8 +369,11 @@ void abcg::Window::templateHandleEvent(SDL_Event const &event, bool &done) {
     SDL_SetWindowSize(m_window, m_windowSettings.width,
                       m_windowSettings.height);
 #endif
+  } break;
+  default:
+    break;
   }
-  }
+
   if (event.type == SDL_EVENT_KEY_UP) {
     if (event.key.key == SDLK_F11) {
 #if defined(__EMSCRIPTEN__)
@@ -419,8 +435,9 @@ void abcg::Window::templatePaint() {
 }
 
 void abcg::Window::templateDestroy() {
-  if (m_window == nullptr)
+  if (m_window == nullptr) {
     return;
+  }
 
   destroy();
 

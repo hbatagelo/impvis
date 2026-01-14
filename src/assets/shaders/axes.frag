@@ -15,6 +15,7 @@ in vec3 fragColor;
 in vec3 fragNormal;
 in vec3 fragPosition;
 in vec3 vLocalPos;
+in float vScaledCylinderEnd;
 
 out vec4 outColor;
 
@@ -51,22 +52,23 @@ void main()
   // Suppress decimal ticks where integer ticks exist
   tickDec *= (1.0 - tickInt);
 
-  // Radial + length masks
-  // Use scaled cylinder radius for radial mask
+  // Radial mask: fade out ticks beyond cylinder surface
   float scaledCylinderRadius = uCylinderRadius * uRadiusScale;
   float radialMask = smoothstep(scaledCylinderRadius * 1.05 + wInt,
                                 scaledCylinderRadius * 1.05 - wInt,
                                 radial);
 
-  // Use scaled half length for length mask
+  // Length mask: fade out ticks beyond cylinder ends
   float scaledHalfLength = uCylinderHalfLength * uLengthScale;
   float lengthMask = smoothstep(scaledHalfLength + wInt,
                                 scaledHalfLength - wInt,
                                 axial);
 
   // Final masks
-  tickInt *= radialMask * lengthMask;
-  tickDec *= radialMask * lengthMask;
+  // Exclude cone geometry from tick rendering
+  float isCone = step(vScaledCylinderEnd, vLocalPos.x);
+  tickInt *= radialMask * lengthMask * (1.0 - isCone);
+  tickDec *= radialMask * lengthMask * (1.0 - isCone);
 
   const float ambient = 0.4;
   float diffuse = max(dot(normalize(fragNormal), -uLightDirection), 0.0) * 0.6;

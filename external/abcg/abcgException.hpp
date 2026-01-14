@@ -31,7 +31,6 @@ using source_location = std::source_location;
 #endif
 #endif
 
-#include <stdexcept>
 #include <string>
 
 namespace abcg {

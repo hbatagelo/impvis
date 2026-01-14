@@ -34,7 +34,7 @@ void RenderPipeline::onPaint(RenderState &renderState, AppState const &appState,
 
   m_axes.setCylinderLength(renderState.boundsRadius * 2.0f);
 
-  auto onFrameStart{[&] {
+  m_raycast.setFrameStartCallback([&] {
     if (renderState.showAxes) {
       m_axesTarget.bind();
       abcg::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -45,12 +45,17 @@ void RenderPipeline::onPaint(RenderState &renderState, AppState const &appState,
       abcg::glDisable(GL_DEPTH_TEST);
 
       m_raycastSwapChain.back().bind();
-      m_raycast.setCompositionSource(m_axesTarget.getColorTexture(),
-                                     m_axesTarget.getDepthTexture());
+      m_raycast.setCompositionSrcColorGetter(
+          [&] { return m_axesTarget.getColorTexture(); });
+      m_raycast.setCompositionSrcDepthGetter(
+          [&] { return m_axesTarget.getDepthTexture(); });
+    } else {
+      m_raycast.setCompositionSrcColorGetter({});
+      m_raycast.setCompositionSrcDepthGetter({});
     }
-  }};
+  });
 
-  auto onFrameEnd{[&] {
+  m_raycast.setFrameEndCallback([&] {
     GLenum const drawBuffer{GL_COLOR_ATTACHMENT0};
     abcg::glDrawBuffers(1, &drawBuffer);
 
@@ -72,11 +77,10 @@ void RenderPipeline::onPaint(RenderState &renderState, AppState const &appState,
     }
 
     m_raycastSwapChain.swap();
-  }};
+  });
 
   m_raycastSwapChain.back().bind();
-  m_raycast.onPaint(camera, renderState, lightRotation, onFrameStart,
-                    onFrameEnd);
+  m_raycast.onPaint(camera, renderState, lightRotation);
   RenderTarget::unbind();
 
   abcg::glEnable(GL_BLEND);

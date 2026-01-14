@@ -287,5 +287,14 @@ void Window::applyRecommendedSettings() {
   }
 
   renderState.isosurfaceRaymarchSteps = rayMarchSteps;
-  renderState.dvrRaymarchSteps = data.dvrRaymarchSteps;
+
+  // Make number of raymarch steps proportional to density
+  // If density = kInitialDvrDensity, use recommended number of steps
+  // If density = kMaxDvrDensity, use triple the recommended number of steps
+  renderState.dvrRaymarchSteps = gsl::narrow_cast<int>(
+      gsl::narrow<float>(data.dvrRaymarchSteps) *
+      std::lerp(
+          1.0f, 3.0f,
+          (renderState.dvrDensity - RenderState::kInitialDvrDensity) /
+              (RenderState::kMaxDvrDensity - RenderState::kInitialDvrDensity)));
 }

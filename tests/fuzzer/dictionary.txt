@@ -111,7 +111,7 @@
 "uMeanCurvatureFalloff"
 "uMaxAbsCurvatureFalloff"
 "uNormalLengthFalloff"
-"uDVRAbsorptionCoeff"
+"uDVRDensity"
 "@"
 "#"
 "(x,y,z)"

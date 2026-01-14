@@ -123,7 +123,7 @@ uniform float uMeanCurvatureFalloff;
 uniform float uMaxAbsCurvatureFalloff;
 uniform float uNormalLengthFalloff;
 uniform float uDVRFalloff;
-uniform float uDVRAbsorptionCoeff;
+uniform float uDVRDensity;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Function definitions
@@ -827,7 +827,7 @@ vec4 dvrMarch(in Ray   ray    /* ray origin and direction           */,
               in float tEnd   /* ray parameter at end of interval   */)
 {
   float ds = (tEnd - tStart) / float(DVR_RAYMARCH_STEPS);
-  float opticalDepthScale = ds * kInvBoundRadius * uDVRAbsorptionCoeff;
+  float opticalDepthScale = ds * kInvBoundRadius * uDVRDensity;
 
   vec3 samplePos = ray.origin + ray.direction * tStart;
   vec3 rayStep   = ray.direction * ds;

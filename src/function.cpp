@@ -382,7 +382,7 @@ void Function::extractParameters() {
                                             "uMaxAbsCurvatureFalloff",
                                             "uNormalLengthFalloff",
                                             "uDVRFalloff",
-                                            "uDVRAbsorptionCoeff"};
+                                            "uDVRDensity"};
   for (auto const &name : reservedNames) {
     parameters.erase(name);
   }

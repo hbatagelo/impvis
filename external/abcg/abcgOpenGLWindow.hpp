@@ -15,7 +15,6 @@
 
 #include <string>
 
-#include "abcgExternal.hpp"
 #include "abcgOpenGLFunction.hpp"
 #include "abcgWindow.hpp"
 

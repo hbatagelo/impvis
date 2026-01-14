@@ -28,19 +28,21 @@ out vec3 fragColor;
 out vec3 fragNormal;
 out vec3 fragPosition;
 out vec3 vLocalPos;
+out float vScaledCylinderEnd;
 
 void main()
 {
   vec3 scaledPosition = inPosition;
   vec3 scaledNormal = inNormal;
 
+  float cylinderStart = -uCylinderHalfLength;
   float cylinderEnd = uCylinderHalfLength;
-  bool isCone = inPosition.x >= cylinderEnd - 0.001; // Cone starts at cylinderEnd
+  bool isBaseCap = inPosition.x <= cylinderStart + 0.001;
+  bool isCone = inPosition.x >= cylinderEnd - 0.001;
 
   if (isCone)
   {
     // For cone: scale uniformly with radiusScale to maintain proportions
-    // First scale the cylinder end position
     float scaledCylinderEnd = cylinderEnd * uLengthScale;
 
     // Cone base is at the scaled cylinder end
@@ -67,9 +69,14 @@ void main()
   }
 
   // Save scaled local coords for tick mark computation
-  // For cylinder part, use scaled position; for cone, clamp to cylinder end
+  // For cylinder part, use scaled position; for cone and base cap,
+  // clamp and exclude from tick rendering
   if (isCone) {
-    vLocalPos = vec3(cylinderEnd * uLengthScale, scaledPosition.yz);
+    vScaledCylinderEnd = cylinderEnd * uLengthScale;
+    vLocalPos = vec3(vScaledCylinderEnd, scaledPosition.yz);
+  } else if (isBaseCap) {
+    // Clamp base cap to just beyond cylinder start
+    vLocalPos = vec3(cylinderStart * uLengthScale - 0.001, scaledPosition.yz);
   } else {
     vLocalPos = scaledPosition;
   }

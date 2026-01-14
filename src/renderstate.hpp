@@ -15,6 +15,14 @@
 #include <glm/glm.hpp>
 
 struct RenderState {
+  static constexpr auto kMinDvrDensity{0.5f};
+  static constexpr auto kMaxDvrDensity{50.0f};
+  static constexpr auto kInitialDvrDensity{5.0f};
+
+  static_assert(kMinDvrDensity < kMaxDvrDensity);
+  static_assert(kMinDvrDensity <= kInitialDvrDensity &&
+                kInitialDvrDensity < kMaxDvrDensity);
+
   enum class BoundsShape { Sphere, Box };
   enum class RenderingMode { LitSurface, UnlitSurface, DirectVolume };
   enum class SurfaceColorMode {
@@ -35,7 +43,7 @@ struct RenderState {
   Function function;
 
   float isoValue{0.0f};
-  float dvrAbsorptionCoeff{5.0f};
+  float dvrDensity{kInitialDvrDensity};
   float dvrFalloff{1.0f};
   float gaussianCurvatureFalloff{1.0f};
   float meanCurvatureFalloff{1.0f};
@@ -97,8 +105,7 @@ struct RenderState {
       {0.5f, 0.0f, 0.0f, 1.0f}    // #7f0000
   };
 
-  friend bool operator==(RenderState const &,
-                         RenderState const &) = default;
+  friend bool operator==(RenderState const &, RenderState const &) = default;
 };
 
 #endif

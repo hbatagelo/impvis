@@ -21,12 +21,13 @@ public:
   void onCreate(RenderState const &renderState);
   void onUpdate();
   void onPaint(Camera const &camera, RenderState const &renderState,
-               glm::quat lightRotation, std::function<void()> onFrameStart,
-               std::function<void()> onFrameEnd);
+               glm::quat lightRotation);
   void onResize(glm::ivec2 size);
   void onDestroy();
 
-  [[nodiscard]] bool isProgramValid() const noexcept { return !m_programBuildFailed; }
+  [[nodiscard]] bool isProgramValid() const noexcept {
+    return !m_programBuildFailed;
+  }
 
   [[nodiscard]] bool isFrameComplete() const noexcept {
     return !m_frameState.isRendering && m_frameState.frameCount > 0;
@@ -54,16 +55,28 @@ public:
     return m_shadingUBOData.lightDirWorld;
   }
 
-  void setCompositionSource(GLuint colorTexture, GLuint depthTexture) noexcept {
-    m_colorTexture = colorTexture;
-    m_depthTexture = depthTexture;
+  void setCompositionSrcColorGetter(
+      std::function<GLuint()> colorTextureGetter) noexcept {
+    m_colorTextureGetter.swap(colorTextureGetter);
+  }
+
+  void setCompositionSrcDepthGetter(
+      std::function<GLuint()> depthTextureGetter) noexcept {
+    m_depthTextureGetter.swap(depthTextureGetter);
+  }
+
+  void setFrameStartCallback(std::function<void()> onFrameStart) noexcept {
+    m_onFrameStart.swap(onFrameStart);
+  }
+
+  void setFrameEndCallback(std::function<void()> onFrameEnd) noexcept {
+    m_onFrameEnd.swap(onFrameEnd);
   }
 
 private:
   static constexpr std::string_view kVertexShaderPath{"shaders/raycast.vert"};
   static constexpr std::string_view kFragmentShaderPath{"shaders/raycast.frag"};
-  static inline glm::vec3 kLightDirection{
-      glm::normalize(glm::vec3{1.0f, -1.0f, -1.0f})};
+  static constexpr glm::vec3 kLightDirection{glm::vec3{1.0f, -1.0f, -1.0f}};
 
   struct Vertex {
     glm::vec2 position{};
@@ -107,11 +120,15 @@ private:
     std::array<glm::vec4, 4> data;
   };
 
-  // Minimum number of screen rows per chunk
-  static constexpr int kMinChunkHeight{4};
-  // Maximum time allowed for rendering a full frame. If the last frame render
-  // took longer, the number of render chunks increases for the next frame.
-  static constexpr double kFullFrameMaxTime{25.0 / 1000.0};
+  // Maximum number of vertical slices a frame can be divided into.
+  static constexpr auto kMaxTotalChunks{32};
+
+  // Minimum FPS allowed for the UI.
+  // If the actual FPS is lower than this, rendering of the next frame is
+  // split into smaller chunks, up to kMaxTotalChunks.
+  static constexpr auto kMinimumUIFPS{30.0};
+
+  abcg::Timer timer;
 
   struct FrameState {
     bool isRendering{};
@@ -141,7 +158,7 @@ private:
   GLuint m_UBOShading{};
   GLuint m_UBOParams{};
   GLint m_isoValueLocation{};
-  GLint m_dvrAbsorptionCoeffLocation{};
+  GLint m_dvrDensityLocation{};
   GLint m_dvrFalloffLocation{};
   GLint m_gaussianCurvatureFalloffLocation{};
   GLint m_meanCurvatureFalloffLocation{};
@@ -150,8 +167,11 @@ private:
   GLint m_colorTextureLocation{};
   GLint m_depthTextureLocation{};
 
-  GLuint m_colorTexture{};
-  GLuint m_depthTexture{};
+  std::function<GLuint()> m_colorTextureGetter;
+  std::function<GLuint()> m_depthTextureGetter;
+
+  std::function<void()> m_onFrameStart;
+  std::function<void()> m_onFrameEnd;
 
   enum class ProgramBuildPhase { Compile, Link, Done };
   ProgramBuildPhase m_programBuildPhase{ProgramBuildPhase::Done};
@@ -169,15 +189,14 @@ private:
   void destroyUBOs();
   void createVBOs();
   void setupVAO();
-  std::string getColormapDefinition(std::string_view name,
-                                    std::vector<glm::vec4> const &colors);
 
   // Adaptive rendering
   void resetFrameState();
   void startNewFrame(RenderState const &renderState);
   void renderChunk(RenderState const &renderState);
   void onFrameCompleted();
-  bool hasStateInvalidatedFrame(RenderState const &renderState) const noexcept;
+  [[nodiscard]] bool
+  hasStateInvalidatedFrame(RenderState const &renderState) const noexcept;
 };
 
 #endif

@@ -116,11 +116,12 @@ void UILegends::dvrLegendAndModeSettings(AppContext &context) {
                             (itemSpacingX * 2.0f)};
     ImGui::PushItemWidth(columnBWidth);
 
-    ImGui::SliderFloat("##sliderDvrAbsorptionCoeff",
-                       &renderState.dvrAbsorptionCoeff, 0.5f, 25.0f,
+    ImGui::SliderFloat("##sliderDvrDensity", &renderState.dvrDensity,
+                       RenderState::kMinDvrDensity, RenderState::kMaxDvrDensity,
                        "Density: %.1f");
-    renderState.dvrAbsorptionCoeff =
-        std::clamp(renderState.dvrAbsorptionCoeff, 0.0f, 1000.0f);
+
+    renderState.dvrDensity =
+        std::clamp(renderState.dvrDensity, 0.0f, RenderState::kMaxDvrDensity);
 
     ImGui::Spacing();
 

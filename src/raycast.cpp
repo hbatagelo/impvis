@@ -16,6 +16,34 @@
 
 #include <fstream>
 
+namespace {
+
+std::string getColormapDefinition(std::string_view name,
+                                  std::vector<glm::vec4> const &colors) {
+  auto const emitArray{[&name](std::vector<glm::vec4> const &lut) {
+    auto out{std::format("const vec4 {}[{}] = vec4[{}](\n", name, lut.size(),
+                         lut.size())};
+    for (std::size_t const index : iter::range(lut.size())) {
+      auto const &color{lut[index]};
+      out += std::format("    vec4({:.6f}, {:.6f}, {:.6f}, {:.6f}){}", color.r,
+                         color.g, color.b, color.a,
+                         (index + 1 < lut.size() ? ",\n" : "\n"));
+    }
+    out += ");\n\n";
+    return out;
+  }};
+
+  std::string str;
+  str.reserve(32768);
+
+  str += emitArray(colors);
+  str += std::format("const int {}_SIZE = {};\n", name, colors.size());
+
+  return str;
+}
+
+} // namespace
+
 void Raycast::handleEvent(SDL_Event const &event) {
   if (event.type == SDL_EVENT_WINDOW_RESTORED ||
       event.type == SDL_EVENT_WINDOW_SHOWN ||
@@ -46,9 +74,7 @@ void Raycast::onUpdate() {
 }
 
 void Raycast::onPaint(Camera const &camera, RenderState const &renderState,
-                      glm::quat lightRotation,
-                      std::function<void()> onFrameStart,
-                      std::function<void()> onFrameEnd) {
+                      glm::quat lightRotation) {
 
   if (hasStateInvalidatedFrame(renderState)) {
     // Disable exception throwing when creating user-defined shader programs to
@@ -105,8 +131,9 @@ void Raycast::onPaint(Camera const &camera, RenderState const &renderState,
 #endif
   }
 
-  if (m_programBuildPhase != ProgramBuildPhase::Done)
+  if (m_programBuildPhase != ProgramBuildPhase::Done) {
     return;
+  }
 
   if (!m_frameState.isRendering || hasStateInvalidatedFrame(renderState)) {
     if (!m_frameState.isRendering) {
@@ -133,8 +160,9 @@ void Raycast::onPaint(Camera const &camera, RenderState const &renderState,
 
     m_shadingUBOData.insideKdId = renderState.insideKdId;
     m_shadingUBOData.outsideKdId = renderState.outsideKdId;
-    m_shadingUBOData.lightDirWorld = glm::mat3(m_cameraUBOData.invViewMatrix) *
-                                     glm::vec3{lightRotation * kLightDirection};
+    m_shadingUBOData.lightDirWorld =
+        glm::mat3(m_cameraUBOData.invViewMatrix) *
+        glm::normalize(glm::vec3{lightRotation * kLightDirection});
 
     for (auto &&[index, param] :
          iter::enumerate(renderState.function.getParameters())) {
@@ -143,14 +171,19 @@ void Raycast::onPaint(Camera const &camera, RenderState const &renderState,
       m_paramsUBOData.data.at(vecIndex)[varIndex] = param.value;
     }
 
-    onFrameStart();
+    if (m_onFrameStart) {
+      m_onFrameStart();
+    }
   }
 
   if (m_frameState.isRendering) {
     renderChunk(renderState);
     if (m_frameState.nextChunkY >= m_frameState.viewportSize.y) {
       m_frameState.isRendering = false;
-      onFrameEnd();
+
+      if (m_onFrameEnd) {
+        m_onFrameEnd();
+      }
     }
   }
 }
@@ -372,8 +405,8 @@ void Raycast::createUBOs() {
 
   // Get location of other uniform variables
   m_isoValueLocation = abcg::glGetUniformLocation(m_program, "uIsoValue");
-  m_dvrAbsorptionCoeffLocation =
-      abcg::glGetUniformLocation(m_program, "uDVRAbsorptionCoeff");
+  m_dvrDensityLocation =
+      abcg::glGetUniformLocation(m_program, "uDVRDensity");
   m_dvrFalloffLocation = abcg::glGetUniformLocation(m_program, "uDVRFalloff");
   m_gaussianCurvatureFalloffLocation =
       abcg::glGetUniformLocation(m_program, "uGaussianCurvatureFalloff");
@@ -436,31 +469,6 @@ void Raycast::setupVAO() {
   abcg::glBindVertexArray(0);
 }
 
-std::string
-Raycast::getColormapDefinition(std::string_view name,
-                               std::vector<glm::vec4> const &colors) {
-  auto const emitArray{[&name](std::vector<glm::vec4> const &lut) {
-    auto out{std::format("const vec4 {}[{}] = vec4[{}](\n", name, lut.size(),
-                         lut.size())};
-    for (std::size_t const index : iter::range(lut.size())) {
-      auto const &c{lut[index]};
-      out +=
-          std::format("    vec4({:.6f}, {:.6f}, {:.6f}, {:.6f}){}", c[0], c[1],
-                      c[2], c[3], (index + 1 < lut.size() ? ",\n" : "\n"));
-    }
-    out += ");\n\n";
-    return out;
-  }};
-
-  std::string str;
-  str.reserve(32768);
-
-  str += emitArray(colors);
-  str += std::format("const int {}_SIZE = {};\n", name, colors.size());
-
-  return str;
-}
-
 void Raycast::resetFrameState() {
   m_frameState.frameTimer.restart();
   m_frameState.numChunksEstimate = 1.0;
@@ -513,8 +521,8 @@ void Raycast::renderChunk(RenderState const &renderState) {
   updateUBO(m_UBOParams, std::span{&m_paramsUBOData, sizeof(m_paramsUBOData)});
 
   abcg::glUniform1f(m_isoValueLocation, renderState.isoValue);
-  abcg::glUniform1f(m_dvrAbsorptionCoeffLocation,
-                    renderState.dvrAbsorptionCoeff);
+  abcg::glUniform1f(m_dvrDensityLocation,
+                    renderState.dvrDensity);
   abcg::glUniform1f(m_dvrFalloffLocation, renderState.dvrFalloff);
   abcg::glUniform1f(m_gaussianCurvatureFalloffLocation,
                     renderState.gaussianCurvatureFalloff);
@@ -526,16 +534,20 @@ void Raycast::renderChunk(RenderState const &renderState) {
                     renderState.normalLengthFalloff);
 
   if (renderState.showAxes) {
-    if (m_depthTexture > 0) {
-      abcg::glActiveTexture(GL_TEXTURE0);
-      abcg::glBindTexture(GL_TEXTURE_2D, m_depthTexture);
-      abcg::glUniform1i(m_depthTextureLocation, 0);
+    if (m_depthTextureGetter) {
+      if (auto const depthTexture{m_depthTextureGetter()}; depthTexture > 0) {
+        abcg::glActiveTexture(GL_TEXTURE0);
+        abcg::glBindTexture(GL_TEXTURE_2D, depthTexture);
+        abcg::glUniform1i(m_depthTextureLocation, 0);
+      }
     }
 
-    if (m_colorTexture > 0) {
-      abcg::glActiveTexture(GL_TEXTURE1);
-      abcg::glBindTexture(GL_TEXTURE_2D, m_colorTexture);
-      abcg::glUniform1i(m_colorTextureLocation, 1);
+    if (m_colorTextureGetter) {
+      if (auto const colorTexture{m_colorTextureGetter()}; colorTexture > 0) {
+        abcg::glActiveTexture(GL_TEXTURE1);
+        abcg::glBindTexture(GL_TEXTURE_2D, colorTexture);
+        abcg::glUniform1i(m_colorTextureLocation, 1);
+      }
     }
   }
 
@@ -552,13 +564,16 @@ void Raycast::renderChunk(RenderState const &renderState) {
 }
 
 void Raycast::onFrameCompleted() {
+  auto const fps{gsl::narrow<double>(ImGui::GetIO().Framerate)};
+  auto const deltaFPSNormalized{(kMinimumUIFPS - fps) / kMinimumUIFPS};
+  auto const newNumChunksEstimate{m_frameState.numChunksEstimate +
+                                  deltaFPSNormalized};
+
+  m_frameState.numChunksEstimate = std::clamp(
+      newNumChunksEstimate, 1.0, gsl::narrow<double>(kMaxTotalChunks));
+
   m_frameState.lastFrameTime = m_frameState.frameTimer.elapsed();
 
-  auto const newNumChunksEstimate{std::clamp(
-      m_frameState.lastFrameTime / kFullFrameMaxTime, 1.0,
-      gsl::narrow_cast<double>(m_frameState.viewportSize.y) / kMinChunkHeight)};
-  m_frameState.numChunksEstimate =
-      std::lerp(m_frameState.numChunksEstimate, newNumChunksEstimate, 0.5);
   ++m_frameState.frameCount;
 }
 
