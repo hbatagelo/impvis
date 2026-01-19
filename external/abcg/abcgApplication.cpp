@@ -56,7 +56,7 @@ abcg::Application::Application([[maybe_unused]] int argc, char **argv) {
       argv_str.substr(0, argv_str.find_last_of('/'));
 #endif
 
-  abcg::Application::m_assetsPath = abcg::Application::m_basePath + "/assets/";
+  abcg::Application::m_assetsPath = abcg::Application::m_basePath / "assets/";
 }
 
 /**
@@ -77,8 +77,7 @@ void abcg::Application::run(Window &window) {
   SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR, "1");
   SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 
-  if (Uint32 const subsystemMask{SDL_INIT_VIDEO};
-      !SDL_Init(subsystemMask)) {
+  if (Uint32 const subsystemMask{SDL_INIT_VIDEO}; !SDL_Init(subsystemMask)) {
     throw abcg::SDLError("SDL_Init failed");
   }
 
@@ -114,7 +113,7 @@ void abcg::Application::run(Window &window) {
  *
  * @sa abcg::Application::getBasePath
  */
-std::string const &abcg::Application::getAssetsPath() noexcept {
+std::filesystem::path const &abcg::Application::getAssetsPath() noexcept {
   return m_assetsPath;
 }
 
@@ -130,16 +129,17 @@ std::string const &abcg::Application::getAssetsPath() noexcept {
  *
  * @remark The returned path does not end with a slash.
  */
-std::string const &abcg::Application::getBasePath() noexcept {
+std::filesystem::path const &abcg::Application::getBasePath() noexcept {
   return m_basePath;
 }
 
 void abcg::Application::mainLoopIterator([[maybe_unused]] bool &done) const {
   SDL_Event event{};
-  while (SDL_PollEvent(&event) != 0) {
+  while (static_cast<int>(SDL_PollEvent(&event)) != 0) {
 #if !defined(__EMSCRIPTEN__)
-    if (event.type == SDL_EVENT_QUIT)
+    if (event.type == SDL_EVENT_QUIT) {
       done = true;
+    }
 #endif
     m_window->templateHandleEvent(event, done);
   }

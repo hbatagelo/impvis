@@ -26,9 +26,9 @@ void SwapChain::resize(glm::ivec2 size) {
 void SwapChain::swap() noexcept { m_backIndex = 1 - m_backIndex; }
 
 RenderTarget const &SwapChain::back() const noexcept {
-  return m_targets[m_backIndex];
+  return m_targets.at(m_backIndex);
 }
 
 RenderTarget const &SwapChain::front() const noexcept {
-  return m_targets[1 - m_backIndex];
+  return m_targets.at(1 - m_backIndex);
 }

@@ -99,3 +99,17 @@ max_abs_curvature_falloff = 1.25
 normal_length_falloff = 0.3
 parameters = [{name = "r", value = 1}]
 expression = "x^2+2*r*z"
+
+[witch_of_agnesi]
+name = "Witch of Agnesi"
+thumbnail = "textures/thumbs/quadric/witch_of_agnesi.png"
+bounds_radius = 2.0
+isosurface_raymarch_steps = 100
+scale = 1.15
+dvr_falloff = 5.0
+gaussian_curvature_falloff = 1.0
+mean_curvature_falloff = 3.0
+max_abs_curvature_falloff = 0.755
+normal_length_falloff = 0.4
+parameters = [{name = "w", value = 0.5}]
+expression = "y*(x^2+z^2+w)-w"

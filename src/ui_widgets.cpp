@@ -16,13 +16,12 @@
 #include <gsl/gsl>
 #include <imgui_internal.h>
 
-void UIWidgets::showDelayedTooltip(std::string_view text,
-                                   bool allowWhenDisabled) {
+void UIWidgets::showDelayedTooltip(char const *text, bool allowWhenDisabled) {
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal |
                            (allowWhenDisabled
                                 ? ImGuiHoveredFlags_AllowWhenDisabled
                                 : ImGuiHoveredFlags_None))) {
-    ImGui::SetTooltip("%s", text.data());
+    ImGui::SetTooltip("%s", text);
   }
 }
 
@@ -32,8 +31,8 @@ void UIWidgets::showRecommendedSettingsTooltip(AppContext &context) {
   }
 }
 
-void UIWidgets::drawCheckerboard(ImDrawList *const drawList, ImVec2 pos,
-                                 ImVec2 size, float const checkerSize) {
+void UIWidgets::drawCheckerboard(ImDrawList *drawList, ImVec2 pos, ImVec2 size,
+                                 float checkerSize) {
   auto const color1{IM_COL32(204, 204, 204, 255)};
   auto const color2{IM_COL32(153, 153, 153, 255)};
 
@@ -44,8 +43,9 @@ void UIWidgets::drawCheckerboard(ImDrawList *const drawList, ImVec2 pos,
        iter::product(iter::range(rows), iter::range(cols))) {
     auto const color{((row + col) % 2 == 0) ? color1 : color2};
 
-    auto const minCorner{ImVec2(pos.x + gsl::narrow<float>(col) * checkerSize,
-                                pos.y + gsl::narrow<float>(row) * checkerSize)};
+    auto const minCorner{
+        ImVec2(pos.x + (gsl::narrow<float>(col) * checkerSize),
+               pos.y + (gsl::narrow<float>(row) * checkerSize))};
     auto const maxCorner{
         ImVec2(std::min(pos.x + gsl::narrow<float>(col + 1) * checkerSize,
                         pos.x + size.x),
@@ -56,11 +56,245 @@ void UIWidgets::drawCheckerboard(ImDrawList *const drawList, ImVec2 pos,
   }
 }
 
-bool UIWidgets::gradientWidget(
-    std::string_view label, std::vector<glm::vec4> &stops, bool useAlpha,
-    ImVec2 size, std::function<float(float)> const &tickerMapFunc,
-    bool showTickers, int numTickers, std::string_view leftLabel,
-    std::string_view centerLabel, std::string_view rightLabel) {
+namespace {
+
+struct GradientDimensions {
+  float labelHeight;
+  float tickerHeight;
+  float barHeight;
+  float markerSize;
+};
+
+struct GradientPositions {
+  ImVec2 labelPos;
+  ImVec2 barPos;
+  ImVec2 barSize;
+};
+
+ImU32 colorToImU32(glm::vec4 color) {
+  return IM_COL32(gsl::narrow_cast<int>(color.r * 255.0f),
+                  gsl::narrow_cast<int>(color.g * 255.0f),
+                  gsl::narrow_cast<int>(color.b * 255.0f),
+                  gsl::narrow_cast<int>(color.a * 255.0f));
+}
+
+glm::vec4 interpolateColor(std::vector<glm::vec4> const &stops, float t) {
+  if (stops.size() == 1) {
+    return stops[0];
+  }
+
+  auto const tStop{t * gsl::narrow<float>(stops.size() - 1)};
+  auto const idx{std::clamp(gsl::narrow<std::size_t>(std::floor(tStop)),
+                            std::size_t{}, stops.size() - 2)};
+
+  auto const tLocal{tStop - gsl::narrow<float>(idx)};
+  return glm::mix(stops.at(idx), stops.at(idx + 1), tLocal);
+}
+
+GradientDimensions calculateDimensions(ImVec2 size, bool hasLabels,
+                                       bool showTickers) {
+  auto const smallFontSize{ImGui::GetFontSize() * 0.95f};
+  auto const labelHeight{hasLabels ? smallFontSize + 4.0f : 0.0f};
+  auto constexpr tickerMarkHeight{4.0f};
+  auto const tickerHeight{showTickers ? tickerMarkHeight + smallFontSize + 3.0f
+                                      : 0.0f};
+  auto const barHeight{size.y - labelHeight - tickerHeight};
+
+  return {.labelHeight = labelHeight,
+          .tickerHeight = tickerHeight,
+          .barHeight = barHeight,
+          .markerSize = 10.0f};
+}
+
+GradientPositions calculatePositions(ImVec2 pos, ImVec2 size,
+                                     GradientDimensions const &dims) {
+  auto const labelPos{ImVec2(pos.x, pos.y)};
+  auto const barPos{ImVec2(pos.x, pos.y + dims.labelHeight)};
+  auto const barSize{ImVec2(size.x, dims.barHeight)};
+
+  return {.labelPos = labelPos, .barPos = barPos, .barSize = barSize};
+}
+
+void drawGradientLabels(ImDrawList *drawList, ImVec2 labelPos, ImVec2 size,
+                        char const *leftLabel, char const *centerLabel,
+                        char const *rightLabel, float labelHeight) {
+  if (labelHeight <= 0.0f) {
+    return;
+  }
+
+  auto *const font{ImGui::GetFont()};
+  auto const smallFontSize{ImGui::GetFontSize() * 0.95f};
+  auto const offsetPosY{labelPos.y - 1};
+  auto const labelColor{IM_COL32(200, 200, 200, 255)};
+
+  if (*leftLabel != '\0') {
+    drawList->AddText(font, smallFontSize, ImVec2(labelPos.x, offsetPosY),
+                      labelColor, leftLabel);
+  }
+
+  if (*centerLabel != '\0') {
+    auto const textSize{
+        font->CalcTextSizeA(smallFontSize, FLT_MAX, 0.0f, centerLabel)};
+    auto const centerPos{
+        ImVec2(labelPos.x + ((size.x - textSize.x) * 0.5f), offsetPosY)};
+    drawList->AddText(font, smallFontSize, centerPos, labelColor, centerLabel);
+  }
+
+  if (*rightLabel != '\0') {
+    auto const textSize{
+        font->CalcTextSizeA(smallFontSize, FLT_MAX, 0.0f, rightLabel)};
+    auto const rightPos{ImVec2(labelPos.x + size.x - textSize.x, offsetPosY)};
+    drawList->AddText(font, smallFontSize, rightPos, labelColor, rightLabel);
+  }
+}
+
+void drawGradientBar(ImDrawList *drawList, ImVec2 barPos, ImVec2 barSize,
+                     std::vector<glm::vec4> const &stops) {
+  auto constexpr gradientSegments{256};
+
+  for (auto const idx : iter::range(gradientSegments)) {
+    auto const tLinear{gsl::narrow<float>(idx) /
+                       gsl::narrow<float>(gradientSegments)};
+    auto const tNextLinear{gsl::narrow<float>(idx + 1) /
+                           gsl::narrow<float>(gradientSegments)};
+
+    auto const color1{interpolateColor(stops, tLinear)};
+    auto const color2{interpolateColor(stops, tNextLinear)};
+
+    auto const x1{barPos.x + (tLinear * barSize.x)};
+    auto const x2{barPos.x + (tNextLinear * barSize.x)};
+
+    drawList->AddRectFilledMultiColor(
+        ImVec2(x1, barPos.y), ImVec2(x2, barPos.y + barSize.y),
+        colorToImU32(color1), colorToImU32(color2), colorToImU32(color2),
+        colorToImU32(color1));
+  }
+
+  // Draw border
+  auto constexpr borderThickness{1.5f};
+  drawList->AddRect(barPos, ImVec2(barPos.x + barSize.x, barPos.y + barSize.y),
+                    IM_COL32(150, 150, 150, 128), 0.0f, 0, borderThickness);
+}
+
+bool handleStopMarkerInteraction(ImGuiWindow *window, ImGuiID baseId,
+                                 std::size_t idx, ImRect const &markerBb,
+                                 glm::vec4 &stopColor, bool useAlpha) {
+  auto const markerId{baseId + gsl::narrow<ImGuiID>(idx + 1)};
+  bool valueChanged{false};
+
+  if (ImGui::IsMouseHoveringRect(markerBb.Min, markerBb.Max)) {
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+      ImGui::SetActiveID(markerId, window);
+    }
+  }
+
+  auto const popupId{std::format("##popupGradientColorPicker{}", idx)};
+
+  if (ImGui::GetActiveID() == markerId &&
+      ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+    ImGui::OpenPopup(popupId.c_str());
+  }
+
+  if (ImGui::BeginPopup(popupId.c_str())) {
+    std::array<float, 4> color{stopColor.r, stopColor.g, stopColor.b,
+                               stopColor.a};
+
+    auto const flags{ImGuiColorEditFlags_DisplayRGB |
+                     ImGuiColorEditFlags_DisplayHSV |
+                     (useAlpha ? ImGuiColorEditFlags_AlphaBar |
+                                     ImGuiColorEditFlags_AlphaPreview
+                               : ImGuiColorEditFlags_None)};
+
+    if (ImGui::ColorPicker4("##colorPicker", color.data(), flags)) {
+      stopColor.r = color[0];
+      stopColor.g = color[1];
+      stopColor.b = color[2];
+      stopColor.a = color[3];
+      valueChanged = true;
+    }
+
+    ImGui::EndPopup();
+  }
+
+  return valueChanged;
+}
+
+bool drawStopMarkers(ImDrawList *drawList, ImGuiWindow *window, ImGuiID baseId,
+                     std::vector<glm::vec4> &stops, ImVec2 barPos,
+                     ImVec2 barSize, float markerSize, bool useAlpha) {
+  bool valueChanged{false};
+
+  for (auto const idx : iter::range(stops.size())) {
+    auto const tStop{gsl::narrow<float>(idx) /
+                     gsl::narrow<float>(stops.size() - 1)};
+
+    auto const markerX{barPos.x + (tStop * barSize.x)};
+    auto const markerY{barPos.y + ((barSize.y - markerSize) * 0.5f)};
+
+    auto const markerPos{ImVec2(markerX - (markerSize * 0.5f), markerY)};
+    auto const markerMax{
+        ImVec2(markerX + (markerSize * 0.5f), markerY + markerSize)};
+
+    // Draw marker
+    drawList->AddRectFilled(markerPos, markerMax, colorToImU32(stops[idx]),
+                            2.0f);
+    drawList->AddRect(markerPos, markerMax, IM_COL32(0, 0, 0, 255), 2.0f, 0,
+                      2.0f);
+
+    // Handle interaction
+    auto const markerBb{ImRect(markerPos, markerMax)};
+    if (handleStopMarkerInteraction(window, baseId, idx, markerBb, stops[idx],
+                                    useAlpha)) {
+      valueChanged = true;
+    }
+  }
+
+  return valueChanged;
+}
+
+void drawTickerMarks(ImDrawList *drawList, ImVec2 barPos, ImVec2 barSize,
+                     int numTickers,
+                     std::function<float(float)> const &tickerMapFunc) {
+  if (numTickers <= 1) {
+    return;
+  }
+
+  auto constexpr tickerMarkHeight{4.0f};
+  auto const tickerY{barPos.y + barSize.y + 2.0f};
+  auto const smallFontSize{ImGui::GetFontSize() * 0.95f};
+  auto *const font{ImGui::GetFont()};
+  auto const tickerColor{IM_COL32(200, 200, 200, 255)};
+
+  for (auto const i : iter::range(numTickers)) {
+    auto const tLinear{gsl::narrow<float>(i) /
+                       gsl::narrow<float>(numTickers - 1)};
+    auto const tMapped{tickerMapFunc ? tickerMapFunc(tLinear) : tLinear};
+
+    auto const tickerX{barPos.x + (tLinear * barSize.x)};
+
+    drawList->AddLine(ImVec2(tickerX, tickerY),
+                      ImVec2(tickerX, tickerY + tickerMarkHeight), tickerColor,
+                      1.0f);
+
+    auto const valueText{std::format("{:.2g}", tMapped)};
+    auto const textSize{
+        font->CalcTextSizeA(smallFontSize, FLT_MAX, 0.0f, valueText.c_str())};
+    auto const textPos{ImVec2(tickerX - (textSize.x * 0.5f),
+                              tickerY + tickerMarkHeight + 1.0f)};
+
+    drawList->AddText(font, smallFontSize, textPos, tickerColor,
+                      valueText.c_str());
+  }
+}
+
+} // namespace
+
+bool UIWidgets::gradientWidget(char const *label, std::vector<glm::vec4> &stops,
+                               bool useAlpha, ImVec2 size,
+                               std::function<float(float)> const &tickerMapFunc,
+                               bool showTickers, int numTickers,
+                               char const *leftLabel, char const *centerLabel,
+                               char const *rightLabel) {
   Expects(stops.size() >= 2);
 
   auto *const window{ImGui::GetCurrentWindow()};
@@ -69,44 +303,14 @@ bool UIWidgets::gradientWidget(
   }
 
   auto const &style{GImGui->Style};
-  auto const id{window->GetID(label.data())};
+  auto const id{window->GetID(label)};
 
-  auto const toImU32{[](glm::vec4 color) -> ImU32 {
-    return IM_COL32(gsl::narrow_cast<int>(color.r * 255.0f),
-                    gsl::narrow_cast<int>(color.g * 255.0f),
-                    gsl::narrow_cast<int>(color.b * 255.0f),
-                    gsl::narrow_cast<int>(color.a * 255.0f));
-  }};
-
-  auto const getColorAt{[&stops](float t) -> glm::vec4 {
-    if (stops.size() == 1) {
-      return stops[0];
-    }
-
-    auto const tStop{t * gsl::narrow<float>(stops.size() - 1)};
-    auto const idx{std::clamp(gsl::narrow<std::size_t>(std::floor(tStop)),
-                              std::size_t{}, stops.size() - 2)};
-
-    auto const tLocal{tStop - gsl::narrow<float>(idx)};
-    return glm::mix(stops.at(idx), stops.at(idx + 1), tLocal);
-  }};
-
-  // Calculate sizes
-  auto const hasLabels{!leftLabel.empty() || !centerLabel.empty() ||
-                       !rightLabel.empty()};
-  auto const smallFontSize{ImGui::GetFontSize() * 0.95f};
-  auto const labelHeight{hasLabels ? smallFontSize + 4.0f : 0.0f};
-  auto constexpr tickerMarkHeight{4.0f};
-  auto const tickerHeight{showTickers ? tickerMarkHeight + smallFontSize + 3.0f
-                                      : 0.0f};
-  auto const markerSize{10.0f};
-  auto const barHeight{size.y - labelHeight - tickerHeight};
-
-  // Get position
+  // Calculate layout
+  auto const hasLabels{*leftLabel != '\0' || *centerLabel != '\0' ||
+                       *rightLabel != '\0'};
+  auto const dims{calculateDimensions(size, hasLabels, showTickers)};
   auto const pos{window->DC.CursorPos};
-  auto const labelPos{ImVec2(pos.x, pos.y)};
-  auto const barPos{ImVec2(pos.x, pos.y + labelHeight)};
-  auto const barSize{ImVec2(size.x, barHeight)};
+  auto const positions{calculatePositions(pos, size, dims)};
 
   // Register item
   auto const totalBb{ImRect(pos, ImVec2(pos.x + size.x, pos.y + size.y))};
@@ -117,157 +321,36 @@ bool UIWidgets::gradientWidget(
 
   auto *const drawList{window->DrawList};
 
-  // Draw labels at the top
-  if (labelHeight > 0.0f) {
-    auto *const font{ImGui::GetFont()};
-    auto const offsetPosY{labelPos.y - 1};
+  // Draw all components
+  drawGradientLabels(drawList, positions.labelPos, size, leftLabel, centerLabel,
+                     rightLabel, dims.labelHeight);
 
-    if (!leftLabel.empty()) {
-      drawList->AddText(font, smallFontSize, ImVec2(labelPos.x, offsetPosY),
-                        IM_COL32(200, 200, 200, 255), leftLabel.data());
-    }
-
-    if (!centerLabel.empty()) {
-      auto const textSize{font->CalcTextSizeA(smallFontSize, FLT_MAX, 0.0f,
-                                              centerLabel.data())};
-      auto const centerPos{
-          ImVec2(pos.x + (size.x - textSize.x) * 0.5f, offsetPosY)};
-      drawList->AddText(font, smallFontSize, centerPos,
-                        IM_COL32(200, 200, 200, 255), centerLabel.data());
-    }
-
-    if (!rightLabel.empty()) {
-      auto const textSize{
-          font->CalcTextSizeA(smallFontSize, FLT_MAX, 0.0f, rightLabel.data())};
-      auto const rightPos{ImVec2(pos.x + size.x - textSize.x, offsetPosY)};
-      drawList->AddText(font, smallFontSize, rightPos,
-                        IM_COL32(200, 200, 200, 255), rightLabel.data());
-    }
-  }
-
-  // Draw checkerboard background
   if (useAlpha) {
-    drawCheckerboard(drawList, barPos, barSize);
+    drawCheckerboard(drawList, positions.barPos, positions.barSize);
   }
 
-  // Draw gradient bar
-  auto constexpr segments{256};
-  for (auto const idx : iter::range(segments)) {
-    auto const tLinear{gsl::narrow<float>(idx) / gsl::narrow<float>(segments)};
-    auto const tNextLinear{gsl::narrow<float>(idx + 1) /
-                           gsl::narrow<float>(segments)};
+  drawGradientBar(drawList, positions.barPos, positions.barSize, stops);
 
-    auto const color1{getColorAt(tLinear)};
-    auto const color2{getColorAt(tNextLinear)};
+  bool const valueChanged{drawStopMarkers(drawList, window, id, stops,
+                                          positions.barPos, positions.barSize,
+                                          dims.markerSize, useAlpha)};
 
-    auto const x1{barPos.x + tLinear * barSize.x};
-    auto const x2{barPos.x + tNextLinear * barSize.x};
-
-    drawList->AddRectFilledMultiColor(
-        ImVec2(x1, barPos.y), ImVec2(x2, barPos.y + barSize.y), toImU32(color1),
-        toImU32(color2), toImU32(color2), toImU32(color1));
-  }
-
-  // Draw border around bar
-  drawList->AddRect(barPos, ImVec2(barPos.x + barSize.x, barPos.y + barSize.y),
-                    IM_COL32(150, 150, 150, 128), 0.0f, 0, 1.5f);
-
-  // Draw stop markers
-  auto valueChanged{false};
-  for (auto const idx : iter::range(stops.size())) {
-    auto const tStop{gsl::narrow<float>(idx) /
-                     gsl::narrow<float>(stops.size() - 1)};
-
-    auto const markerX{barPos.x + tStop * barSize.x};
-    auto const markerY{barPos.y + (barSize.y - markerSize) * 0.5f};
-
-    auto const markerPos{ImVec2(markerX - markerSize * 0.5f, markerY)};
-    auto const markerMax{
-        ImVec2(markerX + markerSize * 0.5f, markerY + markerSize)};
-    auto const markerBb{ImRect(markerPos, markerMax)};
-
-    // Draw marker
-    drawList->AddRectFilled(markerPos, markerMax, toImU32(stops[idx]), 2.0f);
-    drawList->AddRect(markerPos, markerMax, IM_COL32(0, 0, 0, 255), 2.0f, 0,
-                      2.0f);
-
-    // Handle click on marker
-    auto const markerId{id + gsl::narrow<ImGuiID>(idx + 1)};
-
-    if (ImGui::IsMouseHoveringRect(markerBb.Min, markerBb.Max)) {
-      if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        ImGui::SetActiveID(markerId, window);
-      }
-    }
-
-    // Color picker popup
-    auto const popupId{std::format("##popupGradientColorPicker{}", idx)};
-
-    if (ImGui::GetActiveID() == markerId &&
-        ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-      ImGui::OpenPopup(popupId.c_str());
-    }
-
-    if (ImGui::BeginPopup(popupId.c_str())) {
-      float color[4]{stops[idx].r, stops[idx].g, stops[idx].b, stops[idx].a};
-
-      auto const flags{ImGuiColorEditFlags_DisplayRGB |
-                       ImGuiColorEditFlags_DisplayHSV |
-                       (useAlpha ? ImGuiColorEditFlags_AlphaBar |
-                                       ImGuiColorEditFlags_AlphaPreview
-                                 : ImGuiColorEditFlags_None)};
-
-      if (ImGui::ColorPicker4("##colorPicker", color, flags)) {
-        stops[idx].r = color[0];
-        stops[idx].g = color[1];
-        stops[idx].b = color[2];
-        stops[idx].a = color[3];
-        valueChanged = true;
-      }
-
-      ImGui::EndPopup();
-    }
-  }
-
-  // Draw ticker marks if enabled
-  if (showTickers && numTickers > 1) {
-    auto const tickerY{barPos.y + barSize.y + 2.0f};
-
-    auto *const font{ImGui::GetFont()};
-
-    for (auto const i : iter::range(numTickers)) {
-      auto const tLinear{gsl::narrow<float>(i) /
-                         gsl::narrow<float>(numTickers - 1)};
-      auto const tMapped{tickerMapFunc ? tickerMapFunc(tLinear) : tLinear};
-
-      auto const tickerX{barPos.x + tLinear * barSize.x};
-
-      drawList->AddLine(ImVec2(tickerX, tickerY),
-                        ImVec2(tickerX, tickerY + tickerMarkHeight),
-                        IM_COL32(200, 200, 200, 255), 1.0f);
-
-      auto const valueText{std::format("{:.2g}", tMapped)};
-      auto const textSize{
-          font->CalcTextSizeA(smallFontSize, FLT_MAX, 0.0f, valueText.c_str())};
-      auto const textPos{ImVec2(tickerX - textSize.x * 0.5f,
-                                tickerY + tickerMarkHeight + 1.0f)};
-
-      drawList->AddText(font, smallFontSize, textPos,
-                        IM_COL32(200, 200, 200, 255), valueText.c_str());
-    }
+  if (showTickers) {
+    drawTickerMarks(drawList, positions.barPos, positions.barSize, numTickers,
+                    tickerMapFunc);
   }
 
   return valueChanged;
 }
 
 template <std::size_t N>
-std::size_t UIWidgets::combo(std::string_view label,
-                             std::array<std::string_view, N> items,
+std::size_t UIWidgets::combo(char const *label,
+                             std::array<char const *, N> items,
                              std::size_t currentIndex) {
-  if (ImGui::BeginCombo(label.data(), items.at(currentIndex).data())) {
+  if (ImGui::BeginCombo(label, items.at(currentIndex))) {
     for (auto const index : iter::range(items.size())) {
       auto const isSelected{currentIndex == index};
-      if (ImGui::Selectable(items[index].data(), isSelected)) {
+      if (ImGui::Selectable(items.at(index), isSelected)) {
         currentIndex = index;
       }
       if (isSelected) {
@@ -280,18 +363,13 @@ std::size_t UIWidgets::combo(std::string_view label,
 }
 
 // Explicit instantiation for common sizes
-template std::size_t UIWidgets::combo<2>(std::string_view,
-                                         std::array<std::string_view, 2>,
-                                         std::size_t);
-template std::size_t UIWidgets::combo<3>(std::string_view,
-                                         std::array<std::string_view, 3>,
-                                         std::size_t);
-template std::size_t UIWidgets::combo<4>(std::string_view,
-                                         std::array<std::string_view, 4>,
-                                         std::size_t);
-template std::size_t UIWidgets::combo<5>(std::string_view,
-                                         std::array<std::string_view, 5>,
-                                         std::size_t);
-template std::size_t UIWidgets::combo<6>(std::string_view,
-                                         std::array<std::string_view, 6>,
-                                         std::size_t);
+template std::size_t
+UIWidgets::combo<2>(char const *, std::array<char const *, 2>, std::size_t);
+template std::size_t
+UIWidgets::combo<3>(char const *, std::array<char const *, 3>, std::size_t);
+template std::size_t
+UIWidgets::combo<4>(char const *, std::array<char const *, 4>, std::size_t);
+template std::size_t
+UIWidgets::combo<5>(char const *, std::array<char const *, 5>, std::size_t);
+template std::size_t
+UIWidgets::combo<6>(char const *, std::array<char const *, 6>, std::size_t);

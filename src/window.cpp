@@ -71,15 +71,17 @@ void Window::onCreate() {
   auto &appState{m_context.appState};
   auto &renderState{m_context.renderState};
 
-  auto const assetsPath{abcg::Application::getAssetsPath()};
+  auto const &assetsPath{abcg::Application::getAssetsPath()};
 
-  m_context.functionManager.loadFromDirectory(assetsPath + "functions/");
+  m_context.functionManager.loadFromDirectory(
+      assetsPath / std::filesystem::path{"functions/"});
 
   selectInitialFunction();
 
   // Initialize render state from selected function
   auto const function{m_context.functionManager.getFunction(
-      {appState.selectedFunctionGroupIndex, appState.selectedFunctionIndex})};
+      {.group = appState.selectedFunctionGroupIndex,
+       .index = appState.selectedFunctionIndex})};
 
   if (function.has_value()) {
     renderState.function = function.value();
@@ -155,10 +157,11 @@ void Window::onPaintUI() {
 void Window::onResize([[maybe_unused]] glm::ivec2 size) {
   auto &appState{m_context.appState};
 
-  auto const window{getSDLWindow()};
+  auto *const window{getSDLWindow()};
 
   // Get the actual framebuffer size in pixels (HighDPI aware)
-  int fbWidth, fbHeight;
+  int fbWidth{};
+  int fbHeight{};
   SDL_GetWindowSizeInPixels(window, &fbWidth, &fbHeight);
   glm::ivec2 const fbSize{fbWidth, fbHeight};
 
@@ -176,7 +179,8 @@ void Window::onResize([[maybe_unused]] glm::ivec2 size) {
                          gsl::narrow<float>(size.y) / dpr};
 #else
   // For native: SDL handles HighDPI automatically
-  int windowWidth, windowHeight;
+  int windowWidth{};
+  int windowHeight{};
   SDL_GetWindowSize(window, &windowWidth, &windowHeight);
   appState.windowSize = {windowWidth, windowHeight};
   auto const dpr{SDL_GetWindowDisplayScale(window)};
@@ -237,8 +241,7 @@ void Window::applyRecommendedSettings() {
                                 : RenderState::BoundsShape::Sphere;
   renderState.boundsRadius = data.boundsRadius;
   renderState.raymarchAdaptive =
-      ivUtil::toLower(data.isosurfaceRaymarchMethod) == "fixed-step" ? false
-                                                                     : true;
+      ivUtil::toLower(data.isosurfaceRaymarchMethod) != "fixed-step";
 
   auto const rootTestMode{ivUtil::toLower(data.isosurfaceRaymarchRootTest)};
   if (rootTestMode == "taylor 1st-order") {

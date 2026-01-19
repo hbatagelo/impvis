@@ -12,6 +12,7 @@
 
 #include "function.hpp"
 
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <vector>
@@ -36,7 +37,7 @@ public:
   FunctionManager(FunctionManager &&) = delete;
   FunctionManager &operator=(FunctionManager &&) = delete;
 
-  void loadFromDirectory(std::string_view directory);
+  void loadFromDirectory(std::filesystem::path const &path);
   void addUserDefined(Function const &function);
 
   [[nodiscard]] std::optional<FunctionId> getId(std::string_view name) const;

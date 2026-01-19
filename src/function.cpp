@@ -187,8 +187,9 @@ void encloseMatchesInBrackets(std::string &str, RE2 const &regex,
     auto const what{std::string{match} + bracketedArgs};
     // "{name(...)}" if brackets are curly brackets
     auto const with{brackets.first + what + brackets.second};
-    str.replace(pos + matchPosition, what.length(), with.data(), with.length());
-    ns.replace(matchPosition, what.length(), with.data(), with.length());
+    str.replace(pos + matchPosition, what.length(), with.c_str(),
+                with.length());
+    ns.replace(matchPosition, what.length(), with.c_str(), with.length());
 
     auto const advancePos{matchPosition + match.size()};
     pos += advancePos;
@@ -310,6 +311,181 @@ void removeMatchesInSameScope(RE2 const &regex, re2::StringPiece str,
   }
 }
 
+void reformatStringNumbersAsFloats(std::string &str) {
+  // Match integers (e.g. 42) or floats (e.g. .42 or 4.2)
+  static RE2 const regex(R"re(((\.\d+\.?\d*)|\b(\d+\.?\d*)))re");
+  assert(regex.ok()); // NOLINT
+
+  std::size_t pos{};
+  re2::StringPiece match;
+
+  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
+
+    auto const number{std::stod(std::string{match})};
+    auto integralPart{0.0};
+    auto const fractionalPart{std::modf(number, &integralPart)};
+    auto const formattedString{FP_ZERO == std::fpclassify(fractionalPart)
+                                   ? std::format("{:.1f}", number)
+                                   : std::format("{:.12g}", number)};
+    str.replace(pos + matchPosition, match.size(), formattedString);
+    pos += formattedString.length() + matchPosition;
+
+    ns = ns.substr(matchPosition + match.size());
+  }
+}
+
+std::string convertDivisionsToFractions(std::string_view expr) {
+  std::string result{expr};
+  std::string::size_type pos{0};
+
+  while ((pos = result.find('/', pos)) != std::string::npos) {
+    // Find the numerator (work backwards from '/')
+    std::string::size_type numStart = pos;
+    auto parenDepth{0};
+    auto bracketDepth{0};
+    auto braceDepth{0};
+
+    // Scan backwards to find where numerator starts
+    if (pos > 0) {
+      for (std::string::size_type i = pos; i > 0; --i) {
+        auto const c{result[i - 1]};
+
+        // Track bracket depths
+        if (c == ')') {
+          parenDepth++;
+        } else if (c == '(') {
+          parenDepth--;
+        } else if (c == ']') {
+          bracketDepth++;
+        } else if (c == '[') {
+          bracketDepth--;
+        } else if (c == '}') {
+          braceDepth++;
+        } else if (c == '{') {
+          braceDepth--;
+        }
+
+        // At top level (all depths are 0)
+        if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+          // Stop at binary operators that separate terms
+          if (c == '+' || c == '-' || c == '*') {
+            numStart = i;
+            break;
+          }
+          // Don't stop at ^ - it's part of the same term
+        }
+
+        // Stop if we hit an opening bracket at negative depth
+        if (parenDepth < 0 || bracketDepth < 0 || braceDepth < 0) {
+          numStart = i;
+          break;
+        }
+
+        if (i == 1) {
+          numStart = 0;
+        }
+      }
+    } else {
+      numStart = 0;
+    }
+
+    // Find the denominator (work forwards from '/')
+    std::string::size_type denEnd{pos + 1};
+    parenDepth = 0;
+    bracketDepth = 0;
+    braceDepth = 0;
+
+    // Scan forwards to find where denominator ends
+    for (std::string::size_type index : iter::range(pos + 1, result.length())) {
+      auto const c{result[index]};
+
+      // Track bracket depths
+      if (c == '(') {
+        parenDepth++;
+      } else if (c == ')') {
+        parenDepth--;
+      } else if (c == '[') {
+        bracketDepth++;
+      } else if (c == ']') {
+        bracketDepth--;
+      } else if (c == '{') {
+        braceDepth++;
+      } else if (c == '}') {
+        braceDepth--;
+      }
+
+      // At top level (all depths are 0)
+      if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+        // Stop at binary operators that separate terms
+        if (c == '+' || c == '-' || c == '*' || c == '/') {
+          denEnd = index;
+          break;
+        }
+        // Don't stop at ^ - it's part of the same term
+      }
+
+      // Stop if we hit a closing bracket at negative depth
+      if (parenDepth < 0 || bracketDepth < 0 || braceDepth < 0) {
+        denEnd = index;
+        break;
+      }
+
+      if (index == result.length() - 1) {
+        denEnd = result.length();
+      }
+    }
+
+    // Extract numerator and denominator
+    Expects(numStart <= pos);
+    Expects(denEnd >= pos + 1);
+    auto numerator{result.substr(numStart, pos - numStart)};
+    auto denominator{result.substr(pos + 1, denEnd - pos - 1)};
+
+    // Remove one level of enclosing parentheses if they wrap the entire
+    // expression
+    auto const stripOuterParens{[](std::string &str) {
+      while (str.length() >= 2 && str.front() == '(' && str.back() == ')') {
+        // Verify these parens match and wrap the whole expression
+        int depth = 0;
+        bool wrapsAll = true;
+        for (std::size_t i{}; i < str.length() - 1; ++i) {
+          if (str[i] == '(') {
+            depth++;
+          } else if (str[i] == ')') {
+            depth--;
+          }
+          if (depth == 0 && i < str.length() - 2) {
+            wrapsAll = false;
+            break;
+          }
+        }
+        if (wrapsAll) {
+          str = str.substr(1, str.length() - 2);
+        } else {
+          break;
+        }
+      }
+    }};
+
+    stripOuterParens(numerator);
+    stripOuterParens(denominator);
+
+    // Build the \frac expression
+    auto const fraction{
+        std::format("\\frac{{{}}}{{{}}}", numerator, denominator)};
+
+    // Replace in result
+    result.replace(numStart, denEnd - numStart, fraction);
+
+    // Move position forward past the inserted fraction
+    pos = numStart + fraction.length();
+  }
+
+  return result;
+}
+
 Function::Function(Data data) : m_data(std::move(data)) {
   ivUtil::replaceAll(m_data.expression, "\\n", "\n");
   convertToGLSL();
@@ -317,9 +493,9 @@ Function::Function(Data data) : m_data(std::move(data)) {
 }
 
 void Function::onCreate() {
-  auto const path{abcg::Application::getAssetsPath()};
+  auto const &path{abcg::Application::getAssetsPath()};
   if (!m_data.thumbnail.empty()) {
-    m_thumbnailId = abcg::loadOpenGLTexture({.path = path + m_data.thumbnail,
+    m_thumbnailId = abcg::loadOpenGLTexture({.path = path / m_data.thumbnail,
                                              .generateMipmaps = true,
                                              .flipUpsideDown = false});
   }
@@ -382,7 +558,7 @@ void Function::extractParameters() {
                                             "uMaxAbsCurvatureFalloff",
                                             "uNormalLengthFalloff",
                                             "uDVRFalloff",
-                                            "uDVRDensity"};
+                                            "uDVRAbsorptionCoeff"};
   for (auto const &name : reservedNames) {
     parameters.erase(name);
   }
@@ -416,31 +592,6 @@ void Function::extractParameters() {
   }
 }
 
-void reformatStringNumbersAsFloats(std::string &str) {
-  // Match integers (e.g. 42) or floats (e.g. .42 or 4.2)
-  static RE2 const regex(R"re(((\.\d+\.?\d*)|\b(\d+\.?\d*)))re");
-  assert(regex.ok()); // NOLINT
-
-  std::size_t pos{};
-  re2::StringPiece match;
-
-  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
-    auto const matchPosition{
-        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
-
-    auto const number{std::stod(std::string{match})};
-    auto integralPart{0.0};
-    auto const fractionalPart{std::modf(number, &integralPart)};
-    auto const formattedString{FP_ZERO == std::fpclassify(fractionalPart)
-                                   ? std::format("{:.1f}", number)
-                                   : std::format("{:.12g}", number)};
-    str.replace(pos + matchPosition, match.size(), formattedString);
-    pos += formattedString.length() + matchPosition;
-
-    ns = ns.substr(matchPosition + match.size());
-  }
-}
-
 void Function::convertToGLSL() {
   std::string result{m_data.expression};
 
@@ -460,10 +611,10 @@ void Function::convertToGLSL() {
   // "mpowy(x)" or "mpow(x,y)". The former is returned iff y is an integer in
   // the range [1,16].
   constexpr auto mpowExpression{
-      [](std::string_view leftOperand,
-         std::string_view rightOperand) -> std::string {
+      [](std::string const &leftOperand,
+         std::string const &rightOperand) -> std::string {
         char *strEnd{};
-        auto const exponent{std::strtod(rightOperand.data(), &strEnd)};
+        auto const exponent{std::strtod(rightOperand.c_str(), &strEnd)};
         auto const maxPowerByMultiplication{16.0};
         if (exponent != HUGE_VAL && exponent > 0.0 &&
             exponent <= maxPowerByMultiplication) {
@@ -508,152 +659,6 @@ void Function::convertToGLSL() {
   reformatStringNumbersAsFloats(result);
 
   m_exprGLSL = result;
-}
-
-std::string convertDivisionsToFractions(std::string_view expr) {
-  std::string result{expr};
-  std::string::size_type pos{0};
-
-  while ((pos = result.find('/', pos)) != std::string::npos) {
-    // Find the numerator (work backwards from '/')
-    std::string::size_type numStart = pos;
-    auto parenDepth{0};
-    auto bracketDepth{0};
-    auto braceDepth{0};
-
-    // Scan backwards to find where numerator starts
-    if (pos > 0) {
-      for (std::string::size_type i = pos; i > 0; --i) {
-        auto const c{result[i - 1]};
-
-        // Track bracket depths
-        if (c == ')')
-          parenDepth++;
-        else if (c == '(')
-          parenDepth--;
-        else if (c == ']')
-          bracketDepth++;
-        else if (c == '[')
-          bracketDepth--;
-        else if (c == '}')
-          braceDepth++;
-        else if (c == '{')
-          braceDepth--;
-
-        // At top level (all depths are 0)
-        if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
-          // Stop at binary operators that separate terms
-          if (c == '+' || c == '-' || c == '*') {
-            numStart = i;
-            break;
-          }
-          // Don't stop at ^ - it's part of the same term
-        }
-
-        // Stop if we hit an opening bracket at negative depth
-        if (parenDepth < 0 || bracketDepth < 0 || braceDepth < 0) {
-          numStart = i;
-          break;
-        }
-
-        if (i == 1) {
-          numStart = 0;
-        }
-      }
-    } else {
-      numStart = 0;
-    }
-
-    // Find the denominator (work forwards from '/')
-    std::string::size_type denEnd{pos + 1};
-    parenDepth = 0;
-    bracketDepth = 0;
-    braceDepth = 0;
-
-    // Scan forwards to find where denominator ends
-    for (std::string::size_type i : iter::range(pos + 1, result.length())) {
-      auto const c{result[i]};
-
-      // Track bracket depths
-      if (c == '(')
-        parenDepth++;
-      else if (c == ')')
-        parenDepth--;
-      else if (c == '[')
-        bracketDepth++;
-      else if (c == ']')
-        bracketDepth--;
-      else if (c == '{')
-        braceDepth++;
-      else if (c == '}')
-        braceDepth--;
-
-      // At top level (all depths are 0)
-      if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
-        // Stop at binary operators that separate terms
-        if (c == '+' || c == '-' || c == '*' || c == '/') {
-          denEnd = i;
-          break;
-        }
-        // Don't stop at ^ - it's part of the same term
-      }
-
-      // Stop if we hit a closing bracket at negative depth
-      if (parenDepth < 0 || bracketDepth < 0 || braceDepth < 0) {
-        denEnd = i;
-        break;
-      }
-
-      if (i == result.length() - 1) {
-        denEnd = result.length();
-      }
-    }
-
-    // Extract numerator and denominator
-    Expects(numStart <= pos);
-    Expects(denEnd >= pos + 1);
-    auto numerator{result.substr(numStart, pos - numStart)};
-    auto denominator{result.substr(pos + 1, denEnd - pos - 1)};
-
-    // Remove one level of enclosing parentheses if they wrap the entire
-    // expression
-    auto const stripOuterParens{[](std::string &s) {
-      while (s.length() >= 2 && s.front() == '(' && s.back() == ')') {
-        // Verify these parens match and wrap the whole expression
-        int depth = 0;
-        bool wrapsAll = true;
-        for (std::size_t i{}; i < s.length() - 1; ++i) {
-          if (s[i] == '(')
-            depth++;
-          else if (s[i] == ')')
-            depth--;
-          if (depth == 0 && i < s.length() - 2) {
-            wrapsAll = false;
-            break;
-          }
-        }
-        if (wrapsAll) {
-          s = s.substr(1, s.length() - 2);
-        } else {
-          break;
-        }
-      }
-    }};
-
-    stripOuterParens(numerator);
-    stripOuterParens(denominator);
-
-    // Build the \frac expression
-    auto const fraction{"\\frac{" + numerator + "}{" + denominator + "}"};
-
-    // Replace in result
-    result.replace(numStart, denEnd - numStart, fraction);
-
-    // Move position forward past the inserted fraction
-    pos = numStart + fraction.length();
-  }
-
-  return result;
 }
 
 void Function::convertToMathJax() {

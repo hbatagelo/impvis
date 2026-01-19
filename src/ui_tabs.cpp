@@ -23,7 +23,7 @@
 
 namespace {
 
-constexpr std::string_view kAppVersion{"v3.1.0"};
+constexpr std::string_view kAppVersion{"v3.1.1"};
 
 } // namespace
 
@@ -32,7 +32,7 @@ void UITabs::functionsTab(AppContext &context, Camera &camera,
   auto &appState{context.appState};
 
   ImGui::BeginChild("##childFunctionsTab", ImVec2(0, parentWindowHeight - 109),
-                    true, ImGuiWindowFlags_None);
+                    1, ImGuiWindowFlags_None);
 
   if (ImGui::IsWindowHovered()) {
     SDL_SetCursor(SDL_GetDefaultCursor());
@@ -158,7 +158,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     ImGui::BeginDisabled(appState.useRecommendedSettings);
 
     // Bounding geometry combo box
-    static constexpr std::array<std::string_view, 2> items{"Box", "Sphere"};
+    static constexpr std::array<char const *, 2> items{"Box", "Sphere"};
     static constexpr std::array itemsEnum{RenderState::BoundsShape::Sphere,
                                           RenderState::BoundsShape::Box};
 
@@ -168,9 +168,9 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     renderState.boundsShape = newBoundsShape;
 
     // Bounding size (for box) or radius (for sphere)
-    auto const label{renderState.boundsShape == RenderState::BoundsShape::Box
-                         ? "Size"
-                         : "Radius"};
+    auto const *const label{
+        renderState.boundsShape == RenderState::BoundsShape::Box ? "Size"
+                                                                 : "Radius"};
     ImGui::SliderFloat(label, &renderState.boundsRadius, 0.1f, 20.0f, "%.1f");
 
     ImGui::EndDisabled();
@@ -190,8 +190,8 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     ImGui::BeginDisabled(appState.useRecommendedSettings || DVRSelected);
 
     // Raymarch method combo box
-    static constexpr std::array<std::string_view, 2> items{"Adaptive",
-                                                           "Fixed-step"};
+    static constexpr std::array<char const *, 2> items{"Adaptive",
+                                                       "Fixed-step"};
     auto currentIndex{renderState.raymarchAdaptive ? 0ul : 1ul};
     auto const newIndex{UIWidgets::combo("Method", items, currentIndex)};
     renderState.raymarchAdaptive = newIndex == 0;
@@ -203,7 +203,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
                      minSteps, maxSteps);
 
     // Root test combo box
-    static constexpr std::array<std::string_view, 3> rootTestItems{
+    static constexpr std::array<char const *, 3> rootTestItems{
         "Sign change", "Taylor 1st-order", "Taylor 2nd-order"};
     static constexpr std::array rootTestItemsEnum{
         RenderState::RootTestMode::SignChange,
@@ -220,7 +220,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     }
 
     // Gradient evaluation combo box
-    static constexpr std::array<std::string_view, 3> gradientItems{
+    static constexpr std::array<char const *, 3> gradientItems{
         "Forward difference", "Central difference", "5-point stencil"};
     static constexpr std::array gradientItemsEnum{
         RenderState::GradientMode::ForwardDifference,
@@ -244,8 +244,8 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
   ImGui::SeparatorText("Camera projection");
   {
     // Camera projection combo box
-    static constexpr std::array<std::string_view, 2> camItems{"Perspective",
-                                                              "Orthographic"};
+    static constexpr std::array<char const *, 2> camItems{"Perspective",
+                                                          "Orthographic"};
     static constexpr std::array camItemsEnum{Camera::Projection::Perspective,
                                              Camera::Projection::Orthographic};
 
@@ -297,7 +297,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
   ImGui::SeparatorText("Rendering & UI");
   {
     // Shader combo box
-    static constexpr std::array<std::string_view, 3> shaderItems{
+    static constexpr std::array<char const *, 3> shaderItems{
         "Lit isosurface", "Unlit isosurface", "Volume rendering"};
     static constexpr std::array shaderItemsEnum{
         RenderState::RenderingMode::LitSurface,
@@ -327,7 +327,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
 
     if (!DVRSelected) {
       // Surface color combo box
-      static constexpr std::array<std::string_view, 6> colorItems{
+      static constexpr std::array<char const *, 6> colorItems{
           "Surface side (+/-)", "Unit normal",    "Normal magnitude",
           "Gaussian curvature", "Mean curvature", "max(|k1|, |k2|)"};
       static constexpr std::array colorItemsEnum{
@@ -352,7 +352,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
       }
 
       // Antialiasing combo box
-      static constexpr std::array<std::string_view, 5> AAItems{
+      static constexpr std::array<char const *, 5> AAItems{
           "Off", "2x MSAA", "4x MSAA", "8x MSAA", "16x MSAA"};
       auto const currentAAIndex{
           gsl::narrow_cast<std::size_t>(std::log2(renderState.msaaSamples))};
@@ -453,15 +453,15 @@ void UITabs::aboutTab([[maybe_unused]] AppContext &context,
                      gsl::narrow<int>(framesUI.size()),
                      gsl::narrow<int>(offsetUI),
                      std::format("UI: {:.1f} FPS", fpsUI).c_str(), 0.0f,
-                     *std::max_element(framesUI.begin(), framesUI.end()) * 2,
+                     *std::ranges::max_element(framesUI) * 2,
                      ImVec2(gsl::narrow<float>(framesUI.size()), 50));
 
-    ImGui::PlotLines(
-        "##plotLinesFPSRender", framesRender.data(),
-        gsl::narrow<int>(framesRender.size()), gsl::narrow<int>(offsetRender),
-        std::format("3D rendering: {:.1f} FPS", fpsRender).c_str(), 0.0f,
-        *std::max_element(framesRender.begin(), framesRender.end()) * 2,
-        ImVec2(gsl::narrow<float>(framesRender.size()), 50));
+    ImGui::PlotLines("##plotLinesFPSRender", framesRender.data(),
+                     gsl::narrow<int>(framesRender.size()),
+                     gsl::narrow<int>(offsetRender),
+                     std::format("3D rendering: {:.1f} FPS", fpsRender).c_str(),
+                     0.0f, *std::ranges::max_element(framesRender) * 2,
+                     ImVec2(gsl::narrow<float>(framesRender.size()), 50));
     ImGui::Spacing();
 
     ImGui::Text("%s",

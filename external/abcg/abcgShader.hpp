@@ -11,18 +11,19 @@
 #ifndef ABCG_SHADER_HPP_
 #define ABCG_SHADER_HPP_
 
+#include <cstdint>
 #include <string>
 
 namespace abcg {
 struct ShaderSource;
-enum class ShaderStage;
+enum class ShaderStage : std::uint8_t;
 } // namespace abcg
 
 /**
  * @brief Enumeration of shader stages.
  *
  */
-enum class abcg::ShaderStage {
+enum class abcg::ShaderStage : std::uint8_t {
   Vertex,
   TessellationControl,
   TessellationEvaluation,
@@ -48,7 +49,7 @@ struct abcg::ShaderSource {
    * This can be either the path to the shader file or the string containing the
    * source code.
    */
-  std::string source{};
+  std::string source;
   /** @brief Shader stage. */
   abcg::ShaderStage stage{};
 };

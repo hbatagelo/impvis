@@ -13,6 +13,7 @@
 #include <abcgException.hpp>
 #include <abcgOpenGLFunction.hpp>
 #include <abcgOpenGLShader.hpp>
+#include <abcgUtil.hpp>
 
 #include <fstream>
 
@@ -24,14 +25,15 @@ constexpr glm::vec3 kColor{1.0f, 0.8f, 0.2f}; // #ffcc33
 } // namespace
 
 void Arrow::onCreate() {
-  auto const readFile{[](std::string_view filename) -> std::string {
+  auto const readFile{[](std::filesystem::path const &path) -> std::string {
+    auto const utf8Path{abcg::pathToUtf8(path)};
     std::stringstream source;
-    if (std::ifstream stream(filename.data()); stream) {
+    if (std::ifstream stream(utf8Path); stream) {
       source << stream.rdbuf();
       stream.close();
     } else {
       throw abcg::RuntimeError(
-          std::format("Failed to read shader file {}", filename));
+          std::format("Failed to read shader file {}", utf8Path));
     }
     return source.str();
   }};
@@ -39,9 +41,11 @@ void Arrow::onCreate() {
   static auto const &assetsPath{abcg::Application::getAssetsPath()};
 
   std::vector<abcg::ShaderSource> const sources{
-      {.source = readFile(assetsPath + std::string{kVertexShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kVertexShaderPath}),
        .stage = abcg::ShaderStage::Vertex},
-      {.source = readFile(assetsPath + std::string{kFragmentShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kFragmentShaderPath}),
        .stage = abcg::ShaderStage::Fragment}};
 
   m_program = abcg::createOpenGLProgram(sources);
@@ -104,15 +108,19 @@ void Arrow::onCreate() {
 
   // Position attribute
   abcg::glEnableVertexAttribArray(0);
+  // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
   abcg::glVertexAttribPointer(
       0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
       reinterpret_cast<void *>(offsetof(Vertex, position)));
+  // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
 
   // Normal attribute
   abcg::glEnableVertexAttribArray(1);
+  // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
   abcg::glVertexAttribPointer(
       1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
       reinterpret_cast<void *>(offsetof(Vertex, normal)));
+  // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
 
   abcg::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
   abcg::glBindVertexArray(0);

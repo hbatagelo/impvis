@@ -27,7 +27,7 @@ auto const codeReset{"\033[0m"};
  * @return New string surrounded by the color and reset codes.
  */
 std::string abcg::toRedString(std::string_view str) {
-  return std::string{codeBoldRed} + str.data() + std::string{codeReset};
+  return std::string{codeBoldRed} + std::string{str} + std::string{codeReset};
 }
 
 /**
@@ -40,7 +40,8 @@ std::string abcg::toRedString(std::string_view str) {
  * @return New string surrounded by the color and reset codes.
  */
 std::string abcg::toYellowString(std::string_view str) {
-  return std::string{codeBoldYellow} + str.data() + std::string{codeReset};
+  return std::string{codeBoldYellow} + std::string{str} +
+         std::string{codeReset};
 }
 
 /**
@@ -53,5 +54,5 @@ std::string abcg::toYellowString(std::string_view str) {
  * @return New string surrounded by the color and reset codes.
  */
 std::string abcg::toBlueString(std::string_view str) {
-  return std::string{codeBoldBlue} + str.data() + std::string{codeReset};
+  return std::string{codeBoldBlue} + std::string{str} + std::string{codeReset};
 }

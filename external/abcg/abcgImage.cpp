@@ -12,80 +12,128 @@
 
 #include <cppitertools/itertools.hpp>
 #include <fmt/format.h>
+#include <gsl/gsl>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <span>
+
 #include "abcgException.hpp"
+#include "abcgUtil.hpp"
 
 /**
- * @brief Loads an image from disk using stb_image.
+ * @brief Constructs a new abcg::Image.
  *
  * Loads the file at the given path and decodes it into raw pixel data.
  * Optionally forces a specific number of channels.
  *
  * @param path Filesystem path to the image file.
  *
- * @param forceChannels Number of channels to force (e.g., 3 or 4). Pass 0
- * to preserve the file's original channels (default).
+ * @param layout Channel layout. Use abcg::Image::ChannelLayout::FromFile
+ * to preserve the file's original layout (default).
  *
  * @throw abcg::RuntimeError If the file cannot be opened or decoded.
- *
- * @return A fully populated Image structure containing width, height, channel
- * count, and pixel data.
  */
-abcg::Image abcg::loadImage(std::string_view path, int forceChannels) {
-  int w{}, h{}, c{};
-  auto *pixels{stbi_load(path.data(), &w, &h, &c, forceChannels)};
-  if (!pixels) {
-    throw abcg::RuntimeError(
-        fmt::format("Failed to load texture file {}", path));
-  }
-
-  Image img{};
-  img.width = w;
-  img.height = h;
-  img.channels = (forceChannels != 0 ? forceChannels : c);
-  img.data.assign(pixels, pixels + (w * h * img.channels));
-  stbi_image_free(pixels);
-
-  return img;
+abcg::Image::Image(std::filesystem::path const &path, ChannelLayout layout) {
+  loadImage(path, layout);
 }
 
 /**
- * @brief Flips an image horizontally.
+ * @brief Returns the dimensions (width, height, channel count) of the image.
+ *
+ * @returns Image dimensions.
+ */
+abcg::Image::Dimensions const &abcg::Image::dimensions() const noexcept {
+  return m_dimensions;
+}
+
+/**
+ * @brief Returns a mutable span of the image data.
+ *
+ * @returns Image data in row-major order and interleaved (size = width *
+ * height * channels).
+ */
+std::span<std::uint8_t> abcg::Image::data() noexcept { return m_data; }
+
+/**
+ * @brief Returns a view (immutable span) of the image data.
+ *
+ * @returns Image data in row-major order and interleaved (size = width *
+ * height * channels).
+ */
+std::span<std::uint8_t const> abcg::Image::data() const noexcept {
+  return m_data;
+}
+
+void abcg::Image::loadImage(std::filesystem::path const &path,
+                            ChannelLayout layout) {
+  using StbiDeleter = decltype(&stbi_image_free);
+  using StbiPtr = std::unique_ptr<stbi_uc, StbiDeleter>;
+
+  auto const requestedChannels{static_cast<int>(layout)};
+
+  int width{};
+  int height{};
+  int channels{};
+  StbiPtr rawPixels{stbi_load(pathToUtf8(path).c_str(), &width, &height,
+                              &channels, requestedChannels),
+                    stbi_image_free};
+
+  if (!rawPixels) {
+    throw abcg::RuntimeError(
+        fmt::format("Failed to load image file {}", path.string()));
+  }
+
+  auto const actualChannels{
+      (layout != ChannelLayout::FromFile ? requestedChannels : channels)};
+  m_dimensions = Dimensions{.width = gsl::narrow<size_t>(width),
+                            .height = gsl::narrow<size_t>(height),
+                            .channels = gsl::narrow<size_t>(actualChannels)};
+
+  auto const sizeInBytes{m_dimensions.width * m_dimensions.height *
+                         m_dimensions.channels};
+  std::span<stbi_uc const> const pixels{rawPixels.get(), sizeInBytes};
+
+  m_data.assign(pixels.begin(), pixels.end());
+}
+
+/**
+ * @brief Flips the image vertically.
+ *
+ * Flips the image vertically by swapping entire scanlines.
+ * This mirrors the image top-to-bottom in-place.
+ */
+void abcg::Image::flipVertically() noexcept {
+  auto const &[width, height, channels]{m_dimensions};
+  auto const rowStride{width * channels};
+  auto const halfHeight{height / 2};
+  auto const img{std::span{m_data}};
+  for (auto const y : iter::range(halfHeight)) {
+    auto const top{img.subspan(y * rowStride, rowStride)};
+    auto const bottom{img.subspan((height - 1 - y) * rowStride, rowStride)};
+    std::ranges::swap_ranges(top, bottom);
+  }
+}
+
+/**
+ * @brief Flips the image horizontally.
  *
  * Flips the image horizontally by swapping pixels across the vertical axis.
  * This mirrors each scanline left-to-right in-place.
  *
  * @param img Image data loaded with abcg::loadImage.
  */
-void abcg::flipHorizontally(Image &img) {
-  auto const rowStride{img.width * img.channels};
-  for (auto const y : iter::range(img.height)) {
-    auto *row{img.data.data() + y * rowStride};
-    for (auto const x : iter::range(img.width / 2)) {
-      auto *left{row + x * img.channels};
-      auto *right{row + (img.width - 1 - x) * img.channels};
-      for (auto const c : iter::range(img.channels)) {
-        std::swap(left[c], right[c]);
-      }
+void abcg::Image::flipHorizontally() noexcept {
+  auto const &[width, height, channels]{m_dimensions};
+  auto const rowStride{width * channels};
+  auto const halfWidth{width / 2};
+  auto const img{std::span{m_data}};
+  for (auto const y : iter::range(height)) {
+    auto const row{img.subspan(y * rowStride, rowStride)};
+    for (auto const x : iter::range(halfWidth)) {
+      auto const left{row.subspan(x * channels, channels)};
+      auto const right{row.subspan((width - 1 - x) * channels, channels)};
+      std::ranges::swap_ranges(left, right);
     }
-  }
-}
-
-/**
- * @brief Flips an image vertically.
- *
- * Flips the image vertically by swapping entire scanlines.
- * This mirrors the image top-to-bottom in-place.
- *
- * @param img Image data loaded with abcg::loadImage.
- */
-void abcg::flipVertically(Image &img) {
-  auto const rowStride{img.width * img.channels};
-  for (auto const y : iter::range(img.height / 2)) {
-    auto *top{img.data.data() + y * rowStride};
-    auto *bottom{img.data.data() + (img.height - 1 - y) * rowStride};
-    std::swap_ranges(top, top + rowStride, bottom);
   }
 }

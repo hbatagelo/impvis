@@ -13,11 +13,15 @@ void Background::onCreate() {
   abcg::glGenFramebuffers(1, &m_FBO);
 
   auto const &assetsPath{abcg::Application::getAssetsPath()};
-  m_program = abcg::createOpenGLProgram(
-      {{.source = assetsPath + std::string{kVertexShaderPath},
-        .stage = abcg::ShaderStage::Vertex},
-       {.source = assetsPath + std::string{kFragmentShaderPath},
-        .stage = abcg::ShaderStage::Fragment}});
+  std::vector<abcg::ShaderSource> const sources{
+      {.source = abcg::pathToUtf8(assetsPath /
+                                  std::filesystem::path{kVertexShaderPath}),
+       .stage = abcg::ShaderStage::Vertex},
+      {.source = abcg::pathToUtf8(assetsPath /
+                                  std::filesystem::path{kFragmentShaderPath}),
+       .stage = abcg::ShaderStage::Fragment}};
+
+  m_program = abcg::createOpenGLProgram(sources);
 
   abcg::glGenBuffers(1, &m_VBO);
   abcg::glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
@@ -31,9 +35,9 @@ void Background::onCreate() {
   abcg::glGenVertexArrays(1, &m_VAO);
   abcg::glBindVertexArray(m_VAO);
 
-  auto const setUpVertexAttribute{[&](std::string_view name, auto size,
+  auto const setUpVertexAttribute{[&](std::string const &name, auto size,
                                       intptr_t offset) {
-    if (auto const location{abcg::glGetAttribLocation(m_program, name.data())};
+    if (auto const location{abcg::glGetAttribLocation(m_program, name.c_str())};
         location >= 0) {
       abcg::glEnableVertexAttribArray(gsl::narrow<GLuint>(location));
       // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)

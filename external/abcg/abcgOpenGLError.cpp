@@ -32,12 +32,12 @@ abcg::OpenGLError::OpenGLError(std::string_view what, unsigned int errorCode,
 std::string
 abcg::OpenGLError::prettyPrint(std::string_view what, unsigned int errorCode,
                                source_location const &sourceLocation) {
-  auto errorMessage{toRedString(std::string{"OpenGL error "} + what.data())};
+  auto errorMessage{toRedString("OpenGL error ") + std::string{what}};
   if (SDL_GL_GetCurrentContext() == nullptr) {
     errorMessage += " (invalid OpenGL context)";
   } else {
-    auto appendGLErrorString{[&errorMessage, &errorCode]() {
-      errorMessage += fmt::format(" ({})", getGLErrorString(errorCode).data());
+    auto const appendGLErrorString{[&errorMessage, &errorCode]() {
+      errorMessage += fmt::format(" ({})", getGLErrorString(errorCode));
     }};
     appendGLErrorString();
     //  Clear remaining errors
@@ -55,12 +55,12 @@ abcg::OpenGLError::OpenGLError(std::string_view what, unsigned int errorCode)
 
 std::string abcg::OpenGLError::prettyPrint(std::string_view what,
                                            unsigned int errorCode) {
-  auto errorMessage{toRedString(std::string{"OpenGL error "} + what.data())};
+  auto errorMessage{toRedString("OpenGL error ") + std::string{what}};
   if (SDL_GL_GetCurrentContext() == nullptr) {
     errorMessage += " (invalid OpenGL context)";
   } else {
-    auto appendGLErrorString{[&errorMessage, &errorCode]() {
-      errorMessage += fmt::format(" ({})", getGLErrorString(errorCode).data());
+    auto const appendGLErrorString{[&errorMessage, &errorCode]() {
+      errorMessage += fmt::format(" ({})", getGLErrorString(errorCode));
     }};
     appendGLErrorString();
     //  Clear remaining errors

@@ -21,16 +21,18 @@ constexpr static auto epsilon{std::numeric_limits<float>::epsilon()};
  * @param position Position of the mouse cursor in window coordinates.
  */
 void abcg::TrackBall::mouseMove(glm::ivec2 position) {
-  if (!m_mouseTracking)
+  if (!m_mouseTracking) {
     return;
+  }
 
   m_durationSinceLastEvent =
       gsl::narrow_cast<float>(m_lastTime.restart()) * 1000.0f;
 
   // Return if mouse cursor hasn't moved wrt last position
   auto const currentPosition{project(position)};
-  if (glm::all(glm::epsilonEqual(m_lastPosition, currentPosition, epsilon)))
+  if (glm::all(glm::epsilonEqual(m_lastPosition, currentPosition, epsilon))) {
     return;
+  }
 
   // Rotation axis
   m_axis = glm::cross(m_lastPosition, currentPosition);
@@ -96,8 +98,9 @@ void abcg::TrackBall::resizeViewport(glm::ivec2 size) noexcept {
  * @return Trackball rotation represented as a quaternion.
  */
 glm::quat abcg::TrackBall::getRotation() const {
-  if (m_mouseTracking)
+  if (m_mouseTracking) {
     return m_rotation;
+  }
 
   auto const angle{m_velocity * gsl::narrow_cast<float>(m_lastTime.elapsed()) *
                    1000.0f};
@@ -128,8 +131,8 @@ void abcg::TrackBall::setVelocity(float velocity) noexcept {
 glm::vec3 abcg::TrackBall::project(glm::vec2 position) const {
   // Convert from window coordinates to NDC
   auto projected{glm::vec3(
-      2.0f * position.x / gsl::narrow<float>(m_viewportSize.x) - 1.0f,
-      1.0f - 2.0f * position.y / gsl::narrow<float>(m_viewportSize.y), 0.0f)};
+      (2.0f * position.x / gsl::narrow<float>(m_viewportSize.x)) - 1.0f,
+      1.0f - (2.0f * position.y / gsl::narrow<float>(m_viewportSize.y)), 0.0f)};
 
   // Project to centered unit hemisphere
   if (auto const squaredLength{glm::length2(projected)};

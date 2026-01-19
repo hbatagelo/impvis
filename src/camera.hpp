@@ -14,7 +14,7 @@
 
 class Camera {
 public:
-  enum Projection { Perspective, Orthographic };
+  enum Projection : std::uint8_t { Perspective, Orthographic };
 
   Camera();
 
@@ -29,7 +29,7 @@ public:
   [[nodiscard]] glm::vec2 getPixelSize() const noexcept { return m_pixelSize; }
   [[nodiscard]] float getModelScale() const noexcept { return m_modelScale; }
   [[nodiscard]] float getFovY() const noexcept { return m_fovY; }
-  [[nodiscard]] float getLookAtDistance() const noexcept {
+  [[nodiscard]] static float getLookAtDistance() noexcept {
     return kLookAtDistance;
   }
   [[nodiscard]] Projection getProjection() const noexcept {

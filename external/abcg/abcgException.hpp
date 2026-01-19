@@ -31,6 +31,7 @@ using source_location = std::source_location;
 #endif
 #endif
 
+#include <stdexcept>
 #include <string>
 
 namespace abcg {
@@ -51,7 +52,7 @@ public:
   [[nodiscard]] char const *what() const noexcept override;
 
 private:
-  std::string m_what{};
+  std::string m_what;
 };
 
 /**

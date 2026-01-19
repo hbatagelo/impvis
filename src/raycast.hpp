@@ -87,7 +87,7 @@ private:
     float _pad0;
 
     glm::vec2 pixelSize{};
-    float _pad1[2];
+    std::array<float, 2> _pad1;
 
     glm::mat4 viewMatrix{};
     glm::mat4 invViewMatrix{};
@@ -101,7 +101,7 @@ private:
     glm::vec4 normalMatrixCol2{};
 
     float maxModelScale{};
-    float _pad3[3];
+    std::array<float, 3> _pad3;
   };
   static_assert(sizeof(CameraUBOData) == 480);
 
@@ -173,7 +173,7 @@ private:
   std::function<void()> m_onFrameStart;
   std::function<void()> m_onFrameEnd;
 
-  enum class ProgramBuildPhase { Compile, Link, Done };
+  enum class ProgramBuildPhase : std::uint8_t { Compile, Link, Done };
   ProgramBuildPhase m_programBuildPhase{ProgramBuildPhase::Done};
   abcg::Timer m_programBuildTime;
   std::vector<abcg::OpenGLShader> m_shaderIDs;

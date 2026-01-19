@@ -200,10 +200,11 @@ void Raycast::onDestroy() {
 void Raycast::createProgram(RenderState const &renderState) {
   static auto const &assetsPath{abcg::Application::getAssetsPath()};
 
-  auto const readFile{[](std::string_view filename) -> std::string {
-    std::ifstream stream(filename.data(), std::ios::binary);
+  auto const readFile{[](std::filesystem::path const &path) -> std::string {
+    auto const utf8Path{abcg::pathToUtf8(path)};
+    std::ifstream stream(utf8Path, std::ios::binary);
     if (!stream) {
-      throw abcg::RuntimeError(std::format("Failed to read file {}", filename));
+      throw abcg::RuntimeError(std::format("Failed to read file {}", utf8Path));
     }
 
     std::ostringstream ss;
@@ -212,9 +213,11 @@ void Raycast::createProgram(RenderState const &renderState) {
   }};
 
   std::vector<abcg::ShaderSource> sources{
-      {.source = readFile(assetsPath + std::string{kVertexShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kVertexShaderPath}),
        .stage = abcg::ShaderStage::Vertex},
-      {.source = readFile(assetsPath + std::string{kFragmentShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kFragmentShaderPath}),
        .stage = abcg::ShaderStage::Fragment}};
 
   // Replace placeholders
@@ -405,8 +408,7 @@ void Raycast::createUBOs() {
 
   // Get location of other uniform variables
   m_isoValueLocation = abcg::glGetUniformLocation(m_program, "uIsoValue");
-  m_dvrDensityLocation =
-      abcg::glGetUniformLocation(m_program, "uDVRDensity");
+  m_dvrDensityLocation = abcg::glGetUniformLocation(m_program, "uDVRDensity");
   m_dvrFalloffLocation = abcg::glGetUniformLocation(m_program, "uDVRFalloff");
   m_gaussianCurvatureFalloffLocation =
       abcg::glGetUniformLocation(m_program, "uGaussianCurvatureFalloff");
@@ -521,8 +523,7 @@ void Raycast::renderChunk(RenderState const &renderState) {
   updateUBO(m_UBOParams, std::span{&m_paramsUBOData, sizeof(m_paramsUBOData)});
 
   abcg::glUniform1f(m_isoValueLocation, renderState.isoValue);
-  abcg::glUniform1f(m_dvrDensityLocation,
-                    renderState.dvrDensity);
+  abcg::glUniform1f(m_dvrDensityLocation, renderState.dvrDensity);
   abcg::glUniform1f(m_dvrFalloffLocation, renderState.dvrFalloff);
   abcg::glUniform1f(m_gaussianCurvatureFalloffLocation,
                     renderState.gaussianCurvatureFalloff);

@@ -10,12 +10,12 @@
 #ifndef UI_EMSCRIPTEN_HPP_
 #define UI_EMSCRIPTEN_HPP_
 
-#include <string_view>
+#include <string>
 
 namespace emscriptenMathJax {
 
-bool updateEquation(std::string_view equation, std::string_view comment);
-bool updateEquationName(std::string_view name);
+bool updateEquation(std::string const &equation, std::string const &comment);
+bool updateEquationName(std::string const &name);
 bool setMathJaxVisibility(bool visible);
 
 } // namespace emscriptenMathJax

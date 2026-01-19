@@ -16,15 +16,61 @@
 #include "ui_emscripten.hpp"
 #endif
 
+namespace {
+
+int editorCallback(ImGuiInputTextCallbackData *callback) {
+  constexpr auto allowed{[](unsigned char ch) noexcept {
+    // Allow newline + tab for code editing, and printable ASCII
+    return ch == '\n' || ch == '\t' || (ch >= 0x20 && ch <= 0x7E);
+  }};
+
+  switch (callback->EventFlag) {
+  case ImGuiInputTextFlags_CallbackCharFilter: {
+    auto const ch{gsl::narrow_cast<unsigned char>(callback->EventChar)};
+
+    return allowed(ch) ? 0 : 1;
+  }
+
+  case ImGuiInputTextFlags_CallbackEdit: {
+    // Sanitize buffer (account for pasted code)
+    auto const buf{
+        std::span{callback->Buf, gsl::narrow<std::size_t>(callback->BufSize)}};
+
+    auto dst{buf.begin()};
+    auto const end{buf.begin() + callback->BufTextLen};
+
+    for (auto it{buf.begin()}; it != end; ++it) {
+      if (allowed(gsl::narrow_cast<unsigned char>(*it))) {
+        *dst++ = *it;
+      }
+    }
+
+    *dst = '\0';
+
+    // Update length + cursor
+    callback->BufTextLen = gsl::narrow<int>(dst - buf.begin());
+    callback->CursorPos = std::min(callback->CursorPos, callback->BufTextLen);
+    callback->SelectionStart = callback->SelectionEnd = callback->CursorPos;
+    return 0;
+  }
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+} // namespace
+
 void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
                               gsl::not_null<ImFont *> font) {
-  static constexpr std::size_t kMaxEditorTextSize{80 * 16};
-  static constexpr std::string_view kEditorErrorMessage{
+  static constexpr std::size_t kMaxEditorTextSize{80UL * 16};
+  static constexpr auto kEditorErrorMessage{
       "ERROR: Ill-formed code or expression"};
 
   auto &appState{context.appState};
   auto &renderState{context.renderState};
-  auto &groups{context.functionManager.getGroups()};
+  auto const &groups{context.functionManager.getGroups()};
 
   ImVec2 uiWindowSize{};
   ImVec2 const minUIWindowSize{250, 240};
@@ -54,88 +100,39 @@ void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
 
   ImGui::TextUnformatted("GLSL ES 3.00 embedded code:");
   if (!raycast.isProgramValid()) {
-    auto const textSize{ImGui::CalcTextSize(kEditorErrorMessage.data())};
+    auto const textSize{ImGui::CalcTextSize(kEditorErrorMessage)};
     ImGui::SameLine(uiWindowSize.x - textSize.x - 8);
 
     ImVec4 const redColor{1.0f, 0.35f, 0.35f, 1.0f};
-    ImGui::TextColored(redColor, "%s", kEditorErrorMessage.data());
+    ImGui::TextColored(redColor, "%s", kEditorErrorMessage);
   }
   ImGui::BeginChild("##childScopes", ImVec2(0, uiWindowSize.y / 2),
                     ImGuiChildFlags_Borders |
                         ImGuiChildFlags_AlwaysUseWindowPadding);
   ImGui::TextUnformatted("Global scope:");
-  ImGui::SameLine(uiWindowSize.x / 2 - 4);
+  ImGui::SameLine((uiWindowSize.x / 2) - 4);
   ImGui::TextUnformatted("Local scope:");
 
   std::string newExpression{};
   std::string newEmbeddedCodeGlobal{};
   std::string newEmbeddedCodeLocal{};
 
-  static constexpr auto editorCallback{
-      [](ImGuiInputTextCallbackData *cb) -> int {
-        switch (cb->EventFlag) {
-        case ImGuiInputTextFlags_CallbackCharFilter: {
-          auto const c{cb->EventChar};
-
-          // Allow newline + tab for code editing
-          if (c == '\n' || c == '\t') {
-            return 0;
-          }
-
-          // Printable ASCII only
-          if (c >= 0x20 && c <= 0x7E) {
-            return 0;
-          }
-
-          return 1; // Reject
-        }
-
-        case ImGuiInputTextFlags_CallbackEdit: {
-          // Sanitize buffer (account for pasted code)
-          auto src{cb->Buf};
-          auto dst{cb->Buf};
-          auto const end{cb->Buf + cb->BufTextLen};
-
-          while (src < end) {
-            auto const c{gsl::narrow_cast<unsigned char>(*src)};
-
-            if (c == '\n' || c == '\t' || (c >= 0x20 && c <= 0x7E)) {
-              *dst++ = *src;
-            }
-
-            src++;
-          }
-
-          *dst = '\0';
-
-          // Update length + cursor
-          cb->BufTextLen = gsl::narrow<int>(dst - cb->Buf);
-          cb->CursorPos = std::min(cb->CursorPos, cb->BufTextLen);
-          cb->SelectionStart = cb->SelectionEnd = cb->CursorPos;
-
-          break;
-        }
-        }
-
-        return 0;
-      }};
-
   // Code embedded in global scope
   {
     std::array<char, kMaxEditorTextSize + 1> embeddedCode{};
     auto const &code{data.codeGlobal};
     code.copy(embeddedCode.data(), std::min(code.length(), kMaxEditorTextSize));
+    embeddedCode[kMaxEditorTextSize] = '\0';
     ImGui::PushFont(font);
     ImGui::InputTextMultiline("##editGlobalScope", embeddedCode.data(),
                               embeddedCode.size(),
-                              ImVec2(uiWindowSize.x / 2 - 20, -1),
+                              ImVec2((uiWindowSize.x / 2) - 20, -1),
                               ImGuiInputTextFlags_AllowTabInput |
                                   ImGuiInputTextFlags_CallbackCharFilter |
                                   ImGuiInputTextFlags_CallbackEdit,
                               editorCallback);
     ImGui::PopFont();
-    newEmbeddedCodeGlobal.assign(embeddedCode.data(), kMaxEditorTextSize);
-    newEmbeddedCodeGlobal.resize(newEmbeddedCodeGlobal.find('\0'));
+    newEmbeddedCodeGlobal = embeddedCode.data();
   }
 
   // Code embedded in local scope
@@ -144,17 +141,17 @@ void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
     std::array<char, kMaxEditorTextSize + 1> embeddedCode{};
     auto const &code{data.codeLocal};
     code.copy(embeddedCode.data(), std::min(code.length(), kMaxEditorTextSize));
+    embeddedCode[kMaxEditorTextSize] = '\0';
     ImGui::PushFont(font);
     ImGui::InputTextMultiline("##editLocalScope", embeddedCode.data(),
                               embeddedCode.size(),
-                              ImVec2(uiWindowSize.x / 2 - 20, -1),
+                              ImVec2((uiWindowSize.x / 2) - 20, -1),
                               ImGuiInputTextFlags_AllowTabInput |
                                   ImGuiInputTextFlags_CallbackCharFilter |
                                   ImGuiInputTextFlags_CallbackEdit,
                               editorCallback);
     ImGui::PopFont();
-    newEmbeddedCodeLocal.assign(embeddedCode.data(), kMaxEditorTextSize);
-    newEmbeddedCodeLocal.resize(newEmbeddedCodeLocal.find('\0'));
+    newEmbeddedCodeLocal = embeddedCode.data();
   }
   ImGui::EndChild();
 
@@ -163,9 +160,10 @@ void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
   auto const eqIsoValueSize{ImGui::CalcTextSize(eqIsovalue.c_str())};
 
   // Multiline text is prefilled with zeros to indicate its maximum size
-  std::string multilineText(kMaxEditorTextSize + 1, '\0');
+  std::array<char, kMaxEditorTextSize + 1> multilineText{};
   data.expression.copy(multilineText.data(),
                        std::min(kMaxEditorTextSize, data.expression.length()));
+  multilineText[kMaxEditorTextSize] = '\0';
 
   ImGui::PushFont(font);
   ImGui::InputTextMultiline(
@@ -177,8 +175,7 @@ void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
       editorCallback);
   ImGui::PopFont();
 
-  newExpression.assign(multilineText.data(), kMaxEditorTextSize);
-  newExpression.resize(newExpression.find('\0'));
+  newExpression = multilineText.data();
   ImGui::SameLine();
   ImGui::AlignTextToFramePadding();
   ImGui::Text("%s", eqIsovalue.c_str());
@@ -196,8 +193,9 @@ void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
     if (newExpression != data.expression ||
         newEmbeddedCodeGlobal != data.codeGlobal ||
         newEmbeddedCodeLocal != data.codeLocal) {
-      auto &oldFunction{groups.at(appState.selectedFunctionGroupIndex)
-                            .functions.at(appState.selectedFunctionIndex)};
+      auto const &oldFunction{
+          groups.at(appState.selectedFunctionGroupIndex)
+              .functions.at(appState.selectedFunctionIndex)};
 
       // Create a user-defined function from the current selected function
       Function::Data userDefinedData{oldFunction.getData()};

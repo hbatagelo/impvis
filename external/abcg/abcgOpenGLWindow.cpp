@@ -40,8 +40,9 @@ abcg::OpenGLWindow::getOpenGLSettings() const noexcept {
  */
 void abcg::OpenGLWindow::setOpenGLSettings(
     OpenGLSettings const &openGLSettings) noexcept {
-  if (abcg::Window::getSDLWindow() != nullptr)
+  if (abcg::Window::getSDLWindow() != nullptr) {
     return;
+  }
   m_openGLSettings = openGLSettings;
 }
 
@@ -50,7 +51,7 @@ void abcg::OpenGLWindow::setOpenGLSettings(
  *
  * @param filename String view to the filename.
  */
-void abcg::OpenGLWindow::saveScreenshotPNG(std::string_view filename) const {
+void abcg::OpenGLWindow::saveScreenshotPNG(std::string const &filename) const {
   auto const size{getWindowSize()};
   auto const channels{4};
   auto const pitch{gsl::narrow<long>(size.x * channels)};
@@ -150,8 +151,7 @@ void abcg::OpenGLWindow::onPaintUI() {
     auto const label{fmt::format("avg {:.1f} FPS", fps)};
     ImGui::PlotLines("", frames.data(), gsl::narrow<int>(frames.size()),
                      gsl::narrow<int>(offset), label.c_str(), 0.0f,
-                     // *std::ranges::max_element(frames) * 2,
-                     *std::max_element(frames.begin(), frames.end()) * 2,
+                     *std::ranges::max_element(frames) * 2,
                      ImVec2(gsl::narrow<float>(frames.size()), 50));
     ImGui::End();
   }
@@ -220,8 +220,9 @@ void abcg::OpenGLWindow::onUpdate() {}
 void abcg::OpenGLWindow::onDestroy() {}
 
 void abcg::OpenGLWindow::handleEvent(SDL_Event const &event) {
-  if (event.window.windowID != abcg::Window::getSDLWindowID())
+  if (event.window.windowID != abcg::Window::getSDLWindowID()) {
     return;
+  }
 
   switch (event.type) {
   case SDL_EVENT_WINDOW_HIDDEN:
@@ -240,7 +241,9 @@ void abcg::OpenGLWindow::handleEvent(SDL_Event const &event) {
   case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
   case SDL_EVENT_WINDOW_RESIZED: {
     onResize(getWindowSize());
-  }
+  } break;
+  default:
+    break;
   }
 
   onEvent(event);
@@ -353,6 +356,7 @@ void abcg::OpenGLWindow::create() {
   SDL_GL_SetSwapInterval(m_openGLSettings.vSync ? 1 : 0);
 #endif
 
+  // NOLINTBEGIN(*reinterpret-cast, performance-no-int-to-ptr)
 #if !defined(__EMSCRIPTEN__)
   if (auto const err{glewInit()}; GLEW_OK != err) {
     throw abcg::Exception{
@@ -372,6 +376,7 @@ void abcg::OpenGLWindow::create() {
   fmt::print(
       "GLSL version...: {}\n",
       reinterpret_cast<char const *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+  // NOLINTEND(*reinterpret-cast, performance-no-int-to-ptr)
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -407,8 +412,9 @@ void abcg::OpenGLWindow::create() {
 void abcg::OpenGLWindow::paint() {
   onUpdate();
 
-  if (m_hidden || m_minimized)
+  if (m_hidden || m_minimized) {
     return;
+  }
 
   SDL_GL_MakeCurrent(abcg::Window::getSDLWindow(), m_GLContext);
 

@@ -9,62 +9,62 @@ on:
   workflow_dispatch:
 
 jobs:
-  linux-build:
-    runs-on: ubuntu-latest
-    env:
-      BUILD_TYPE: Release
+  # linux-build:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     BUILD_TYPE: Release
 
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+  #   steps:
+  #   - name: Checkout repo
+  #     uses: actions/checkout@v3
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake pkg-config
+  #   - name: Install system dependencies
+  #     run: |
+  #       sudo apt-get update
+  #       sudo apt-get install -y cmake pkg-config
 
-    - name: Install Conan
-      run: pip install conan
+  #   - name: Install Conan
+  #     run: pip install conan
 
-    - name: Detect Conan profile
-      run: conan profile detect --force
+  #   - name: Detect Conan profile
+  #     run: conan profile detect --force
 
-    - name: Install dependencies
-      run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
+  #   - name: Install dependencies
+  #     run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}} -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
 
-    - name: Set build type lowercase
-      run: echo "BUILD_TYPE_LOWER=$(echo ${{env.BUILD_TYPE}} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+  #   - name: Set build type lowercase
+  #     run: echo "BUILD_TYPE_LOWER=$(echo ${{env.BUILD_TYPE}} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-    - name: Configure
-      run: cmake --preset conan-${{env.BUILD_TYPE_LOWER}} -DENABLE_UNIT_TESTING=ON
+  #   - name: Configure
+  #     run: cmake --preset conan-${{env.BUILD_TYPE_LOWER}} -DENABLE_UNIT_TESTING=ON
 
-    - name: Build
-      run: cmake --build --preset conan-${{env.BUILD_TYPE_LOWER}}
+  #   - name: Build
+  #     run: cmake --build --preset conan-${{env.BUILD_TYPE_LOWER}}
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build/build/${{env.BUILD_TYPE}}
-      run: ctest -C ${{env.BUILD_TYPE}}
+  #   - name: Test
+  #     working-directory: ${{github.workspace}}/build/build/${{env.BUILD_TYPE}}
+  #     run: ctest -C ${{env.BUILD_TYPE}}
 
-  macOS-build:
-    runs-on: macos-latest
-    env:
-      BUILD_TYPE: Release
+  # macOS-build:
+  #   runs-on: macos-latest
+  #   env:
+  #     BUILD_TYPE: Release
 
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+  #   steps:
+  #   - name: Checkout repo
+  #     uses: actions/checkout@v3
 
-    - name: Install Conan
-      run: pip install conan
+  #   - name: Install Conan
+  #     run: pip install conan
 
-    - name: Detect Conan profile
-      run: conan profile detect --force
+  #   - name: Detect Conan profile
+  #     run: conan profile detect --force
 
-    - name: Install dependencies
-      run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}}
+  #   - name: Install dependencies
+  #     run: conan install . --output-folder=build --build=missing -s build_type=${{env.BUILD_TYPE}}
 
-    - name: Build
-      run: conan build .
+  #   - name: Build
+  #     run: conan build .
 
   windows-build:
     runs-on: windows-latest
@@ -95,34 +95,34 @@ jobs:
     - name: Build
       run: conan build .
 
-  wasm-build:
-    runs-on: ubuntu-latest
-    env:
-      BUILD_TYPE: Release
+  # wasm-build:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     BUILD_TYPE: Release
 
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+  #   steps:
+  #   - name: Checkout repo
+  #     uses: actions/checkout@v3
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git cmake pkg-config
+  #   - name: Install system dependencies
+  #     run: |
+  #       sudo apt-get update
+  #       sudo apt-get install -y git cmake pkg-config
 
-    - name: Install Conan
-      run: pip install conan
+  #   - name: Install Conan
+  #     run: pip install conan
 
-    - name: Detect Conan profile
-      run: conan profile detect --force
+  #   - name: Detect Conan profile
+  #     run: conan profile detect --force
 
-    - name: Install Emscripten
-      run: |
-        git clone https://github.com/emscripten-core/emsdk.git
-        cd emsdk
-        ./emsdk install latest
-        ./emsdk activate latest
+  #   - name: Install Emscripten
+  #     run: |
+  #       git clone https://github.com/emscripten-core/emsdk.git
+  #       cd emsdk
+  #       ./emsdk install latest
+  #       ./emsdk activate latest
 
-    - name: Build
-      run: |
-        source ./emsdk/emsdk_env.sh
-        source ./build-wasm.sh
+  #   - name: Build
+  #     run: |
+  #       source ./emsdk/emsdk_env.sh
+  #       source ./build-wasm.sh

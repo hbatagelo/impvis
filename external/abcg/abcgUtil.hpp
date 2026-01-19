@@ -11,6 +11,7 @@
 #ifndef ABCG_UTIL_HPP_
 #define ABCG_UTIL_HPP_
 
+#include <filesystem>
 #include <functional>
 #include <string>
 
@@ -67,6 +68,24 @@ std::size_t hashCombine(const TFirst &value, const TRest &...rest) {
   std::size_t seed{};
   hashCombineSeed(seed, value, rest...);
   return seed;
+}
+
+/**
+ * @brief Converts a filesystem path to a UTF-8 encoded string.
+ *
+ * This function returns a UTF-8 representation of the given
+ * std::filesystem::path, independent of the platform's native path encoding.
+ *
+ * On Windows, this performs an explicit conversion from UTF-16 to UTF-8.
+ * On other platforms, it returns the original byte sequence.
+ *
+ * @param path Filesystem path to be converted.
+ *
+ * @return A UTF-8 encoded std::string representing the path.
+ */
+inline std::string pathToUtf8(std::filesystem::path const& path) {
+  auto const u8{path.u8string()};
+  return std::string{u8.begin(), u8.end()};
 }
 
 std::string toRedString(std::string_view str);

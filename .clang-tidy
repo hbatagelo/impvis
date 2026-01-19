@@ -8,12 +8,12 @@ Checks: '*,
          -llvm*,
          -zircon*,
          -*use-trailing-return-type,
-         -*signed-bitwise,         
+         -*signed-bitwise,
          -*magic-numbers,
-         -*vararg,         
+         -*vararg,
          -*uppercase-literal-suffix,
-         -*type-union-access'
+         -*type-union-access,
+         -*readability-identifier-length'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
 FormatStyle: llvm

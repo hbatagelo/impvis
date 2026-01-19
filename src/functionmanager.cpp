@@ -109,11 +109,11 @@ std::vector<Function> loadCatalog(toml::table const &table) {
 
 FunctionManager::~FunctionManager() { onDestroy(); }
 
-void FunctionManager::loadFromDirectory(std::string_view directory) {
+void FunctionManager::loadFromDirectory(std::filesystem::path const &path) {
   onDestroy();
 
   std::set<std::string> functionFilenames;
-  for (auto const &entry : std::filesystem::directory_iterator{directory}) {
+  for (auto const &entry : std::filesystem::directory_iterator{path}) {
     if (entry.is_regular_file() && entry.path().extension() == ".toml") {
       functionFilenames.insert(entry.path().string());
     }
@@ -156,10 +156,11 @@ std::optional<FunctionManager::FunctionId>
 FunctionManager::getId(std::string_view name) const {
   auto const lowerName{ivUtil::toLower(name)};
 
-  for (auto &&[gi, group] : iter::enumerate(m_groups)) {
-    for (auto &&[fi, function] : iter::enumerate(group.functions)) {
+  for (auto &&[group_index, group] : iter::enumerate(m_groups)) {
+    for (auto &&[function_index, function] : iter::enumerate(group.functions)) {
       if (ivUtil::toLower(function.getData().name) == lowerName) {
-        return std::optional{FunctionId{gi, fi}};
+        return std::optional{
+            FunctionId{.group = group_index, .index = function_index}};
       }
     }
   }

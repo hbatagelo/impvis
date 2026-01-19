@@ -22,7 +22,7 @@ struct Frame {
                                                       : glm::vec3(0, 1, 0)};
   auto const tangent{glm::normalize(glm::cross(direction, arbitrary))};
   auto const bitangent{glm::cross(direction, tangent)};
-  return {direction, tangent, bitangent};
+  return {.direction = direction, .tangent = tangent, .bitangent = bitangent};
 }
 
 void addCap(std::vector<geometry::Vertex> &vertices,
@@ -84,8 +84,8 @@ void createCylinder(std::vector<Vertex> &vertices, std::vector<GLuint> &indices,
   }
 
   for (auto const index : iter::range(segments)) {
-    auto const bl{baseIndex + index * 2};
-    auto const br{baseIndex + (index + 1) * 2};
+    auto const bl{baseIndex + (index * 2)};
+    auto const br{baseIndex + ((index + 1) * 2)};
     auto const tl{bl + 1};
     auto const tr{br + 1};
 
@@ -149,7 +149,7 @@ float computeScreenSpaceRadius(Camera const &camera, float targetScreenRadius) {
 
   if (camera.getProjection() == Camera::Projection::Perspective) {
     // Perspective: radius scales with distance and FOV
-    auto const distance{camera.getLookAtDistance()};
+    auto const distance{Camera::getLookAtDistance()};
     auto const fovYRad{glm::radians(fovY)};
 
     // Height at the distance in world space

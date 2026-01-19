@@ -38,10 +38,10 @@ void UILegends::isovalueLegendAndModeSettings(AppContext &context) {
                             kHorizontalMargin};
   auto const wide{availableWidth >= kMinWidth};
 
-  std::string_view const labelPositive{wide ? "Positive side" : "+"};
-  std::string_view const labelNegative{wide ? "Negative side" : "-"};
+  auto const *const labelPositive{wide ? "Positive side" : "+"};
+  auto const *const labelNegative{wide ? "Negative side" : "-"};
 
-  ImGui::ColorEdit3(labelPositive.data(), &renderState.outsideKdId.x,
+  ImGui::ColorEdit3(labelPositive, &renderState.outsideKdId.x,
                     ImGuiColorEditFlags_NoInputs |
                         ImGuiColorEditFlags_NoTooltip);
   UIWidgets::showDelayedTooltip(kTooltip);
@@ -50,7 +50,7 @@ void UILegends::isovalueLegendAndModeSettings(AppContext &context) {
   ImGui::Dummy({0.0f, 5.0f});
   ImGui::SameLine();
 
-  ImGui::ColorEdit3(labelNegative.data(), &renderState.insideKdId.x,
+  ImGui::ColorEdit3(labelNegative, &renderState.insideKdId.x,
                     ImGuiColorEditFlags_NoInputs |
                         ImGuiColorEditFlags_NoTooltip);
   UIWidgets::showDelayedTooltip(kTooltip);
@@ -156,8 +156,8 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
   auto const unitNormal{renderState.surfaceColorMode ==
                         RenderState::SurfaceColorMode::UnitNormal};
 
-  static constexpr std::array<std::string_view, 2> items{
-      "Unit normal (XYZ to RGB)", "Normal magnitude"};
+  static constexpr std::array<const char *, 2> items{"Unit normal (XYZ to RGB)",
+                                                     "Normal magnitude"};
   static constexpr std::array itemsEnum{
       RenderState::SurfaceColorMode::UnitNormal,
       RenderState::SurfaceColorMode::NormalMagnitude};
@@ -311,7 +311,8 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
   auto &falloff{[&]() -> float & {
     if (isGaussianCurvature) {
       return renderState.gaussianCurvatureFalloff;
-    } else if (isMeanCurvature) {
+    }
+    if (isMeanCurvature) {
       return renderState.meanCurvatureFalloff;
     }
     return renderState.maxAbsCurvatureFalloff;
@@ -355,20 +356,10 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
     ImGui::Dummy({5.0f, 0.0f});
     ImGui::SameLine();
 
-    std::string_view leftLabel{};
-    std::string_view centerLabel{};
-    std::string_view rightLabel{};
-
     if (!isMaxAbsCurvature) {
-      if (isGaussianCurvature) {
-        leftLabel = "Hyperbolic";
-        centerLabel = "Parabolic";
-        rightLabel = "Elliptic";
-      } else if (isMeanCurvature) {
-        leftLabel = "Concave*";
-        centerLabel = "Minimal";
-        rightLabel = "Convex*";
-      }
+      auto const *leftLabel{isGaussianCurvature ? "Hyperbolic" : "Concave*"};
+      auto const *centerLabel{isGaussianCurvature ? "Parabolic" : "Minimal"};
+      auto const *rightLabel{isGaussianCurvature ? "Elliptic" : "Convex*"};
       UIWidgets::gradientWidget(
           "##gradientWidget", renderState.curvatureColormap, false,
           ImVec2(columnAWidth, 53), invTanh, true,
@@ -381,7 +372,9 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
             "Inward-bending\nConvex: Outward-bending");
       }
     } else {
-      centerLabel = "Maximum Absolute Curvature";
+      auto const *leftLabel{""};
+      auto const *centerLabel{"Maximum Absolute Curvature"};
+      auto const *rightLabel{""};
       UIWidgets::gradientWidget(
           "##gradientWidget", renderState.maxAbsCurvColormap, false,
           ImVec2(columnAWidth, 53), invOneSidedTanh, true,
@@ -399,7 +392,7 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
 
     ImGui::PushItemWidth(columnBWidth);
 
-    static constexpr std::array<std::string_view, 3> items{
+    static constexpr std::array<const char *, 3> items{
         "Gaussian curvature (K)", "Mean curvature (H)", "max(|k1|, |k2|)"};
     static constexpr std::array itemsEnum{
         RenderState::SurfaceColorMode::GaussianCurvature,
@@ -414,14 +407,17 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
                 RenderState::SurfaceColorMode::MaxAbsCurvature);
     auto const currentIndex{[&]() -> std::size_t {
       if (renderState.surfaceColorMode ==
-          RenderState::SurfaceColorMode::GaussianCurvature)
+          RenderState::SurfaceColorMode::GaussianCurvature) {
         return 0;
+      }
       if (renderState.surfaceColorMode ==
-          RenderState::SurfaceColorMode::MeanCurvature)
+          RenderState::SurfaceColorMode::MeanCurvature) {
         return 1;
+      }
       if (renderState.surfaceColorMode ==
-          RenderState::SurfaceColorMode::MaxAbsCurvature)
+          RenderState::SurfaceColorMode::MaxAbsCurvature) {
         return 2;
+      }
       return 0;
     }()};
 

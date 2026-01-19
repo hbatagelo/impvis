@@ -14,7 +14,7 @@
 #include "abcgOpenGLExternal.hpp"
 
 #include <array>
-#include <string_view>
+#include <filesystem>
 
 namespace abcg {
 struct OpenGLTextureCreateInfo;
@@ -31,7 +31,7 @@ loadOpenGLCubemap(OpenGLCubemapCreateInfo const &createInfo);
  */
 struct abcg::OpenGLTextureCreateInfo {
   /** @brief Path to the image file (PNG or JPEG). */
-  std::string_view path{};
+  std::filesystem::path path;
   /** @brief Whether to generate mipmap levels. */
   bool generateMipmaps{true};
   /** @brief Whether to flip the image upside down. */
@@ -46,8 +46,8 @@ struct abcg::OpenGLTextureCreateInfo {
  */
 struct abcg::OpenGLCubemapCreateInfo {
   /** @brief Array of paths to the image files (PNG or JPEG) containing the
-   * sides of the cube map, given in the order +x, -y, +y, -y, +z, -z. */
-  std::array<std::string_view, 6> paths{};
+   * sides of the cube map, given in the order +x, -x, +y, -y, +z, -z. */
+  std::array<std::filesystem::path, 6> paths{};
   /** @brief Whether to generate mipmap levels. */
   bool generateMipmaps{true};
   /** @brief Whether to convert the cubemap from a left-handed system to a

@@ -143,7 +143,7 @@ bool abcg::resizingEventWatcher(void *data, SDL_Event *event) {
 
   auto *window{static_cast<abcg::Window *>(
       SDL_GetPointerProperty(properties, "window", nullptr))};
-  if (window == nullptr || !window->m_enableResizingEventWatcher) {
+  if ((window == nullptr) || !window->m_enableResizingEventWatcher) {
     return false;
   }
 
@@ -327,17 +327,11 @@ void abcg::Window::toggleFullscreen() {
   bool const fullscreen{
       (SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN) != 0U};
 
-  static int windowed_w;
-  static int windowed_h;
-  if (!fullscreen) {
-    SDL_GetWindowSize(m_window, &windowed_w, &windowed_h);
-  }
-
   SDL_SetWindowFullscreen(m_window, !fullscreen);
 
   if (fullscreen) {
-    SDL_SetWindowSize(m_window, windowed_w + 1, windowed_h + 1);
-    SDL_SetWindowSize(m_window, windowed_w, windowed_h);
+    SDL_SetWindowSize(m_window, m_windowSettings.width,
+                      m_windowSettings.height);
   }
 
   setEnableResizingEventWatcher(true);
@@ -373,7 +367,6 @@ void abcg::Window::templateHandleEvent(SDL_Event const &event, bool &done) {
   default:
     break;
   }
-
   if (event.type == SDL_EVENT_KEY_UP) {
     if (event.key.key == SDLK_F11) {
 #if defined(__EMSCRIPTEN__)

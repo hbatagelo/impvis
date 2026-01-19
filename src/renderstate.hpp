@@ -23,9 +23,13 @@ struct RenderState {
   static_assert(kMinDvrDensity <= kInitialDvrDensity &&
                 kInitialDvrDensity < kMaxDvrDensity);
 
-  enum class BoundsShape { Sphere, Box };
-  enum class RenderingMode { LitSurface, UnlitSurface, DirectVolume };
-  enum class SurfaceColorMode {
+  enum class BoundsShape : std::uint8_t { Sphere, Box };
+  enum class RenderingMode : std::uint8_t {
+    LitSurface,
+    UnlitSurface,
+    DirectVolume
+  };
+  enum class SurfaceColorMode : std::uint8_t {
     SideSign,
     UnitNormal,
     NormalMagnitude,
@@ -33,8 +37,12 @@ struct RenderState {
     MeanCurvature,
     MaxAbsCurvature,
   };
-  enum class RootTestMode { SignChange, Taylor1stOrder, Taylor2ndOrder };
-  enum class GradientMode {
+  enum class RootTestMode : std::uint8_t {
+    SignChange,
+    Taylor1stOrder,
+    Taylor2ndOrder
+  };
+  enum class GradientMode : std::uint8_t {
     ForwardDifference,
     CentralDifference,
     FivePointStencil

@@ -25,24 +25,27 @@ constexpr std::array<glm::vec3, 3> kInstanceColors{
 } // namespace
 
 void Axes::onCreate() {
-  auto const readFile{[](std::string_view filename) -> std::string {
+  auto const readFile{[](std::filesystem::path const &path) -> std::string {
+    auto const utf8Path{abcg::pathToUtf8(path)};
     std::stringstream source;
-    if (std::ifstream stream(filename.data()); stream) {
+    if (std::ifstream stream(utf8Path); stream) {
       source << stream.rdbuf();
       stream.close();
     } else {
       throw abcg::RuntimeError(
-          std::format("Failed to read shader file {}", filename));
+          std::format("Failed to read shader file {}", utf8Path));
     }
     return source.str();
   }};
 
-  static auto const &assetsPath{abcg::Application::getAssetsPath()};
+  auto const &assetsPath{abcg::Application::getAssetsPath()};
 
   std::vector<abcg::ShaderSource> const sources{
-      {.source = readFile(assetsPath + std::string{kVertexShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kVertexShaderPath}),
        .stage = abcg::ShaderStage::Vertex},
-      {.source = readFile(assetsPath + std::string{kFragmentShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kFragmentShaderPath}),
        .stage = abcg::ShaderStage::Fragment}};
 
   m_program = abcg::createOpenGLProgram(sources);
@@ -136,10 +139,9 @@ void Axes::onCreate() {
   m_zAxisTip = glm::vec3(0, 0, coneEnd) + glm::vec3(0, 0, 0.075f);
 
   // Texture generated with https://evanw.github.io/font-texture-generator/
+  auto const path{assetsPath / std::filesystem::path{kGlyphsTexturePath}};
   m_glyphsTexture = abcg::loadOpenGLTexture(
-      {.path = assetsPath + std::string{kGlyphsTexturePath},
-       .generateMipmaps = false,
-       .flipUpsideDown = false});
+      {.path = path, .generateMipmaps = false, .flipUpsideDown = false});
 
   // Glyph | x_pos | y_pos | width | height | origin_x | origin_y
   // 'x'   |    71 |     0 |    71 |     69 |        4 |       63
@@ -168,10 +170,13 @@ void Axes::onCreate() {
 
   // Create billboard shader program
   std::vector<abcg::ShaderSource> const billboardSources{
-      {.source = readFile(assetsPath + std::string{kGlyphVertexShaderPath}),
+      {.source =
+           readFile(assetsPath / std::filesystem::path{kGlyphVertexShaderPath}),
        .stage = abcg::ShaderStage::Vertex},
-      {.source = readFile(assetsPath + std::string{kGlyphFragmentShaderPath}),
+      {.source = readFile(assetsPath /
+                          std::filesystem::path{kGlyphFragmentShaderPath}),
        .stage = abcg::ShaderStage::Fragment}};
+
   m_glyphProgram = abcg::createOpenGLProgram(billboardSources);
 
   // Get uniform locations of billboard program
@@ -232,7 +237,7 @@ void Axes::renderAxes(Camera const &camera) {
   m_lastLengthScale = lengthScale;
 
   // Build instance transforms (assuming unit cylinder aligned along +X)
-  glm::mat4 instanceModels[3];
+  std::array<glm::mat4, 3> instanceModels{};
   instanceModels[0] = glm::mat4(1.0f); // X axis: identity
   // Y axis: rotate +90 deg around Z to map +X -> +Y
   instanceModels[1] = glm::rotate(glm::mat4(1.0f), glm::half_pi<float>(),
@@ -304,10 +309,10 @@ void Axes::renderGlyphs(Camera const &camera, float boundsRadius,
   auto const billboardScale{(0.3f * camera.getFovY() / 30.0f) /
                             (4.0f * camera.getModelScale())};
   abcg::glUniform1f(m_glyphBillboardScaleLocation, billboardScale);
-  abcg::glUniform1i(m_glyphFadeAlphaLocation, fadeAlpha);
+  abcg::glUniform1i(m_glyphFadeAlphaLocation, static_cast<GLint>(fadeAlpha));
   abcg::glUniform1f(m_glyphBoundsRadiusLocation, boundsRadius);
   abcg::glUniform1f(m_glyphCameraDistanceToOriginLocation,
-                    camera.getLookAtDistance());
+                    Camera::getLookAtDistance());
 
   abcg::glActiveTexture(GL_TEXTURE0);
   abcg::glBindTexture(GL_TEXTURE_2D, m_glyphsTexture);
@@ -340,23 +345,25 @@ void Axes::renderGlyphs(Camera const &camera, float boundsRadius,
   // For each tip: scale the cylinder part by lengthScale,
   // and the cone offset by radiusScale only
   scaledXTip.x =
-      scaledCylinderEnd + (m_xAxisTip.x - cylinderEnd) * m_lastRadiusScale;
+      scaledCylinderEnd + ((m_xAxisTip.x - cylinderEnd) * m_lastRadiusScale);
   scaledYTip.y =
-      scaledCylinderEnd + (m_yAxisTip.y - cylinderEnd) * m_lastRadiusScale;
+      scaledCylinderEnd + ((m_yAxisTip.y - cylinderEnd) * m_lastRadiusScale);
   scaledZTip.z =
-      scaledCylinderEnd + (m_zAxisTip.z - cylinderEnd) * m_lastRadiusScale;
+      scaledCylinderEnd + ((m_zAxisTip.z - cylinderEnd) * m_lastRadiusScale);
 
   std::array<AxisLabel, 3> const labels{
-      {{scaledXTip, white}, {scaledYTip, white}, {scaledZTip, white}}};
+      {{.position = scaledXTip, .color = white},
+       {.position = scaledYTip, .color = white},
+       {.position = scaledZTip, .color = white}}};
 
   for (auto const index : iter::range(labels.size())) {
     abcg::glUniform3fv(m_glyphBillboardPositionLocation, 1,
-                       &labels[index].position[0]);
-    abcg::glUniform3fv(m_glyphTextColorLocation, 1, &labels[index].color[0]);
-    abcg::glUniform2fv(m_glyphUV0Location, 1, &m_glyphData[index].uv0[0]);
-    abcg::glUniform2fv(m_glyphUV1Location, 1, &m_glyphData[index].uv1[0]);
+                       &labels.at(index).position[0]);
+    abcg::glUniform3fv(m_glyphTextColorLocation, 1, &labels.at(index).color[0]);
+    abcg::glUniform2fv(m_glyphUV0Location, 1, &m_glyphData.at(index).uv0[0]);
+    abcg::glUniform2fv(m_glyphUV1Location, 1, &m_glyphData.at(index).uv1[0]);
     abcg::glUniform1f(m_glyphAspectRatioLocation,
-                      m_glyphData[index].aspectRatio);
+                      m_glyphData.at(index).aspectRatio);
 
     abcg::glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
   }

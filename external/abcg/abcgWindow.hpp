@@ -13,11 +13,10 @@
 #ifndef ABCG_WINDOW_HPP_
 #define ABCG_WINDOW_HPP_
 
+#include <string>
 
 #include "abcgExternal.hpp"
 #include "abcgTimer.hpp"
-
-#include <string>
 
 #if defined(__EMSCRIPTEN__)
 #include "abcgOpenGLExternal.hpp"

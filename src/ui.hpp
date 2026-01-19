@@ -26,15 +26,21 @@ public:
   void onPaintUI(AppContext &context, RenderPipeline &pipeline, Camera &camera);
   void onDestroy();
 
-  ImFont *getProportionalFont() const { return m_proportionalFont; }
-  ImFont *getMonospacedFont() const { return m_monospacedFont; }
-  ImFont *getSmallFont() const { return m_smallFont; }
+  [[nodiscard]] ImFont *getProportionalFont() const noexcept {
+    return m_proportionalFont;
+  }
+  [[nodiscard]] ImFont *getMonospacedFont() const noexcept {
+    return m_monospacedFont;
+  }
+  [[nodiscard]] ImFont *getSmallFont() const noexcept { return m_smallFont; }
 
 private:
+  static void isoValueWindow(AppContext &context);
+  static void progressIndicator(ImVec2 position, float width,
+                                Raycast const &raycast);
+
   void mainWindow(AppContext &context, Camera &camera, Raycast const &raycast);
   void topButtonBar(AppContext &context);
-  void isoValueWindow(AppContext &context);
-  void progressIndicator(ImVec2 position, float width, Raycast const &raycast);
   void updateEquation(AppContext const &context, bool includeName = false);
   void surfaceInfoTooltip(RenderPipeline &pipeline, AppContext const &context);
 
@@ -45,7 +51,7 @@ private:
   SDL_Cursor *m_crossHairCursor{};
 
   std::vector<GLuint> m_buttonTextures;
-  std::optional<RenderPipeline::PixelData> m_lastPixelData{};
+  std::optional<RenderPipeline::PixelData> m_lastPixelData;
 };
 
 #endif

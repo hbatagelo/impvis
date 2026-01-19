@@ -11,11 +11,11 @@
 #ifndef ABCG_APPLICATION_HPP_
 #define ABCG_APPLICATION_HPP_
 
-#include <string>
+#include <filesystem>
 
 #define ABCG_VERSION_MAJOR 3
 #define ABCG_VERSION_MINOR 1
-#define ABCG_VERSION_PATCH 1
+#define ABCG_VERSION_PATCH 3
 
 /**
  * @brief Root namespace.
@@ -40,8 +40,8 @@ public:
 
   void run(Window &window);
 
-  static std::string const &getAssetsPath() noexcept;
-  static std::string const &getBasePath() noexcept;
+  static std::filesystem::path const &getAssetsPath() noexcept;
+  static std::filesystem::path const &getBasePath() noexcept;
 
 private:
   void mainLoopIterator(bool &done) const;
@@ -52,11 +52,8 @@ private:
   friend void mainLoopCallback(void *userData);
 #endif
 
-  // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
-  // See https://bugs.llvm.org/show_bug.cgi?id=48040
-  static inline std::string m_assetsPath;
-  static inline std::string m_basePath;
-  // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
+  static inline std::filesystem::path m_assetsPath;
+  static inline std::filesystem::path m_basePath;
 };
 
 #endif

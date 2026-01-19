@@ -11,7 +11,7 @@
 #include "renderstate.hpp"
 
 RenderPipeline::RenderPipeline()
-    : m_arrow(), m_axes(), m_background(), m_raycast(), m_textureBlit() {}
+    : m_arrow(), m_axes(), m_background(), m_raycast() {}
 
 void RenderPipeline::onCreate(RenderState const &renderState) {
   m_background.onCreate();

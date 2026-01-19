@@ -9,6 +9,7 @@
 
 #include "ui.hpp"
 
+#include "abcgUtil.hpp"
 #include "renderstate.hpp"
 #include "ui_editor.hpp"
 #include "ui_legends.hpp"
@@ -53,14 +54,14 @@ EM_JS(void, jsSetMathJaxVisibility, (bool visible),
 
 namespace emscriptenMathJax {
 
-bool updateEquation(std::string_view equation, std::string_view comment) {
-  jsUpdateEquation(equation.data(), equation.length(), comment.data(),
-                   comment.length());
+bool updateEquation(std::string const &equation, std::string const &comment) {
+  jsUpdateEquation(equation.c_str(), equation.size(), comment.c_str(),
+                   comment.size());
   return true;
 }
 
-bool updateEquationName(std::string_view name) {
-  jsUpdateEquationName(name.data(), name.length());
+bool updateEquationName(std::string const &name) {
+  jsUpdateEquationName(name.c_str(), name.size());
   return true;
 }
 
@@ -138,13 +139,14 @@ void debugInfo(AppContext &context, Camera &camera) {
 void UI::onCreate(AppContext const &context) {
   updateEquation(context, true);
 
-  auto const loadFont{[](std::string fontFile,
+  auto const loadFont{[](std::string const &fontFile,
                          float fontSizePixels) -> ImFont * {
-    auto const assetsPath{abcg::Application::getAssetsPath()};
+    auto const &assetsPath{abcg::Application::getAssetsPath()};
     ImFontConfig const fontConfig;
     ImGuiIO &guiIO{ImGui::GetIO()};
-    auto *font{guiIO.Fonts->AddFontFromFileTTF((assetsPath + fontFile).c_str(),
-                                               fontSizePixels, &fontConfig)};
+    auto *font{guiIO.Fonts->AddFontFromFileTTF(
+        abcg::pathToUtf8(assetsPath / std::filesystem::path{fontFile}).c_str(),
+        fontSizePixels, &fontConfig)};
     if (font == nullptr) {
       throw abcg::RuntimeError(std::format("Failed to load {}", fontFile));
     }
@@ -163,12 +165,12 @@ void UI::onCreate(AppContext const &context) {
   m_smallFont = loadFont(proportionalFontFile, smallFontSize);
 
   auto const numTopButtons{4};
-  auto const assetsPath{abcg::Application::getAssetsPath()};
+  auto const &assetsPath{abcg::Application::getAssetsPath()};
   for (auto const &index : iter::range(numTopButtons)) {
+    auto const path{assetsPath / std::filesystem::path{std::format(
+                                     "textures/top_button_{}.png", index)}};
     auto const textureID{abcg::loadOpenGLTexture(
-        {.path = assetsPath + std::format("textures/top_button_{}.png", index),
-         .generateMipmaps = true,
-         .flipUpsideDown = false})};
+        {.path = path, .generateMipmaps = true, .flipUpsideDown = false})};
     m_buttonTextures.push_back(textureID);
   }
 
@@ -215,8 +217,6 @@ void UI::onPaintUI(AppContext &context, RenderPipeline &pipeline,
       UILegends::isovalueLegendAndModeSettings(context);
       break;
     case RenderState::SurfaceColorMode::UnitNormal:
-      UILegends::normalLegendAndModeSettings(context);
-      break;
     case RenderState::SurfaceColorMode::NormalMagnitude:
       UILegends::normalLegendAndModeSettings(context);
       break;
@@ -259,7 +259,7 @@ void UI::mainWindow(AppContext &context, Camera &camera,
 
   auto const &parameters{renderState.function.getParameters()};
   auto const parametersExtraHeight{
-      !parameters.empty() ? 34 + parameters.size() * 26 : 0ul};
+      !parameters.empty() ? 34 + (parameters.size() * 26) : 0ul};
 
   auto const parametersMarginBelow{parametersExtraHeight > 0 ? 4ul : 0ul};
   ImVec2 const uiWindowSize{
@@ -376,7 +376,7 @@ void UI::mainWindow(AppContext &context, Camera &camera,
       ImVec2(gsl::narrow<float>(appState.windowSize.x) - uiWindowSize.x - 5,
              (isMainWindowCollapsed ? 22 : uiWindowSize.y) + 10 +
                  gsl::narrow<float>(parametersExtraHeight) +
-                 (showParameters ? 5 : 0)),
+                 (showParameters ? 5.0f : 0.0f)),
       uiWindowSize.x, raycast);
 
 #ifndef NDEBUG
@@ -396,16 +396,24 @@ void UI::topButtonBar(AppContext &context) {
   auto &renderState{context.renderState};
 
   struct ButtonInfo {
-    std::string_view label;
-    std::string_view tooltip;
+    char const *label;
+    char const *tooltip;
     ImGuiKey shortcutKey;
   };
 
   static constexpr std::array<ButtonInfo, 4> buttonInfo{
-      {{"Shaded", "Shaded isosurface", ImGuiKey_1},
-       {"Volume", "Volume rendering\nof the scalar field", ImGuiKey_2},
-       {"Normals", "Isosurface colored\nby normals", ImGuiKey_3},
-       {"Curvature", "Isosurface colored\nby curvature", ImGuiKey_4}}};
+      {{.label = "Shaded",
+        .tooltip = "Shaded isosurface",
+        .shortcutKey = ImGuiKey_1},
+       {.label = "Volume",
+        .tooltip = "Volume rendering\nof the scalar field",
+        .shortcutKey = ImGuiKey_2},
+       {.label = "Normals",
+        .tooltip = "Isosurface colored\nby normals",
+        .shortcutKey = ImGuiKey_3},
+       {.label = "Curvature",
+        .tooltip = "Isosurface colored\nby curvature",
+        .shortcutKey = ImGuiKey_4}}};
 
   auto const &io{ImGui::GetIO()};
   auto const buttonSize{ImVec2{47.0f, 47.0f}};
@@ -448,7 +456,7 @@ void UI::topButtonBar(AppContext &context) {
   // Keyboard shortcuts: Ctrl + [1–4]
   if (io.KeyCtrl) {
     for (auto const index : iter::range(buttonInfo.size())) {
-      if (ImGui::IsKeyPressed(buttonInfo[index].shortcutKey, false)) {
+      if (ImGui::IsKeyPressed(buttonInfo.at(index).shortcutKey, false)) {
         activateMode(index);
       }
     }
@@ -500,8 +508,9 @@ void UI::topButtonBar(AppContext &context) {
     }
     ImGui::PopID();
 
-    UIWidgets::showDelayedTooltip(std::format(
-        "{}\nShortcut: Ctrl+{}", buttonInfo[index].tooltip, index + 1));
+    auto const tooltip{std::format("{}\nShortcut: Ctrl+{}",
+                                   buttonInfo.at(index).tooltip, index + 1)};
+    UIWidgets::showDelayedTooltip(tooltip.c_str());
 
     if (selected) {
       ImGui::PopStyleColor(2);
@@ -512,16 +521,16 @@ void UI::topButtonBar(AppContext &context) {
     // Label
     ImGui::SetWindowFontScale(0.8f);
 
-    auto const label{buttonInfo[index].label};
-    auto const labelSize{ImGui::CalcTextSize(label.data())};
+    auto const *const label{buttonInfo.at(index).label};
+    auto const labelSize{ImGui::CalcTextSize(label)};
     auto const &style{ImGui::GetStyle()};
     auto const insideMargin{style.FramePadding.x * 2.0f};
 
     auto const labelX{groupStartX +
-                      ((buttonSize.x + insideMargin) - labelSize.x) * 0.5f};
+                      (((buttonSize.x + insideMargin) - labelSize.x) * 0.5f)};
 
     ImGui::SetCursorPosX(labelX);
-    ImGui::TextUnformatted(label.data());
+    ImGui::TextUnformatted(label);
 
     ImGui::SetWindowFontScale(1.0f);
 
@@ -648,8 +657,8 @@ void UI::updateEquation([[maybe_unused]] AppContext const &context,
 
 void UI::surfaceInfoTooltip(RenderPipeline &pipeline,
                             AppContext const &context) {
-  auto &appState{context.appState};
-  auto &renderState{context.renderState};
+  auto const &appState{context.appState};
+  auto const &renderState{context.renderState};
 
   if (!appState.showSurfaceInfoTooltip) {
     return;
@@ -671,7 +680,7 @@ void UI::surfaceInfoTooltip(RenderPipeline &pipeline,
       glm::ivec2 const pixelPosition{
           gsl::narrow_cast<int>(gsl::narrow<float>(mousePosition.x) * dpr),
           gsl::narrow_cast<int>(appState.viewportSize.y -
-                                gsl::narrow<float>(mousePosition.y) * dpr) -
+                                (gsl::narrow<float>(mousePosition.y) * dpr)) -
               1};
 
       m_lastPixelData = pipeline.readPixelData(pixelPosition);
