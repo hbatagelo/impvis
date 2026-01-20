@@ -20,6 +20,36 @@ expression = '''
 4*(phi^2*x^2-y^2)*(phi^2*y^2-z^2)*(phi^2*z^2-x^2)
 -(1+2*phi)*(x^2+y^2+z^2-w^2)^2*w^2'''
 
+[boy]
+name = "Boy"
+thumbnail = "textures/thumbs/sextic/boy.png"
+bounds_radius = 4.8
+isosurface_raymarch_method = "fixed-step"
+isosurface_raymarch_steps = 500
+scale = 0.7
+dvr_raymarch_steps = 400
+dvr_falloff = 0.001
+gaussian_curvature_falloff = 0.1
+mean_curvature_falloff = 0.15
+max_abs_curvature_falloff = 0.05
+normal_length_falloff = 0.005
+code_local = '''
+float x_0=1.0;
+float x_1=x;
+float x_2=y;
+float x_3=z;
+'''
+comment = '''
+\mathrm{where}\\
+&\quad x_0=1,\\
+&\quad x_1=x,\\
+&\quad x_2=y,\\
+&\quad x_3=z.'''
+expression = '''
+64*(x_0-x_3)^3*x_3^3-48*(x_0-x_3)^2*x_3^2*(3*x_1^2+3*x_2^2+2*x_3^2)
++12*(x_0-x_3)*x_3*[27*(x_1^2+x_2^2)^2-24*x_3^2*(x_1^2+x_2^2)+36*sqrt(2)*x_2*x_3*(x_2^2-3*x_1^2)+x_3^4]
++(9*x_1^2+9*x_2^2-2*x_3^2)*[-81*(x_1^2+x_2^2)^2-71*x_3^2*(x_1^2+x_2^2)+108*sqrt(2)*x_1*x_3*(x_1^2-3*x_2^2)+4*x_3^4]'''
+
 [chmutov_sextic]
 name = "Chmutov Sextic"
 thumbnail = "textures/thumbs/sextic/chmutov_sextic.png"

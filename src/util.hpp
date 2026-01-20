@@ -27,25 +27,26 @@ concept ReplaceCallback =
 std::size_t replaceAllAndInvoke(std::string &inout, std::string_view what,
                                 std::string_view with,
                                 ReplaceCallback auto &&replaceCallback,
-                                bool matchWholeWord = false) {
+                                bool matchIdentifier = false) {
   if (what.empty()) {
     return 0;
   }
 
-  auto const isAlpha{
-      [](char c) { return std::isalpha(static_cast<unsigned char>(c)); }};
+  auto const isIdentifier{[](char c) {
+    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+  }};
 
   std::size_t count{};
   for (auto pos{inout.find(what)}; pos != std::string::npos;
        pos = inout.find(what, pos)) {
 
-    if (matchWholeWord) {
+    if (matchIdentifier) {
       auto const posFirstChar{pos};
       auto const posLastChar{pos + what.length() - 1};
       auto const wholeWord{
-          (posFirstChar == 0 || !isAlpha(inout.at(posFirstChar - 1))) &&
+          (posFirstChar == 0 || !isIdentifier(inout.at(posFirstChar - 1))) &&
           (posLastChar >= inout.size() - 1 ||
-           !isAlpha(inout.at(posLastChar + 1)))};
+           !isIdentifier(inout.at(posLastChar + 1)))};
       if (!wholeWord) {
         ++pos;
         continue;
@@ -68,9 +69,9 @@ std::size_t replaceAllAndInvoke(std::string &inout, std::string_view what,
 // 'with'.
 inline std::size_t replaceAll(std::string &inout, std::string_view what,
                               std::string_view with,
-                              bool matchWholeWord = false) {
+                              bool matchIdentifier = false) {
   return replaceAllAndInvoke(
-      inout, what, with, [](auto &, auto) {}, matchWholeWord);
+      inout, what, with, [](auto &, auto) {}, matchIdentifier);
 }
 
 // Converts a string_view to a lowercase std::string (ASCII only).
