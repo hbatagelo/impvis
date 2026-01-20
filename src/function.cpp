@@ -16,6 +16,10 @@
 
 #include <re2/re2.h>
 
+#ifndef ENABLE_UNIT_TESTING
+namespace {
+#endif
+
 // Returns the position of the first pair of enclosing brackets starting from
 // str[pos].
 //
@@ -60,7 +64,7 @@ getBracketsPos(std::string_view str, std::string::size_type pos,
           --numNestedParens;
         } else {
           ++endPos;
-          assert(startPos <= endPos); // NOLINT
+          assert(startPos <= endPos);
           return std::pair{startPos, endPos};
         }
       }
@@ -125,76 +129,6 @@ getBracketsPosReverse(std::string_view str, std::string::size_type pos,
     }
   }
   return failed;
-}
-
-void encloseFunctionCallsInBrackets(std::string &str,
-                                    std::pair<char, char> brackets) {
-  std::unordered_set<std::string> functionCalls;
-
-  // Match "name(" where name is a function name
-  static RE2 const regex(R"re(\b([a-zA-Z_]*\w*\s*\())re");
-  assert(regex.ok()); // NOLINT
-
-  re2::StringPiece match;
-
-  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
-    auto const matchPosition{
-        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
-    auto const advancePos{matchPosition + match.size()};
-    auto const startPos{advancePos - 1};
-    auto const bracketPos{getBracketsPos(ns, startPos, {'(', ')'})};
-
-    if (bracketPos.first == std::string::npos) {
-      ns = ns.substr(advancePos);
-      continue;
-    }
-
-    auto const callArgs{
-        ns.substr(bracketPos.first + 1, bracketPos.second - bracketPos.first)};
-
-    functionCalls.emplace(std::string{match} + callArgs); // "name(" + "...)"
-
-    ns = ns.substr(advancePos);
-  }
-
-  for (auto const &fcall : functionCalls) {
-    ivUtil::replaceAll(
-        str, fcall,
-        std::format("{}{}{}", brackets.first, fcall, brackets.second));
-  }
-}
-
-void encloseMatchesInBrackets(std::string &str, RE2 const &regex,
-                              std::pair<char, char> brackets) {
-  std::size_t pos{};
-  re2::StringPiece match;
-
-  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
-    auto const matchPosition{
-        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
-    auto const posAfterName{matchPosition + match.size()};
-    auto const bracketPos{getBracketsPos(ns, posAfterName, {'(', ')'})};
-
-    std::string bracketedArgs{};
-    if (bracketPos.first != std::string::npos &&
-        bracketPos.second != std::string::npos) {
-      assert(bracketPos.second >= bracketPos.first); // NOLINT
-      bracketedArgs =
-          ns.substr(bracketPos.first, 1 + bracketPos.second - bracketPos.first);
-    }
-
-    // "name" + "(...)"
-    auto const what{std::string{match} + bracketedArgs};
-    // "{name(...)}" if brackets are curly brackets
-    auto const with{brackets.first + what + brackets.second};
-    str.replace(pos + matchPosition, what.length(), with.c_str(),
-                with.length());
-    ns.replace(matchPosition, what.length(), with.c_str(), with.length());
-
-    auto const advancePos{matchPosition + match.size()};
-    pos += advancePos;
-    ns = ns.substr(advancePos);
-  }
 }
 
 // Returns the sizes of the left and right operands of the single-character
@@ -262,6 +196,82 @@ std::pair<std::size_t, std::size_t> getSizesOfGLSLOperands(std::string_view str,
   return sizes;
 }
 
+#ifndef ENABLE_UNIT_TESTING
+} // anonymous namespace
+#endif
+
+namespace {
+
+void encloseFunctionCallsInBrackets(std::string &str,
+                                    std::pair<char, char> brackets) {
+  std::unordered_set<std::string> functionCalls;
+
+  // Match "name(" where name is a function name
+  static RE2 const regex(R"re(\b([a-zA-Z_]*\w*\s*\())re");
+  assert(regex.ok());
+
+  re2::StringPiece match;
+
+  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
+    auto const advancePos{matchPosition + match.size()};
+    auto const startPos{advancePos - 1};
+    auto const bracketPos{getBracketsPos(ns, startPos, {'(', ')'})};
+
+    if (bracketPos.first == std::string::npos) {
+      ns = ns.substr(advancePos);
+      continue;
+    }
+
+    auto const callArgs{
+        ns.substr(bracketPos.first + 1, bracketPos.second - bracketPos.first)};
+
+    functionCalls.emplace(std::string{match} + callArgs); // "name(" + "...)"
+
+    ns = ns.substr(advancePos);
+  }
+
+  for (auto const &fcall : functionCalls) {
+    ivUtil::replaceAll(
+        str, fcall,
+        std::format("{}{}{}", brackets.first, fcall, brackets.second));
+  }
+}
+
+void encloseMatchesInBrackets(std::string &str, RE2 const &regex,
+                              std::pair<char, char> brackets) {
+  std::size_t pos{};
+  re2::StringPiece match;
+
+  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
+    auto const matchPosition{
+        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
+    auto const posAfterName{matchPosition + match.size()};
+    auto const bracketPos{getBracketsPos(ns, posAfterName, {'(', ')'})};
+
+    std::string bracketedArgs{};
+    if (bracketPos.first != std::string::npos &&
+        bracketPos.second != std::string::npos) {
+      assert(bracketPos.second >= bracketPos.first);
+      bracketedArgs =
+          ns.substr(bracketPos.first, 1 + bracketPos.second - bracketPos.first);
+    }
+
+    // "name" + "(...)"
+    auto const what{std::string{match} + bracketedArgs};
+    // "{name(...)}" if brackets are curly brackets
+    auto const with{brackets.first + what + brackets.second};
+    str.replace(pos + matchPosition, what.length(), with.c_str(),
+                with.length());
+    ns.replace(matchPosition, what.length(), with.c_str(), with.length());
+
+    auto const advancePos{matchPosition + match.size()};
+    pos += advancePos;
+    ns = ns.substr(advancePos);
+  }
+}
+
 // Add matches to the given set
 void addMatchesToSet(RE2 const &regex, re2::StringPiece str,
                      std::set<std::string> &set) {
@@ -314,7 +324,7 @@ void removeMatchesInSameScope(RE2 const &regex, re2::StringPiece str,
 void reformatStringNumbersAsFloats(std::string &str) {
   // Match integers (e.g. 42) or floats (e.g. .42 or 4.2)
   static RE2 const regex(R"re(((\.\d+\.?\d*)|\b(\d+\.?\d*)))re");
-  assert(regex.ok()); // NOLINT
+  assert(regex.ok());
 
   std::size_t pos{};
   re2::StringPiece match;
@@ -336,155 +346,174 @@ void reformatStringNumbersAsFloats(std::string &str) {
   }
 }
 
+// Helper class to track bracket depths while scanning
+class BracketDepthTracker {
+public:
+  void trackForward(char ch) {
+    if (ch == '(') {
+      ++parenDepth;
+    } else if (ch == ')') {
+      --parenDepth;
+    } else if (ch == '[') {
+      ++bracketDepth;
+    } else if (ch == ']') {
+      --bracketDepth;
+    } else if (ch == '{') {
+      ++braceDepth;
+    } else if (ch == '}') {
+      --braceDepth;
+    }
+  }
+
+  void trackBackward(char ch) {
+    if (ch == ')') {
+      ++parenDepth;
+    } else if (ch == '(') {
+      --parenDepth;
+    } else if (ch == ']') {
+      ++bracketDepth;
+    } else if (ch == '[') {
+      --bracketDepth;
+    } else if (ch == '}') {
+      ++braceDepth;
+    } else if (ch == '{') {
+      --braceDepth;
+    }
+  }
+
+  void reset() {
+    parenDepth = 0;
+    bracketDepth = 0;
+    braceDepth = 0;
+  }
+
+  [[nodiscard]] bool atTopLevel() const {
+    return parenDepth == 0 && bracketDepth == 0 && braceDepth == 0;
+  }
+
+  [[nodiscard]] bool hasNegativeDepth() const {
+    return parenDepth < 0 || bracketDepth < 0 || braceDepth < 0;
+  }
+
+private:
+  int parenDepth{0};
+  int bracketDepth{0};
+  int braceDepth{0};
+};
+
+// Check if character is a binary operator that separates terms
+constexpr bool isTermSeparator(char ch) {
+  return ch == '+' || ch == '-' || ch == '*';
+}
+
+// Find the start position of the numerator by scanning backward from division
+std::string::size_type findNumeratorStart(std::string_view result,
+                                          std::string::size_type divPos) {
+  if (divPos == 0) {
+    return 0;
+  }
+
+  BracketDepthTracker tracker;
+  std::string::size_type numStart{divPos};
+
+  for (std::string::size_type i = divPos; i > 0; --i) {
+    auto const ch{result.at(i - 1)};
+    tracker.trackBackward(ch);
+
+    if (tracker.atTopLevel() && isTermSeparator(ch)) {
+      numStart = i;
+      break;
+    }
+    if (tracker.hasNegativeDepth()) {
+      numStart = i;
+      break;
+    }
+    if (i == 1) {
+      numStart = 0;
+    }
+  }
+
+  return numStart;
+}
+
+// Find the end position of the denominator by scanning forward from division
+std::string::size_type findDenominatorEnd(std::string_view result,
+                                          std::string::size_type divPos) {
+  BracketDepthTracker tracker;
+  std::string::size_type denEnd{divPos + 1};
+
+  for (std::string::size_type i : iter::range(divPos + 1, result.length())) {
+    auto const ch{result.at(i)};
+    tracker.trackForward(ch);
+    if (tracker.atTopLevel() && (isTermSeparator(ch) || ch == '/')) {
+      denEnd = i;
+      break;
+    }
+    if (tracker.hasNegativeDepth()) {
+      denEnd = i;
+      break;
+    }
+    if (i == result.length() - 1) {
+      denEnd = result.length();
+    }
+  }
+
+  return denEnd;
+}
+
+// Remove one level of enclosing parentheses if they wrap the entire expression
+void stripOuterParens(std::string &str) {
+  while (str.length() >= 2 && str.front() == '(' && str.back() == ')') {
+    // Verify these parens match and wrap the whole expression
+    auto depth{0};
+    auto wrapsAll{true};
+    for (std::size_t i{}; i < str.length() - 1; ++i) {
+      if (str.at(i) == '(') {
+        depth++;
+      } else if (str.at(i) == ')') {
+        depth--;
+      }
+      if (depth == 0 && i < str.length() - 2) {
+        wrapsAll = false;
+        break;
+      }
+    }
+    if (wrapsAll) {
+      str = str.substr(1, str.length() - 2);
+    } else {
+      break;
+    }
+  }
+}
+
 std::string convertDivisionsToFractions(std::string_view expr) {
   std::string result{expr};
   std::string::size_type pos{0};
 
   while ((pos = result.find('/', pos)) != std::string::npos) {
-    // Find the numerator (work backwards from '/')
-    std::string::size_type numStart = pos;
-    auto parenDepth{0};
-    auto bracketDepth{0};
-    auto braceDepth{0};
+    auto const numStart{findNumeratorStart(result, pos)};
+    auto const denEnd{findDenominatorEnd(result, pos)};
 
-    // Scan backwards to find where numerator starts
-    if (pos > 0) {
-      for (std::string::size_type i = pos; i > 0; --i) {
-        auto const c{result[i - 1]};
-
-        // Track bracket depths
-        if (c == ')') {
-          parenDepth++;
-        } else if (c == '(') {
-          parenDepth--;
-        } else if (c == ']') {
-          bracketDepth++;
-        } else if (c == '[') {
-          bracketDepth--;
-        } else if (c == '}') {
-          braceDepth++;
-        } else if (c == '{') {
-          braceDepth--;
-        }
-
-        // At top level (all depths are 0)
-        if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
-          // Stop at binary operators that separate terms
-          if (c == '+' || c == '-' || c == '*') {
-            numStart = i;
-            break;
-          }
-          // Don't stop at ^ - it's part of the same term
-        }
-
-        // Stop if we hit an opening bracket at negative depth
-        if (parenDepth < 0 || bracketDepth < 0 || braceDepth < 0) {
-          numStart = i;
-          break;
-        }
-
-        if (i == 1) {
-          numStart = 0;
-        }
-      }
-    } else {
-      numStart = 0;
-    }
-
-    // Find the denominator (work forwards from '/')
-    std::string::size_type denEnd{pos + 1};
-    parenDepth = 0;
-    bracketDepth = 0;
-    braceDepth = 0;
-
-    // Scan forwards to find where denominator ends
-    for (std::string::size_type index : iter::range(pos + 1, result.length())) {
-      auto const c{result[index]};
-
-      // Track bracket depths
-      if (c == '(') {
-        parenDepth++;
-      } else if (c == ')') {
-        parenDepth--;
-      } else if (c == '[') {
-        bracketDepth++;
-      } else if (c == ']') {
-        bracketDepth--;
-      } else if (c == '{') {
-        braceDepth++;
-      } else if (c == '}') {
-        braceDepth--;
-      }
-
-      // At top level (all depths are 0)
-      if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
-        // Stop at binary operators that separate terms
-        if (c == '+' || c == '-' || c == '*' || c == '/') {
-          denEnd = index;
-          break;
-        }
-        // Don't stop at ^ - it's part of the same term
-      }
-
-      // Stop if we hit a closing bracket at negative depth
-      if (parenDepth < 0 || bracketDepth < 0 || braceDepth < 0) {
-        denEnd = index;
-        break;
-      }
-
-      if (index == result.length() - 1) {
-        denEnd = result.length();
-      }
-    }
-
-    // Extract numerator and denominator
     Expects(numStart <= pos);
     Expects(denEnd >= pos + 1);
+
     auto numerator{result.substr(numStart, pos - numStart)};
     auto denominator{result.substr(pos + 1, denEnd - pos - 1)};
-
-    // Remove one level of enclosing parentheses if they wrap the entire
-    // expression
-    auto const stripOuterParens{[](std::string &str) {
-      while (str.length() >= 2 && str.front() == '(' && str.back() == ')') {
-        // Verify these parens match and wrap the whole expression
-        int depth = 0;
-        bool wrapsAll = true;
-        for (std::size_t i{}; i < str.length() - 1; ++i) {
-          if (str[i] == '(') {
-            depth++;
-          } else if (str[i] == ')') {
-            depth--;
-          }
-          if (depth == 0 && i < str.length() - 2) {
-            wrapsAll = false;
-            break;
-          }
-        }
-        if (wrapsAll) {
-          str = str.substr(1, str.length() - 2);
-        } else {
-          break;
-        }
-      }
-    }};
 
     stripOuterParens(numerator);
     stripOuterParens(denominator);
 
-    // Build the \frac expression
     auto const fraction{
         std::format("\\frac{{{}}}{{{}}}", numerator, denominator)};
 
-    // Replace in result
     result.replace(numStart, denEnd - numStart, fraction);
-
-    // Move position forward past the inserted fraction
     pos = numStart + fraction.length();
   }
 
   return result;
 }
+
+} // namespace
 
 Function::Function(Data data) : m_data(std::move(data)) {
   ivUtil::replaceAll(m_data.expression, "\\n", "\n");
@@ -528,7 +557,7 @@ void Function::extractParameters() {
 
   // Add names
   static RE2 const regexName{R"re(([A-Za-z_]\w*))re"};
-  assert(regexName.ok()); // NOLINT
+  assert(regexName.ok());
   addMatchesToSet(regexName, m_data.expression, parameters);
 
   // Remove reserved names
@@ -565,20 +594,20 @@ void Function::extractParameters() {
 
   // Remove function names
   static RE2 const regexFunctionName{R"re((([a-zA-Z_])\w*)\s*\()re"};
-  assert(regexFunctionName.ok()); // NOLINT
+  assert(regexFunctionName.ok());
   removeMatchesFromSet(regexFunctionName, m_data.codeGlobal, parameters);
   removeMatchesFromSet(regexFunctionName, m_data.expression, parameters);
 
   // Remove global constant variables
   static RE2 const regexConstantVariable{
       R"re(const\s+[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*=)re"};
-  assert(regexConstantVariable.ok()); // NOLINT
+  assert(regexConstantVariable.ok());
   removeMatchesInSameScope(regexConstantVariable, m_data.codeGlobal,
                            parameters);
 
   // Remove local variables
   static RE2 const regexVariable{R"re(\b[A-Za-z_]\w*\s+([A-Za-z_]\w*)\s*=)re"};
-  assert(regexVariable.ok()); // NOLINT
+  assert(regexVariable.ok());
   removeMatchesInSameScope(regexVariable, m_data.codeLocal, parameters);
 
   // Populate vector of parameters
@@ -629,6 +658,9 @@ void Function::convertToGLSL() {
         }
         return std::format("mpow({},{})", leftOperand, rightOperand);
       }};
+
+  // Replace "**" with "^" (exponentiation)
+  ivUtil::replaceAll(result, "**", "^");
 
   // Change all occurrences of x^y with mpowy(x) or mpow(x,y)
   std::size_t idx{};
@@ -725,7 +757,7 @@ void Function::convertToMathJax() {
 
   // Replace "^expr" with "^{expr}"
   static RE2 const regexExponent{R"re(\^([a-zA-Z_]*[a-zA-Z0-9_.]*\s*))re"};
-  assert(regexExponent.ok()); // NOLINT
+  assert(regexExponent.ok());
   encloseMatchesInBrackets(result, regexExponent, {'{', '}'});
 
   // Replace "name(x)" with "name{x}" where x is a single-token argument
@@ -800,7 +832,7 @@ void Function::convertToMathJax() {
 
   // Replace "{(...)}" with "{...}"
   static RE2 const regexNameInParensInCurlyBrackets{R"re(\{\((.+)\)\})re"};
-  assert(regexNameInParensInCurlyBrackets.ok()); // NOLINT
+  assert(regexNameInParensInCurlyBrackets.ok());
   encloseMatchesInBrackets(result, regexNameInParensInCurlyBrackets,
                            {'{', '}'});
 

@@ -177,7 +177,7 @@ Ensure the following tools are installed and are reachable from `PATH`:
     <summary>Linux</summary>
 
     ```sh
-    conan install . --output-folder=build --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
+    conan install . --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
     ```
 
     </details>
@@ -186,7 +186,7 @@ Ensure the following tools are installed and are reachable from `PATH`:
     <summary>macOS</summary>
 
     ```sh
-    conan install . --output-folder=build --build=missing
+    conan install . --build=missing
     ```
 
     </details>
@@ -195,7 +195,7 @@ Ensure the following tools are installed and are reachable from `PATH`:
     <summary>Windows</summary>
 
     ```sh
-    conan install . --output-folder=build --build=missing -s compiler.cppstd=20
+    conan install . --build=missing -s compiler.cppstd=20
     ```
 
     </details>
@@ -253,7 +253,10 @@ and as follows:
    cmake --build --preset conan-release
    ```
 
-4. In the build directory, run `tests`.
+4. Run the tests
+   ```sh
+   ctest --test-dir build/Release -V
+   ```
 
 ### Fuzz Testing
 
