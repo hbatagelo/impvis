@@ -637,8 +637,8 @@ void Function::convertToGLSL() {
   encloseFunctionCallsInBrackets(result, {'(', ')'});
 
   // Given the operands of the expression x^y, returns either the string
-  // "mpowy(x)" or "mpow(x,y)". The former is returned iff y is an integer in
-  // the range [1,16].
+  // "(mpowy(x))" or "(mpow(x,y))". The former is returned iff y is an integer
+  // in the range [1,16].
   constexpr auto mpowExpression{
       [](std::string const &leftOperand,
          std::string const &rightOperand) -> std::string {
@@ -653,16 +653,16 @@ void Function::convertToGLSL() {
               isIntegral) {
             return gsl::narrow_cast<int>(exponent) == 1
                        ? std::format("({})", leftOperand)
-                       : std::format("mpow{:.0f}({})", exponent, leftOperand);
+                       : std::format("(mpow{:.0f}({}))", exponent, leftOperand);
           }
         }
-        return std::format("mpow({},{})", leftOperand, rightOperand);
+        return std::format("(mpow({},{}))", leftOperand, rightOperand);
       }};
 
   // Replace "**" with "^" (exponentiation)
   ivUtil::replaceAll(result, "**", "^");
 
-  // Change all occurrences of x^y with mpowy(x) or mpow(x,y)
+  // Change all occurrences of x^y with (mpowy(x)) or (mpow(x,y))
   std::size_t idx{};
   while ((idx = result.find_first_of('^', idx)) != std::string::npos) {
     auto const operandSizes{getSizesOfGLSLOperands(result, idx)};

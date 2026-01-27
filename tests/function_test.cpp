@@ -646,6 +646,8 @@ TEST(FunctionTest, PowerWithIntegerExponent) {
   auto const &glsl{func.getGLSLExpression()};
   // Should use mpow5 for integer exponent
   EXPECT_NE(glsl.find("mpow5"), std::string::npos);
+  // Must be enclosed in parens
+  EXPECT_TRUE(glsl.front() == '(' && glsl.back() == ')');
 }
 
 // Test power with exponent = 1
@@ -657,6 +659,8 @@ TEST(FunctionTest, PowerWithExponentOne) {
   auto const &glsl{func.getGLSLExpression()};
   // x^1 should just become (x)
   EXPECT_EQ(glsl.find("mpow"), std::string::npos);
+  // Must be enclosed in parens
+  EXPECT_TRUE(glsl.front() == '(' && glsl.back() == ')');
 }
 
 // Test power with fractional exponent
@@ -668,4 +672,6 @@ TEST(FunctionTest, PowerWithFractionalExponent) {
   auto const &glsl{func.getGLSLExpression()};
   // Should use mpow(x, 2.5) for fractional exponent
   EXPECT_NE(glsl.find("mpow"), std::string::npos);
+  // Must be enclosed in parens
+  EXPECT_TRUE(glsl.front() == '(' && glsl.back() == ')');
 }

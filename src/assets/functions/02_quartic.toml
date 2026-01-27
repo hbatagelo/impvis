@@ -196,6 +196,20 @@ normal_length_falloff = 2.0
 parameters = [{name = "r", value = 1.5}]
 expression = "x^2*y^2+x^2*z^2+y^2*z^2-r^2*x*y*z"
 
+[tanglecube]
+name = "Tanglecube"
+thumbnail = "textures/thumbs/quartic/tanglecube.png"
+bounds_radius = 3.5
+isosurface_raymarch_steps = 150
+scale = 0.67
+dvr_raymarch_steps = 300
+dvr_falloff = 0.5
+gaussian_curvature_falloff = 0.25
+mean_curvature_falloff = 0.55
+max_abs_curvature_falloff = 0.3
+normal_length_falloff = 0.05
+expression = "x^4-5*x^2+y^4-5*y^2+z^4-5*z^2+11.8"
+
 [tetrahedroid]
 name = "Tetrahedroid"
 thumbnail = "textures/thumbs/quartic/tetrahedroid.png"

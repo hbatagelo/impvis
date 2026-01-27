@@ -24,11 +24,10 @@ expression = '''
 name = "Boy"
 thumbnail = "textures/thumbs/sextic/boy.png"
 bounds_radius = 4.8
-isosurface_raymarch_method = "fixed-step"
-isosurface_raymarch_steps = 500
+isosurface_raymarch_steps = 1000
 scale = 0.7
-dvr_raymarch_steps = 400
-dvr_falloff = 0.001
+dvr_raymarch_steps = 1000
+dvr_falloff = 0.5
 gaussian_curvature_falloff = 0.1
 mean_curvature_falloff = 0.15
 max_abs_curvature_falloff = 0.05
@@ -47,8 +46,8 @@ comment = '''
 &\quad x_3=z.'''
 expression = '''
 64*(x_0-x_3)^3*x_3^3-48*(x_0-x_3)^2*x_3^2*(3*x_1^2+3*x_2^2+2*x_3^2)
-+12*(x_0-x_3)*x_3*[27*(x_1^2+x_2^2)^2-24*x_3^2*(x_1^2+x_2^2)+36*sqrt(2)*x_2*x_3*(x_2^2-3*x_1^2)+x_3^4]
-+(9*x_1^2+9*x_2^2-2*x_3^2)*[-81*(x_1^2+x_2^2)^2-71*x_3^2*(x_1^2+x_2^2)+108*sqrt(2)*x_1*x_3*(x_1^2-3*x_2^2)+4*x_3^4]'''
++12*(x_0-x_3)*x_3*[27*(x_1^2+x_2^2)^2-24*x_3^2*(x_1^2+x_2^2)+36*sqrt(2)*x_2*x_3*(x_2^2-3*x_1^2)+4*x_3^4]
++(9*x_1^2+9*x_2^2-2*x_3^2)*[-81*(x_1^2+x_2^2)^2-72*x_3^2*(x_1^2+x_2^2)+108*sqrt(2)*x_1*x_3*(x_1^2-3*x_2^2)+4*x_3^4]'''
 
 [chmutov_sextic]
 name = "Chmutov Sextic"
