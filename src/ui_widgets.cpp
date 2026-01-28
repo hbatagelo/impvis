@@ -16,7 +16,7 @@
 #include <gsl/gsl>
 #include <imgui_internal.h>
 
-void UIWidgets::showDelayedTooltip(char const *text, bool allowWhenDisabled) {
+void uiWidgets::showDelayedTooltip(char const *text, bool allowWhenDisabled) {
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal |
                            (allowWhenDisabled
                                 ? ImGuiHoveredFlags_AllowWhenDisabled
@@ -25,13 +25,13 @@ void UIWidgets::showDelayedTooltip(char const *text, bool allowWhenDisabled) {
   }
 }
 
-void UIWidgets::showRecommendedSettingsTooltip(AppContext &context) {
+void uiWidgets::showRecommendedSettingsTooltip(AppContext &context) {
   if (context.appState.useRecommendedSettings) {
     showDelayedTooltip("Overridden by recommended settings", true);
   }
 }
 
-void UIWidgets::drawCheckerboard(ImDrawList *drawList, ImVec2 pos, ImVec2 size,
+void uiWidgets::drawCheckerboard(ImDrawList *drawList, ImVec2 pos, ImVec2 size,
                                  float checkerSize) {
   auto const color1{IM_COL32(204, 204, 204, 255)};
   auto const color2{IM_COL32(153, 153, 153, 255)};
@@ -196,8 +196,7 @@ bool handleStopMarkerInteraction(ImGuiWindow *window, ImGuiID baseId,
   }
 
   if (ImGui::BeginPopup(popupId.c_str())) {
-    std::array<float, 4> color{stopColor.r, stopColor.g, stopColor.b,
-                               stopColor.a};
+    std::array color{stopColor.r, stopColor.g, stopColor.b, stopColor.a};
 
     auto const flags{ImGuiColorEditFlags_DisplayRGB |
                      ImGuiColorEditFlags_DisplayHSV |
@@ -289,7 +288,7 @@ void drawTickerMarks(ImDrawList *drawList, ImVec2 barPos, ImVec2 barSize,
 
 } // namespace
 
-bool UIWidgets::gradientWidget(char const *label, std::vector<glm::vec4> &stops,
+bool uiWidgets::gradientWidget(char const *label, std::vector<glm::vec4> &stops,
                                bool useAlpha, ImVec2 size,
                                std::function<float(float)> const &tickerMapFunc,
                                bool showTickers, int numTickers,
@@ -344,7 +343,7 @@ bool UIWidgets::gradientWidget(char const *label, std::vector<glm::vec4> &stops,
 }
 
 template <std::size_t N>
-std::size_t UIWidgets::combo(char const *label,
+std::size_t uiWidgets::combo(char const *label,
                              std::array<char const *, N> items,
                              std::size_t currentIndex) {
   if (ImGui::BeginCombo(label, items.at(currentIndex))) {
@@ -364,12 +363,12 @@ std::size_t UIWidgets::combo(char const *label,
 
 // Explicit instantiation for common sizes
 template std::size_t
-UIWidgets::combo<2>(char const *, std::array<char const *, 2>, std::size_t);
+uiWidgets::combo<2>(char const *, std::array<char const *, 2>, std::size_t);
 template std::size_t
-UIWidgets::combo<3>(char const *, std::array<char const *, 3>, std::size_t);
+uiWidgets::combo<3>(char const *, std::array<char const *, 3>, std::size_t);
 template std::size_t
-UIWidgets::combo<4>(char const *, std::array<char const *, 4>, std::size_t);
+uiWidgets::combo<4>(char const *, std::array<char const *, 4>, std::size_t);
 template std::size_t
-UIWidgets::combo<5>(char const *, std::array<char const *, 5>, std::size_t);
+uiWidgets::combo<5>(char const *, std::array<char const *, 5>, std::size_t);
 template std::size_t
-UIWidgets::combo<6>(char const *, std::array<char const *, 6>, std::size_t);
+uiWidgets::combo<6>(char const *, std::array<char const *, 6>, std::size_t);

@@ -16,11 +16,11 @@ struct ImFont;
 struct AppContext;
 class Raycast;
 
-namespace UIEditor {
+namespace uiEditor {
 
 void functionEditor(AppContext &context, Raycast const &raycast,
                     gsl::not_null<ImFont*> font);
 
-} // namespace UIEditor
+} // namespace uiEditor
 
 #endif

@@ -62,7 +62,7 @@ int editorCallback(ImGuiInputTextCallbackData *callback) {
 
 } // namespace
 
-void UIEditor::functionEditor(AppContext &context, Raycast const &raycast,
+void uiEditor::functionEditor(AppContext &context, Raycast const &raycast,
                               gsl::not_null<ImFont *> font) {
   static constexpr std::size_t kMaxEditorTextSize{80UL * 16};
   static constexpr auto kEditorErrorMessage{

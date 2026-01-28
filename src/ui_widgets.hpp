@@ -17,7 +17,7 @@
 
 struct AppContext;
 
-namespace UIWidgets {
+namespace uiWidgets {
 
 void showDelayedTooltip(char const *text, bool allowWhenDisabled = false);
 void showRecommendedSettingsTooltip(AppContext &context);
@@ -34,6 +34,6 @@ template <std::size_t N>
 std::size_t combo(char const *label, std::array<char const *, N> items,
                   std::size_t currentIndex);
 
-} // namespace UIWidgets
+} // namespace uiWidgets
 
 #endif

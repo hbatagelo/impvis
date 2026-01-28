@@ -14,7 +14,7 @@
 
 #include <gsl/gsl>
 
-namespace ivUtil {
+namespace util {
 
 template <typename Fun>
 concept ReplaceCallback =
@@ -83,6 +83,6 @@ inline std::string toLower(std::string_view str) {
   return result;
 }
 
-} // namespace ivUtil
+} // namespace util
 
 #endif

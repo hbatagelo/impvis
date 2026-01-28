@@ -236,14 +236,14 @@ void Window::applyRecommendedSettings() {
   auto const &data{m_context.renderState.function.getData()};
   auto &renderState{m_context.renderState};
 
-  renderState.boundsShape = ivUtil::toLower(data.boundsShape) == "box"
+  renderState.boundsShape = util::toLower(data.boundsShape) == "box"
                                 ? RenderState::BoundsShape::Box
                                 : RenderState::BoundsShape::Sphere;
   renderState.boundsRadius = data.boundsRadius;
   renderState.raymarchAdaptive =
-      ivUtil::toLower(data.isosurfaceRaymarchMethod) != "fixed-step";
+      util::toLower(data.isosurfaceRaymarchMethod) != "fixed-step";
 
-  auto const rootTestMode{ivUtil::toLower(data.isosurfaceRaymarchRootTest)};
+  auto const rootTestMode{util::toLower(data.isosurfaceRaymarchRootTest)};
   if (rootTestMode == "taylor 1st-order") {
     renderState.raymarchRootTest = RenderState::RootTestMode::Taylor1stOrder;
   } else if (rootTestMode == "taylor 2nd-order") {
@@ -253,7 +253,7 @@ void Window::applyRecommendedSettings() {
   }
 
   auto const gradientEvaluation{
-      ivUtil::toLower(data.isosurfaceRaymarchGradientEvaluation)};
+      util::toLower(data.isosurfaceRaymarchGradientEvaluation)};
   if (gradientEvaluation == "central difference") {
     renderState.raymarchGradientEvaluation =
         RenderState::GradientMode::CentralDifference;

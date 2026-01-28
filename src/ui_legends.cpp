@@ -16,7 +16,7 @@
 #include <cppitertools/itertools.hpp>
 #include <gsl/gsl>
 
-void UILegends::isovalueLegendAndModeSettings(AppContext &context) {
+void uiLegends::isovalueLegendAndModeSettings(AppContext &context) {
   static constexpr auto kVerticalMargin{5.0f};
   static constexpr auto kHorizontalMargin{10.0f};
   static constexpr auto kMinWidth{246.0f};
@@ -44,7 +44,7 @@ void UILegends::isovalueLegendAndModeSettings(AppContext &context) {
   ImGui::ColorEdit3(labelPositive, &renderState.outsideKdId.x,
                     ImGuiColorEditFlags_NoInputs |
                         ImGuiColorEditFlags_NoTooltip);
-  UIWidgets::showDelayedTooltip(kTooltip);
+  uiWidgets::showDelayedTooltip(kTooltip);
 
   ImGui::SameLine();
   ImGui::Dummy({0.0f, 5.0f});
@@ -53,12 +53,12 @@ void UILegends::isovalueLegendAndModeSettings(AppContext &context) {
   ImGui::ColorEdit3(labelNegative, &renderState.insideKdId.x,
                     ImGuiColorEditFlags_NoInputs |
                         ImGuiColorEditFlags_NoTooltip);
-  UIWidgets::showDelayedTooltip(kTooltip);
+  uiWidgets::showDelayedTooltip(kTooltip);
 
   ImGui::End();
 }
 
-void UILegends::dvrLegendAndModeSettings(AppContext &context) {
+void uiLegends::dvrLegendAndModeSettings(AppContext &context) {
   static constexpr auto kVerticalMargin{5.0f};
   static constexpr auto kHorizontalMargin{5.0f};
   static constexpr auto kMaxWidth{800.0f};
@@ -101,7 +101,7 @@ void UILegends::dvrLegendAndModeSettings(AppContext &context) {
                             (15.0f + itemSpacingX * 2.0f)};
     ImGui::Dummy({5.0f, 0.0f});
     ImGui::SameLine();
-    UIWidgets::gradientWidget(
+    uiWidgets::gradientWidget(
         "##gradientWidget", renderState.dvrColormap, true,
         ImVec2(columnAWidth, 53), invTanh, true,
         std::clamp(gsl::narrow_cast<int>(columnAWidth / 50.0f), 2, 50),
@@ -136,7 +136,7 @@ void UILegends::dvrLegendAndModeSettings(AppContext &context) {
 
     ImGui::EndDisabled();
 
-    UIWidgets::showRecommendedSettingsTooltip(context);
+    uiWidgets::showRecommendedSettingsTooltip(context);
 
     ImGui::PopItemWidth();
 
@@ -146,7 +146,7 @@ void UILegends::dvrLegendAndModeSettings(AppContext &context) {
   ImGui::End();
 }
 
-void UILegends::normalLegendAndModeSettings(AppContext &context) {
+void uiLegends::normalLegendAndModeSettings(AppContext &context) {
   static constexpr auto kVerticalMargin{5.0f};
 
   auto &appState{context.appState};
@@ -156,8 +156,8 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
   auto const unitNormal{renderState.surfaceColorMode ==
                         RenderState::SurfaceColorMode::UnitNormal};
 
-  static constexpr std::array<const char *, 2> items{"Unit normal (XYZ to RGB)",
-                                                     "Normal magnitude"};
+  static constexpr std::array items{"Unit normal (XYZ to RGB)",
+                                    "Normal magnitude"};
   static constexpr std::array itemsEnum{
       RenderState::SurfaceColorMode::UnitNormal,
       RenderState::SurfaceColorMode::NormalMagnitude};
@@ -185,7 +185,7 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
             (kHorizontalMargin * 2.0f + itemSpacingX + itemSpacingX / 2.0f))};
     ImGui::PushItemWidth(std::max(kMinComboWidth, width - kCheckBoxWidth));
 
-    auto const newIndex{UIWidgets::combo("##comboNormal", items, currentIndex)};
+    auto const newIndex{uiWidgets::combo("##comboNormal", items, currentIndex)};
 
     ImGui::PopItemWidth();
 
@@ -243,7 +243,7 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
       ImGui::Dummy({5.0f, 0.0f});
       ImGui::SameLine();
 
-      UIWidgets::gradientWidget(
+      uiWidgets::gradientWidget(
           "##gradientWidget", renderState.normalLengthColormap, false,
           ImVec2(columnAWidth, 53), invOneSidedTanh, true,
           std::clamp(gsl::narrow_cast<int>(columnAWidth / 50.0f), 2, 50), "",
@@ -261,7 +261,7 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
       auto const currentIndex{1};
 
       auto const newIndex{
-          UIWidgets::combo("##comboNormal", items, currentIndex)};
+          uiWidgets::combo("##comboNormal", items, currentIndex)};
 
       if (newIndex != currentIndex) {
         auto const newMode{itemsEnum.at(newIndex)};
@@ -281,7 +281,7 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
 
       ImGui::EndDisabled();
 
-      UIWidgets::showRecommendedSettingsTooltip(context);
+      uiWidgets::showRecommendedSettingsTooltip(context);
 
       ImGui::PopItemWidth();
 
@@ -292,7 +292,7 @@ void UILegends::normalLegendAndModeSettings(AppContext &context) {
   ImGui::End();
 }
 
-void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
+void uiLegends::curvatureLegendAndModeSettings(AppContext &context) {
   static constexpr auto kVerticalMargin{5.0f};
   static constexpr auto kHorizontalMargin{5.0f};
   static constexpr auto kMaxWidth{800.0f};
@@ -360,14 +360,14 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
       auto const *leftLabel{isGaussianCurvature ? "Hyperbolic" : "Concave*"};
       auto const *centerLabel{isGaussianCurvature ? "Parabolic" : "Minimal"};
       auto const *rightLabel{isGaussianCurvature ? "Elliptic" : "Convex*"};
-      UIWidgets::gradientWidget(
+      uiWidgets::gradientWidget(
           "##gradientWidget", renderState.curvatureColormap, false,
           ImVec2(columnAWidth, 53), invTanh, true,
           std::clamp(gsl::narrow_cast<int>(columnAWidth / 50.0f), 2, 50),
           leftLabel, centerLabel, rightLabel);
       if (renderState.surfaceColorMode ==
           RenderState::SurfaceColorMode::MeanCurvature) {
-        UIWidgets::showDelayedTooltip(
+        uiWidgets::showDelayedTooltip(
             "* Relative to surface side\nConcave: "
             "Inward-bending\nConvex: Outward-bending");
       }
@@ -375,7 +375,7 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
       auto const *leftLabel{""};
       auto const *centerLabel{"Maximum Absolute Curvature"};
       auto const *rightLabel{""};
-      UIWidgets::gradientWidget(
+      uiWidgets::gradientWidget(
           "##gradientWidget", renderState.maxAbsCurvColormap, false,
           ImVec2(columnAWidth, 53), invOneSidedTanh, true,
           std::clamp(gsl::narrow_cast<int>(columnAWidth / 50.0f), 2, 50),
@@ -392,8 +392,8 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
 
     ImGui::PushItemWidth(columnBWidth);
 
-    static constexpr std::array<const char *, 3> items{
-        "Gaussian curvature (K)", "Mean curvature (H)", "max(|k1|, |k2|)"};
+    static constexpr std::array items{"Gaussian curvature (K)",
+                                      "Mean curvature (H)", "max(|k1|, |k2|)"};
     static constexpr std::array itemsEnum{
         RenderState::SurfaceColorMode::GaussianCurvature,
         RenderState::SurfaceColorMode::MeanCurvature,
@@ -422,7 +422,7 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
     }()};
 
     auto const newIndex{
-        UIWidgets::combo("##comboCurvature", items, currentIndex)};
+        uiWidgets::combo("##comboCurvature", items, currentIndex)};
 
     if (newIndex != currentIndex) {
       auto const newMode{itemsEnum.at(newIndex)};
@@ -442,7 +442,7 @@ void UILegends::curvatureLegendAndModeSettings(AppContext &context) {
 
     ImGui::EndDisabled();
 
-    UIWidgets::showRecommendedSettingsTooltip(context);
+    uiWidgets::showRecommendedSettingsTooltip(context);
 
     ImGui::PopItemWidth();
 

@@ -23,11 +23,11 @@
 
 namespace {
 
-constexpr std::string_view kAppVersion{"v3.1.1"};
+constexpr std::string_view kAppVersion{"v3.1.2"};
 
 } // namespace
 
-void UITabs::functionsTab(AppContext &context, Camera &camera,
+void uiTabs::functionsTab(AppContext &context, Camera &camera,
                           float parentWindowHeight) {
   auto &appState{context.appState};
 
@@ -138,7 +138,7 @@ void UITabs::functionsTab(AppContext &context, Camera &camera,
   }
 }
 
-void UITabs::settingsTab(AppContext &context, Camera &camera) {
+void uiTabs::settingsTab(AppContext &context, Camera &camera) {
   ImGui::BeginChild("##childSettingsTab", ImVec2(0, -1),
                     ImGuiChildFlags_Borders);
 
@@ -158,12 +158,12 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     ImGui::BeginDisabled(appState.useRecommendedSettings);
 
     // Bounding geometry combo box
-    static constexpr std::array<char const *, 2> items{"Box", "Sphere"};
+    static constexpr std::array items{"Sphere", "Box"};
     static constexpr std::array itemsEnum{RenderState::BoundsShape::Sphere,
                                           RenderState::BoundsShape::Box};
 
     auto const currentIndex{gsl::narrow<std::size_t>(renderState.boundsShape)};
-    auto const newIndex{UIWidgets::combo("Shape", items, currentIndex)};
+    auto const newIndex{uiWidgets::combo("Shape", items, currentIndex)};
     auto const newBoundsShape{itemsEnum.at(newIndex)};
     renderState.boundsShape = newBoundsShape;
 
@@ -190,10 +190,9 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     ImGui::BeginDisabled(appState.useRecommendedSettings || DVRSelected);
 
     // Raymarch method combo box
-    static constexpr std::array<char const *, 2> items{"Adaptive",
-                                                       "Fixed-step"};
+    static constexpr std::array items{"Adaptive", "Fixed-step"};
     auto currentIndex{renderState.raymarchAdaptive ? 0ul : 1ul};
-    auto const newIndex{UIWidgets::combo("Method", items, currentIndex)};
+    auto const newIndex{uiWidgets::combo("Method", items, currentIndex)};
     renderState.raymarchAdaptive = newIndex == 0;
 
     // Isosurface raymarch steps
@@ -203,8 +202,8 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
                      minSteps, maxSteps);
 
     // Root test combo box
-    static constexpr std::array<char const *, 3> rootTestItems{
-        "Sign change", "Taylor 1st-order", "Taylor 2nd-order"};
+    static constexpr std::array rootTestItems{"Sign change", "Taylor 1st-order",
+                                              "Taylor 2nd-order"};
     static constexpr std::array rootTestItemsEnum{
         RenderState::RootTestMode::SignChange,
         RenderState::RootTestMode::Taylor1stOrder,
@@ -213,14 +212,14 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     auto const currentRootIndex{
         gsl::narrow<std::size_t>(renderState.raymarchRootTest)};
     auto const newRootIndex{
-        UIWidgets::combo("Root test", rootTestItems, currentRootIndex)};
+        uiWidgets::combo("Root test", rootTestItems, currentRootIndex)};
     if (newRootIndex != currentRootIndex) {
       auto const newItem{rootTestItemsEnum.at(newRootIndex)};
       renderState.raymarchRootTest = newItem;
     }
 
     // Gradient evaluation combo box
-    static constexpr std::array<char const *, 3> gradientItems{
+    static constexpr std::array gradientItems{
         "Forward difference", "Central difference", "5-point stencil"};
     static constexpr std::array gradientItemsEnum{
         RenderState::GradientMode::ForwardDifference,
@@ -230,7 +229,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     auto const currentGradientIndex{
         gsl::narrow<std::size_t>(renderState.raymarchGradientEvaluation)};
     auto const newGradientIndex{
-        UIWidgets::combo("Gradient", gradientItems, currentGradientIndex)};
+        uiWidgets::combo("Gradient", gradientItems, currentGradientIndex)};
     if (newGradientIndex != currentGradientIndex) {
       auto const newItem{gradientItemsEnum.at(newGradientIndex)};
       renderState.raymarchGradientEvaluation = newItem;
@@ -244,8 +243,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
   ImGui::SeparatorText("Camera projection");
   {
     // Camera projection combo box
-    static constexpr std::array<char const *, 2> camItems{"Perspective",
-                                                          "Orthographic"};
+    static constexpr std::array camItems{"Perspective", "Orthographic"};
     static constexpr std::array camItemsEnum{Camera::Projection::Perspective,
                                              Camera::Projection::Orthographic};
 
@@ -254,7 +252,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
 
     ImGui::PushItemWidth(125);
     auto const newIndex{
-        UIWidgets::combo("##comboProjection", camItems, currentIndex)};
+        uiWidgets::combo("##comboProjection", camItems, currentIndex)};
     ImGui::PopItemWidth();
 
     if (newIndex != currentIndex) {
@@ -297,7 +295,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
   ImGui::SeparatorText("Rendering & UI");
   {
     // Shader combo box
-    static constexpr std::array<char const *, 3> shaderItems{
+    static constexpr std::array shaderItems{
         "Lit isosurface", "Unlit isosurface", "Volume rendering"};
     static constexpr std::array shaderItemsEnum{
         RenderState::RenderingMode::LitSurface,
@@ -309,7 +307,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
 
     ImGui::PushItemWidth(148);
     auto const newShaderIndex{
-        UIWidgets::combo("Shader", shaderItems, currentShaderIndex)};
+        uiWidgets::combo("Shader", shaderItems, currentShaderIndex)};
     ImGui::PopItemWidth();
 
     if (newShaderIndex != currentShaderIndex) {
@@ -327,7 +325,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
 
     if (!DVRSelected) {
       // Surface color combo box
-      static constexpr std::array<char const *, 6> colorItems{
+      static constexpr std::array colorItems{
           "Surface side (+/-)", "Unit normal",    "Normal magnitude",
           "Gaussian curvature", "Mean curvature", "max(|k1|, |k2|)"};
       static constexpr std::array colorItemsEnum{
@@ -343,7 +341,7 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
 
       ImGui::PushItemWidth(148);
       auto const newColorIndex{
-          UIWidgets::combo("Color code", colorItems, currentColorIndex)};
+          uiWidgets::combo("Color code", colorItems, currentColorIndex)};
       ImGui::PopItemWidth();
 
       if (newColorIndex != currentColorIndex) {
@@ -352,14 +350,14 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
       }
 
       // Antialiasing combo box
-      static constexpr std::array<char const *, 5> AAItems{
-          "Off", "2x MSAA", "4x MSAA", "8x MSAA", "16x MSAA"};
+      static constexpr std::array AAItems{"Off", "2x MSAA", "4x MSAA",
+                                          "8x MSAA", "16x MSAA"};
       auto const currentAAIndex{
           gsl::narrow_cast<std::size_t>(std::log2(renderState.msaaSamples))};
 
       ImGui::PushItemWidth(148);
       auto const newAAIndex{
-          UIWidgets::combo("Anti-alias", AAItems, currentAAIndex)};
+          uiWidgets::combo("Anti-alias", AAItems, currentAAIndex)};
       ImGui::PopItemWidth();
 
       renderState.msaaSamples = 1 << newAAIndex;
@@ -405,13 +403,13 @@ void UITabs::settingsTab(AppContext &context, Camera &camera) {
     if (ImGui::Button("Hide UI windows", ImVec2(-1, 0))) {
       appState.showUI = false;
     }
-    UIWidgets::showDelayedTooltip("Press any key to unhide");
+    uiWidgets::showDelayedTooltip("Press any key to unhide");
   }
 
   ImGui::EndChild();
 }
 
-void UITabs::aboutTab([[maybe_unused]] AppContext &context,
+void uiTabs::aboutTab([[maybe_unused]] AppContext &context,
                       Raycast const &raycast) {
   ImGui::BeginChild("##childAboutTab", ImVec2(0, -1), ImGuiChildFlags_Borders);
 

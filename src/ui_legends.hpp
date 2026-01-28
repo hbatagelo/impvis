@@ -12,13 +12,13 @@
 
 struct AppContext;
 
-namespace UILegends {
+namespace uiLegends {
 
 void isovalueLegendAndModeSettings(AppContext &context);
 void dvrLegendAndModeSettings(AppContext &context);
 void normalLegendAndModeSettings(AppContext &context);
 void curvatureLegendAndModeSettings(AppContext &context);
 
-} // namespace UILegends
+} // namespace uiLegends
 
 #endif

@@ -214,21 +214,21 @@ void UI::onPaintUI(AppContext &context, RenderPipeline &pipeline,
   case RenderState::RenderingMode::UnlitSurface:
     switch (context.renderState.surfaceColorMode) {
     case RenderState::SurfaceColorMode::SideSign:
-      UILegends::isovalueLegendAndModeSettings(context);
+      uiLegends::isovalueLegendAndModeSettings(context);
       break;
     case RenderState::SurfaceColorMode::UnitNormal:
     case RenderState::SurfaceColorMode::NormalMagnitude:
-      UILegends::normalLegendAndModeSettings(context);
+      uiLegends::normalLegendAndModeSettings(context);
       break;
     case RenderState::SurfaceColorMode::GaussianCurvature:
     case RenderState::SurfaceColorMode::MeanCurvature:
     case RenderState::SurfaceColorMode::MaxAbsCurvature:
-      UILegends::curvatureLegendAndModeSettings(context);
+      uiLegends::curvatureLegendAndModeSettings(context);
       break;
     }
     break;
   case RenderState::RenderingMode::DirectVolume:
-    UILegends::dvrLegendAndModeSettings(context);
+    uiLegends::dvrLegendAndModeSettings(context);
     break;
   }
 
@@ -294,15 +294,15 @@ void UI::mainWindow(AppContext &context, Camera &camera,
 
     if (ImGui::BeginTabBar("##tabMainWindow", ImGuiTabBarFlags_None)) {
       if (ImGui::BeginTabItem("Functions")) {
-        UITabs::functionsTab(context, camera, uiWindowSize.y - 63);
+        uiTabs::functionsTab(context, camera, uiWindowSize.y - 63);
         ImGui::EndTabItem();
       }
       if (ImGui::BeginTabItem("Settings")) {
-        UITabs::settingsTab(context, camera);
+        uiTabs::settingsTab(context, camera);
         ImGui::EndTabItem();
       }
       if (ImGui::BeginTabItem("About")) {
-        UITabs::aboutTab(context, raycast);
+        uiTabs::aboutTab(context, raycast);
         ImGui::EndTabItem();
       }
 
@@ -388,7 +388,7 @@ void UI::mainWindow(AppContext &context, Camera &camera,
 #endif
 
   if (appState.showFunctionEditor) {
-    UIEditor::functionEditor(context, raycast, m_monospacedFont);
+    uiEditor::functionEditor(context, raycast, m_monospacedFont);
   }
 }
 
@@ -510,7 +510,7 @@ void UI::topButtonBar(AppContext &context) {
 
     auto const tooltip{std::format("{}\nShortcut: Ctrl+{}",
                                    buttonInfo.at(index).tooltip, index + 1)};
-    UIWidgets::showDelayedTooltip(tooltip.c_str());
+    uiWidgets::showDelayedTooltip(tooltip.c_str());
 
     if (selected) {
       ImGui::PopStyleColor(2);

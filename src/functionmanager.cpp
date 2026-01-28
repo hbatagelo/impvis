@@ -154,11 +154,11 @@ void FunctionManager::addUserDefined(Function const &function) {
 
 std::optional<FunctionManager::FunctionId>
 FunctionManager::getId(std::string_view name) const {
-  auto const lowerName{ivUtil::toLower(name)};
+  auto const lowerName{util::toLower(name)};
 
   for (auto &&[group_index, group] : iter::enumerate(m_groups)) {
     for (auto &&[function_index, function] : iter::enumerate(group.functions)) {
-      if (ivUtil::toLower(function.getData().name) == lowerName) {
+      if (util::toLower(function.getData().name) == lowerName) {
         return std::optional{
             FunctionId{.group = group_index, .index = function_index}};
       }

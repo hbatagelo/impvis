@@ -202,40 +202,47 @@ std::pair<std::size_t, std::size_t> getSizesOfGLSLOperands(std::string_view str,
 
 namespace {
 
-void encloseFunctionCallsInBrackets(std::string &str,
-                                    std::pair<char, char> brackets) {
-  std::unordered_set<std::string> functionCalls;
+void encloseFunctionCallsInParens(std::string &str) {
+  std::vector<std::string> functionCalls;
 
   // Match "name(" where name is a function name
   static RE2 const regex(R"re(\b([a-zA-Z_]*\w*\s*\())re");
   assert(regex.ok());
 
-  re2::StringPiece match;
+  for (std::size_t pos{0}; pos < str.size();) {
+    // Search for the next function call starting from pos
+    re2::StringPiece input(str);
+    input.remove_prefix(pos);
+    re2::StringPiece match;
 
-  for (std::string ns{str}; RE2::PartialMatch(ns, regex, &match);) {
-    auto const matchPosition{
-        gsl::narrow<std::size_t>(match.data() - ns.c_str())};
-    auto const advancePos{matchPosition + match.size()};
-    auto const startPos{advancePos - 1};
-    auto const bracketPos{getBracketsPos(ns, startPos, {'(', ')'})};
-
-    if (bracketPos.first == std::string::npos) {
-      ns = ns.substr(advancePos);
-      continue;
+    if (!RE2::PartialMatch(input, regex, &match)) {
+      break;
     }
 
-    auto const callArgs{
-        ns.substr(bracketPos.first + 1, bracketPos.second - bracketPos.first)};
+    auto const matchPosInInput{
+        gsl::narrow<std::size_t>(match.data() - input.data())};
+    auto const matchPos{pos + matchPosInInput};
+    auto const openParenPos{matchPos + match.size() - 1};
+    auto const [_,
+                closeParensPos]{getBracketsPos(str, openParenPos, {'(', ')'})};
 
-    functionCalls.emplace(std::string{match} + callArgs); // "name(" + "...)"
+    if (closeParensPos != std::string::npos) {
+      auto const callArgs{
+          str.substr(openParenPos + 1, closeParensPos - openParenPos)};
 
-    ns = ns.substr(advancePos);
+      // Push "name(" + "...)"
+      functionCalls.push_back(std::string{match} + callArgs);
+
+      // Move to the character immediately after the opening paren
+      pos = openParenPos + 1;
+    } else {
+      // No matching paren found, skip this match
+      pos = matchPos + 1;
+    }
   }
 
   for (auto const &fcall : functionCalls) {
-    ivUtil::replaceAll(
-        str, fcall,
-        std::format("{}{}{}", brackets.first, fcall, brackets.second));
+    util::replaceAll(str, fcall, std::format("({})", fcall));
   }
 }
 
@@ -321,6 +328,7 @@ void removeMatchesInSameScope(RE2 const &regex, re2::StringPiece str,
   }
 }
 
+// Reformat integrals as floats (e.g. 42 as 42.0)
 void reformatStringNumbersAsFloats(std::string &str) {
   // Match integers (e.g. 42) or floats (e.g. .42 or 4.2)
   static RE2 const regex(R"re(((\.\d+\.?\d*)|\b(\d+\.?\d*)))re");
@@ -343,6 +351,45 @@ void reformatStringNumbersAsFloats(std::string &str) {
     pos += formattedString.length() + matchPosition;
 
     ns = ns.substr(matchPosition + match.size());
+  }
+}
+
+// Removes redundant parentheses
+// Examples:
+// "((x+y))" -> "(x+y)"
+// "(sin(x))" -> "sin(x)"
+// "mpow2((max((abs(x)))))" -> "mpow2(max(abs(x)))"
+// "((a)+(b))" -> "(a+b)"
+void removeRedundantParens(std::string &str) {
+  if (str.size() < 2) {
+    return;
+  }
+
+  auto changed{true};
+  while (changed) {
+    changed = false;
+
+    for (std::size_t idx{0}; idx + 1 < str.size(); ++idx) {
+      if (str.at(idx) == '(' && str.at(idx + 1) == '(') {
+        auto const innerParenPos{getBracketsPos(str, idx + 1, {'(', ')'})};
+        if (innerParenPos.first == std::string::npos) {
+          continue;
+        }
+
+        if (innerParenPos.second + 1 < str.size() &&
+            str.at(innerParenPos.second + 1) == ')') {
+          auto const outerParenPos{getBracketsPos(str, idx, {'(', ')'})};
+
+          if (outerParenPos.first == idx &&
+              outerParenPos.second == innerParenPos.second + 1) {
+            str.erase(innerParenPos.second + 1, 1);
+            str.erase(idx, 1);
+            changed = true;
+            break;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -516,7 +563,7 @@ std::string convertDivisionsToFractions(std::string_view expr) {
 } // namespace
 
 Function::Function(Data data) : m_data(std::move(data)) {
-  ivUtil::replaceAll(m_data.expression, "\\n", "\n");
+  util::replaceAll(m_data.expression, "\\n", "\n");
   convertToGLSL();
   convertToMathJax();
 }
@@ -630,39 +677,38 @@ void Function::convertToGLSL() {
   });
 
   // Replace [] with ()
-  ivUtil::replaceAll(result, "[", "(");
-  ivUtil::replaceAll(result, "]", ")");
+  util::replaceAll(result, "[", "(");
+  util::replaceAll(result, "]", ")");
 
   // Replace fun(...) with (fun(...))
-  encloseFunctionCallsInBrackets(result, {'(', ')'});
+  encloseFunctionCallsInParens(result);
 
   // Given the operands of the expression x^y, returns either the string
-  // "(mpowy(x))" or "(mpow(x,y))". The former is returned iff y is an integer
+  // "mpowy(x)" or "mpow(x,y)". The former is returned iff y is an integer
   // in the range [1,16].
-  constexpr auto mpowExpression{
-      [](std::string const &leftOperand,
-         std::string const &rightOperand) -> std::string {
-        char *strEnd{};
-        auto const exponent{std::strtod(rightOperand.c_str(), &strEnd)};
-        auto const maxPowerByMultiplication{16.0};
-        if (exponent != HUGE_VAL && exponent > 0.0 &&
-            exponent <= maxPowerByMultiplication) {
-          auto integralPart{0.0};
-          auto const fractionalPart{std::modf(exponent, &integralPart)};
-          if (auto const isIntegral{FP_ZERO == std::fpclassify(fractionalPart)};
-              isIntegral) {
-            return gsl::narrow_cast<int>(exponent) == 1
-                       ? std::format("({})", leftOperand)
-                       : std::format("(mpow{:.0f}({}))", exponent, leftOperand);
-          }
-        }
-        return std::format("(mpow({},{}))", leftOperand, rightOperand);
-      }};
+  auto const mpowExpression{[](std::string const &leftOperand,
+                               std::string const &rightOperand) -> std::string {
+    char *strEnd{};
+    auto const exponent{std::strtod(rightOperand.c_str(), &strEnd)};
+    auto const maxPowerByMultiplication{16.0};
+    if (exponent != HUGE_VAL && exponent > 0.0 &&
+        exponent <= maxPowerByMultiplication) {
+      auto integralPart{0.0};
+      auto const fractionalPart{std::modf(exponent, &integralPart)};
+      if (auto const isIntegral{FP_ZERO == std::fpclassify(fractionalPart)};
+          isIntegral) {
+        return gsl::narrow_cast<int>(exponent) == 1
+                   ? std::format("{}", leftOperand)
+                   : std::format("mpow{:.0f}({})", exponent, leftOperand);
+      }
+    }
+    return std::format("mpow({},{})", leftOperand, rightOperand);
+  }};
 
   // Replace "**" with "^" (exponentiation)
-  ivUtil::replaceAll(result, "**", "^");
+  util::replaceAll(result, "**", "^");
 
-  // Change all occurrences of x^y with (mpowy(x)) or (mpow(x,y))
+  // Change all occurrences of x^y with mpowy(x) or mpow(x,y)
   std::size_t idx{};
   while ((idx = result.find_first_of('^', idx)) != std::string::npos) {
     auto const operandSizes{getSizesOfGLSLOperands(result, idx)};
@@ -684,11 +730,12 @@ void Function::convertToGLSL() {
   // variable 'p'
   static constexpr std::array xyz{"x", "y", "z"};
   for (auto const *chr : xyz) {
-    ivUtil::replaceAll(result, chr, std::format("@P.@{}", chr), true);
+    util::replaceAll(result, chr, std::format("@P.@{}", chr), true);
   }
 
-  // Reformat integrals as floats (e.g. 42 as 42.0)
   reformatStringNumbersAsFloats(result);
+
+  removeRedundantParens(result);
 
   m_exprGLSL = result;
 }
@@ -720,8 +767,8 @@ void Function::convertToMathJax() {
   std::erase(result, '\\');
 
   // Replace [,] with \left[,\right]
-  ivUtil::replaceAll(result, "[", "\\left[");
-  ivUtil::replaceAll(result, "]", "\\right]");
+  util::replaceAll(result, "[", "\\left[");
+  util::replaceAll(result, "]", "\\right]");
 
   // Remove whitespaces except line feeds
   std::erase_if(result, [](char c) {
@@ -729,10 +776,10 @@ void Function::convertToMathJax() {
   });
 
   // Replace "\n" with "\\\\&" (newline)
-  ivUtil::replaceAll(result, "\n", "\\\\&");
+  util::replaceAll(result, "\n", "\\\\&");
 
   // Replace "**" with "^" (exponentiation)
-  ivUtil::replaceAll(result, "**", "^");
+  util::replaceAll(result, "**", "^");
 
   // Convert divisions to fractions
   result = convertDivisionsToFractions(result);
@@ -740,7 +787,7 @@ void Function::convertToMathJax() {
   // Replace "name" with "\name "
   for (auto const &name : greekLetters) {
     auto const with{std::string{"\\"} + name + ' '};
-    ivUtil::replaceAll(result, name, with, true);
+    util::replaceAll(result, name, with, true);
   }
 
   // From inout[pos], replace the first group of srcBrackets with dstBrackets
@@ -764,8 +811,8 @@ void Function::convertToMathJax() {
   auto reformatCallWithSingleToken{
       [&singleTokenArgs](std::string &str, std::string_view name) {
         for (auto const &variable : singleTokenArgs) {
-          ivUtil::replaceAll(str, std::format("{}({})", name, variable),
-                             std::format("{}{{{}}}", name, variable));
+          util::replaceAll(str, std::format("{}({})", name, variable),
+                           std::format("{}{{{}}}", name, variable));
         }
       }};
 
@@ -775,60 +822,60 @@ void Function::convertToMathJax() {
   for (auto const &name : functionNames) {
     auto const with{std::string{"\\"} + name};
     // Replace "name" with "\name"
-    ivUtil::replaceAll(result, name, with, true);
+    util::replaceAll(result, name, with, true);
     // f(x) to f{x}
     reformatCallWithSingleToken(result, with);
   }
 
   // Replace "exp(...)" with "e^{...}"
-  ivUtil::replaceAllAndInvoke(result, "exp", "e^", replaceBrackets, true);
+  util::replaceAllAndInvoke(result, "exp", "e^", replaceBrackets, true);
 
   // Replace "exp2(...)" with "2^{...}"
-  ivUtil::replaceAllAndInvoke(result, "exp2", "2^", replaceBrackets, true);
+  util::replaceAllAndInvoke(result, "exp2", "2^", replaceBrackets, true);
 
   // Replace "log" with "\ln"
-  ivUtil::replaceAll(result, "log", "\\ln", true);
+  util::replaceAll(result, "log", "\\ln", true);
   reformatCallWithSingleToken(result, "\\ln"); // ln(x) to ln{x}
 
   // Replace "log2" with "\log_2"
-  ivUtil::replaceAll(result, "log2", "\\log_2", true);
+  util::replaceAll(result, "log2", "\\log_2", true);
   reformatCallWithSingleToken(result, "\\log_2"); // log_2(x) to log_2{x}
 
   // Replace "sign" with "\sgn"
-  ivUtil::replaceAll(result, "sign", "\\sgn", true);
+  util::replaceAll(result, "sign", "\\sgn", true);
   reformatCallWithSingleToken(result, "\\sgn"); // sgn(x) to sgn{x}
 
   // Replace "sqrt(...)" with "\sqrt{...}"
-  ivUtil::replaceAllAndInvoke(result, "sqrt", "\\sqrt", replaceBrackets, true);
+  util::replaceAllAndInvoke(result, "sqrt", "\\sqrt", replaceBrackets, true);
 
   // Replace "abs(...)" with "|...|"
   dstBrackets = std::pair{'|', '|'};
-  ivUtil::replaceAllAndInvoke(result, "abs", "", replaceBrackets, true);
+  util::replaceAllAndInvoke(result, "abs", "", replaceBrackets, true);
 
   // Replace "floor(...)" with "@...#"
   dstBrackets = std::pair{'@', '#'};
-  ivUtil::replaceAllAndInvoke(result, "floor", "", replaceBrackets, true);
+  util::replaceAllAndInvoke(result, "floor", "", replaceBrackets, true);
 
   // Replace "@" with "\lfloor"
-  ivUtil::replaceAll(result, "@", "\\lfloor", false);
+  util::replaceAll(result, "@", "\\lfloor", false);
 
   // Replace "#" with "\rfloor"
-  ivUtil::replaceAll(result, "#", "\\rfloor", false);
+  util::replaceAll(result, "#", "\\rfloor", false);
 
   // Replace "ceil(...)" with "@...#"
-  ivUtil::replaceAllAndInvoke(result, "ceil", "", replaceBrackets, true);
+  util::replaceAllAndInvoke(result, "ceil", "", replaceBrackets, true);
 
   // Replace "@" with "\lceil"
-  ivUtil::replaceAll(result, "@", "\\lceil", false);
+  util::replaceAll(result, "@", "\\lceil", false);
 
   // Replace "#" with "\rceil"
-  ivUtil::replaceAll(result, "#", "\\rceil", false);
+  util::replaceAll(result, "#", "\\rceil", false);
 
   // Remove "*" (multiplication)
   std::erase(result, '*');
 
   // Remove "(x,y,z)"
-  ivUtil::replaceAll(result, "(x,y,z)", "", false);
+  util::replaceAll(result, "(x,y,z)", "", false);
 
   // Replace "{(...)}" with "{...}"
   static RE2 const regexNameInParensInCurlyBrackets{R"re(\{\((.+)\)\})re"};
@@ -837,8 +884,8 @@ void Function::convertToMathJax() {
                            {'{', '}'});
 
   // Replace (,) with \left(,\right)
-  ivUtil::replaceAll(result, "(", "\\left(");
-  ivUtil::replaceAll(result, ")", "\\right)");
+  util::replaceAll(result, "(", "\\left(");
+  util::replaceAll(result, ")", "\\right)");
 
   // Remove whitespaces
   std::erase_if(result, [](char c) {

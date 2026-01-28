@@ -14,13 +14,13 @@ struct AppContext;
 class Camera;
 class Raycast;
 
-namespace UITabs {
+namespace uiTabs {
 
 void functionsTab(AppContext &context, Camera &camera,
                   float parentWindowHeight);
 void settingsTab(AppContext &context, Camera &camera);
 void aboutTab(AppContext &context, Raycast const &raycast);
 
-} // namespace UITabs
+} // namespace uiTabs
 
 #endif

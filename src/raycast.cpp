@@ -316,12 +316,12 @@ void Raycast::createProgram(RenderState const &renderState) {
           : renderState.curvatureColormap);
 
   auto &fragmentShader{sources.at(1)};
-  ivUtil::replaceAll(fragmentShader.source, "@DEFINITIONS@", definitions);
+  util::replaceAll(fragmentShader.source, "@DEFINITIONS@", definitions);
 
-  ivUtil::replaceAll(fragmentShader.source, "@ISOVALUE@",
+  util::replaceAll(fragmentShader.source, "@ISOVALUE@",
                      std::to_string(renderState.isoValue));
 
-  ivUtil::replaceAll(fragmentShader.source, "@BOUND_RADIUS@",
+  util::replaceAll(fragmentShader.source, "@BOUND_RADIUS@",
                      std::to_string(renderState.boundsRadius));
 
   auto const &data{renderState.function.getData()};
@@ -338,18 +338,18 @@ void Raycast::createProgram(RenderState const &renderState) {
     static std::array const variables{'x', 'y', 'z', 'w'};
     auto const var{variables.at(index % 4)};
 
-    ivUtil::replaceAll(expression, param.name,
+    util::replaceAll(expression, param.name,
                        std::format("uParams.data[{}].{}", vecIndex, var), true);
   }
 
   // This replacement must be performed AFTER the replacement of parameter names
   // with uParams.data[index]. Otherwise, "P" can be wrongly interpreted as
   // a parameter.
-  ivUtil::replaceAll(expression, "@P.@", "P.");
+  util::replaceAll(expression, "@P.@", "P.");
 
-  ivUtil::replaceAll(fragmentShader.source, "@CODE_LOCAL@", codeLocal);
-  ivUtil::replaceAll(fragmentShader.source, "@CODE_GLOBAL@", codeGlobal);
-  ivUtil::replaceAll(fragmentShader.source, "@EXPRESSION_LHS@", expression);
+  util::replaceAll(fragmentShader.source, "@CODE_LOCAL@", codeLocal);
+  util::replaceAll(fragmentShader.source, "@CODE_GLOBAL@", codeGlobal);
+  util::replaceAll(fragmentShader.source, "@EXPRESSION_LHS@", expression);
 
   // Interrupted during building?
   if (m_programBuildPhase != ProgramBuildPhase::Done) {
